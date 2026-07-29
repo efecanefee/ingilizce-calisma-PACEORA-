@@ -76,9 +76,13 @@ void main() {
     // API anahtarı olmadığı için yedek program kullanıldı.
     expect(find.byIcon(Icons.cloud_off), findsOneWidget);
     expect(find.text('BUGÜN'), findsOneWidget);
+    // Asıl eylem ders akışını açar; elle işaretleme ikincil yol olarak durur.
+    expect(find.text('Bugünü çalış'), findsOneWidget);
 
-    // Günü tamamla → streak 1 olur, buton yerini tamamlandı mesajına bırakır.
-    await tester.tap(find.widgetWithText(FilledButton, 'Bugünü tamamla'));
+    // Elle tamamla → streak 1 olur, buton yerini tamamlandı mesajına bırakır.
+    await tester.tap(
+      find.widgetWithText(TextButton, 'Çalışmadan tamamlandı işaretle'),
+    );
     await _advance(tester);
 
     expect(find.text('1 gün'), findsOneWidget);

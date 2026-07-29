@@ -1,7 +1,9 @@
 import 'package:go_router/go_router.dart';
 
 import '../features/home/home_screen.dart';
+import '../features/lesson/lesson_screen.dart';
 import '../features/onboarding/onboarding_screen.dart';
+import '../features/settings/settings_screen.dart';
 
 GoRouter createRouter({required bool onboardingDone}) {
   return GoRouter(
@@ -14,6 +16,16 @@ GoRouter createRouter({required bool onboardingDone}) {
       GoRoute(
         path: '/',
         builder: (context, state) => const HomeScreen(),
+        routes: [
+          GoRoute(
+            path: 'lesson',
+            builder: (context, state) => const LessonScreen(),
+          ),
+          GoRoute(
+            path: 'settings',
+            builder: (context, state) => const SettingsScreen(),
+          ),
+        ],
       ),
     ],
   );

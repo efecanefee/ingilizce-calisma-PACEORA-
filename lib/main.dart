@@ -6,6 +6,7 @@ import 'app/constants.dart';
 import 'app/router.dart';
 import 'app/theme.dart';
 import 'data/providers.dart';
+import 'data/settings_providers.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,10 +21,39 @@ Future<void> main() async {
   );
 }
 
-class PaceoraApp extends StatelessWidget {
+class PaceoraApp extends ConsumerStatefulWidget {
   const PaceoraApp({super.key, required this.onboardingDone});
 
   final bool onboardingDone;
+
+  @override
+  ConsumerState<PaceoraApp> createState() => _PaceoraAppState();
+}
+
+class _PaceoraAppState extends ConsumerState<PaceoraApp>
+    with WidgetsBindingObserver {
+  late final _router = createRouter(onboardingDone: widget.onboardingDone);
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Uygulama arka planda gece yarısını geçmiş olabilir; öne geldiğinde
+    // "bugün" yeniden hesaplanmazsa dünün planı ekranda kalır.
+    if (state == AppLifecycleState.resumed) {
+      ref.read(weekPlanProvider.notifier).refreshIfDayChanged();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,8 +62,8 @@ class PaceoraApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: lightTheme,
       darkTheme: darkTheme,
-      themeMode: ThemeMode.system,
-      routerConfig: createRouter(onboardingDone: onboardingDone),
+      themeMode: ref.watch(themeModeProvider),
+      routerConfig: _router,
     );
   }
 }

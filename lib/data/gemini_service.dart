@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../app/constants.dart';
+import 'gemini_json.dart';
+import 'lesson_models.dart';
 import 'repository.dart';
 
 /// Haftalık plan üretiminin sonucu.
@@ -17,16 +19,34 @@ class WeeklyPlanResult {
   final String? error;
 }
 
+/// Günlük ders üretiminin sonucu.
+///
+/// Haftalık planın aksine dersin gömülü yedeği yok: her konu için hazır içerik
+/// taşımak gerçekçi değil. Üretilemezse [lesson] null kalır ve arayüz kullanıcıya
+/// "tekrar dene" ile "günü elle işaretle" seçeneklerini sunar.
+class DailyLessonResult {
+  const DailyLessonResult({this.lesson, this.error});
+
+  final DailyLesson? lesson;
+  final String? error;
+
+  bool get isSuccess => lesson != null;
+}
+
 /// Gemini ile içerik üretimi.
 ///
-/// Anahtar derleme zamanında verilir:
-/// `flutter run -d windows --dart-define-from-file=env.json`
+/// [apiKey] varsayılan olarak derleme zamanında verilen anahtardır
+/// (`--dart-define-from-file=env.json`), ancak kullanıcı Ayarlar'dan kendi
+/// anahtarını girerse `geminiServiceProvider` onu geçirir.
 class GeminiService {
-  GeminiService({http.Client? client}) : _client = client ?? http.Client();
+  GeminiService({http.Client? client, String? apiKey})
+      : _client = client ?? http.Client(),
+        _apiKey = (apiKey ?? AppConstants.geminiApiKey).trim();
 
   final http.Client _client;
+  final String _apiKey;
 
-  bool get hasApiKey => AppConstants.geminiApiKey.isNotEmpty;
+  bool get hasApiKey => _apiKey.isNotEmpty;
 
   void dispose() => _client.close();
 
@@ -39,66 +59,122 @@ class GeminiService {
     required String level,
     required int dailyMinutes,
   }) async {
-    if (!hasApiKey) {
+    final response = await _post(
+      prompt: _planPrompt(name: name, level: level, dailyMinutes: dailyMinutes),
+      schema: _planSchema,
+      timeout: const Duration(seconds: 30),
+    );
+
+    if (response.body == null) {
       return WeeklyPlanResult(
         days: fallbackWeeklyPlan(level),
         offline: true,
-        error: 'GEMINI_API_KEY tanımlı değil',
+        error: response.error,
       );
     }
 
+    final days = parseWeeklyPlanResponse(response.body!);
+    if (days.length != 7) {
+      return WeeklyPlanResult(
+        days: fallbackWeeklyPlan(level),
+        offline: true,
+        error: 'Yanıt 7 gün içermiyor',
+      );
+    }
+    return WeeklyPlanResult(days: days, offline: false);
+  }
+
+  /// Günün konusundan çok adımlı bir ders üretir.
+  ///
+  /// [reviewItems] daha önce yanlış yapılıp henüz çözülmemiş kelime/kalıplardır;
+  /// modele verilerek dersin bir kısmının bunların tekrarına ayrılması sağlanır.
+  Future<DailyLessonResult> generateDailyLesson({
+    required String name,
+    required String level,
+    required int dailyMinutes,
+    required String grammarTopic,
+    required String vocabTheme,
+    List<String> reviewItems = const [],
+  }) async {
+    final response = await _post(
+      prompt: _lessonPrompt(
+        name: name,
+        level: level,
+        dailyMinutes: dailyMinutes,
+        grammarTopic: grammarTopic,
+        vocabTheme: vocabTheme,
+        reviewItems: reviewItems,
+      ),
+      schema: _lessonSchema,
+      // Ders plandan çok daha büyük bir yanıt; daha uzun süre tanınıyor.
+      timeout: const Duration(seconds: 60),
+      temperature: 0.9,
+    );
+
+    if (response.body == null) return DailyLessonResult(error: response.error);
+
+    final lesson = parseDailyLessonResponse(response.body!);
+    if (lesson == null) {
+      return const DailyLessonResult(error: 'Ders içeriği okunamadı');
+    }
+    return DailyLessonResult(lesson: lesson);
+  }
+
+  /// Gemini `generateContent` çağrısının ortak gövdesi.
+  ///
+  /// Başarısızlıkta hata fırlatmaz; `body` null, `error` dolu döner.
+  Future<({String? body, String? error})> _post({
+    required String prompt,
+    required Map<String, dynamic> schema,
+    required Duration timeout,
+    double temperature = 1.0,
+  }) async {
+    if (!hasApiKey) return (body: null, error: 'GEMINI_API_KEY tanımlı değil');
+
     final uri = Uri.parse(
       '${AppConstants.geminiBaseUrl}/${AppConstants.geminiModel}:generateContent'
-      '?key=${AppConstants.geminiApiKey}',
+      '?key=$_apiKey',
     );
 
     final body = jsonEncode({
       'contents': [
         {
           'parts': [
-            {'text': _prompt(name: name, level: level, dailyMinutes: dailyMinutes)},
+            {'text': prompt},
           ],
         },
       ],
       'generationConfig': {
         'responseMimeType': 'application/json',
-        'responseSchema': _planSchema,
-        'temperature': 1.0,
+        'responseSchema': schema,
+        'temperature': temperature,
       },
     });
 
     try {
       final response = await _client
           .post(uri, headers: {'Content-Type': 'application/json'}, body: body)
-          .timeout(const Duration(seconds: 30));
+          .timeout(timeout);
 
       if (response.statusCode != 200) {
-        return WeeklyPlanResult(
-          days: fallbackWeeklyPlan(level),
-          offline: true,
-          error: 'Gemini ${response.statusCode}',
-        );
+        return (body: null, error: _errorMessage(response.statusCode));
       }
-
-      final days = parseWeeklyPlanResponse(utf8.decode(response.bodyBytes));
-      if (days.length != 7) {
-        return WeeklyPlanResult(
-          days: fallbackWeeklyPlan(level),
-          offline: true,
-          error: 'Yanıt 7 gün içermiyor',
-        );
-      }
-      return WeeklyPlanResult(days: days, offline: false);
+      return (body: utf8.decode(response.bodyBytes), error: null);
     } catch (e) {
-      return WeeklyPlanResult(
-        days: fallbackWeeklyPlan(level),
-        offline: true,
-        error: e.toString(),
-      );
+      return (body: null, error: e.toString());
     }
   }
 
-  String _prompt({
+  /// HTTP hatalarını kullanıcının anlayacağı dile çevirir.
+  static String _errorMessage(int statusCode) => switch (statusCode) {
+        400 => 'İstek reddedildi (400) — API anahtarı geçersiz olabilir',
+        403 => 'Erişim reddedildi (403) — anahtarı kontrol et',
+        429 => 'Kota doldu (429) — bir süre sonra tekrar dene',
+        >= 500 => 'Gemini şu an yanıt vermiyor ($statusCode)',
+        _ => 'Gemini $statusCode',
+      };
+
+  String _planPrompt({
     required String name,
     required String level,
     required int dailyMinutes,
@@ -122,6 +198,65 @@ Kurallar:
 ''';
   }
 
+  String _lessonPrompt({
+    required String name,
+    required String level,
+    required int dailyMinutes,
+    required String grammarTopic,
+    required String vocabTheme,
+    required List<String> reviewItems,
+  }) {
+    final size = LessonSize.forMinutes(dailyMinutes);
+    final review = reviewItems.isEmpty
+        ? ''
+        : '\nÖğrencinin daha önce yanlış yaptığı ve hâlâ pekişmemiş ifadeler: '
+            '${reviewItems.join(", ")}.\n'
+            'Soruların bir kısmını bunların tekrarına ayır.\n';
+
+    return '''
+Sen bir İngilizce öğretmenisin. Türkçe konuşan bir öğrenci için bugünkü dersi hazırlıyorsun.
+
+Öğrenci: $name
+CEFR seviyesi: $level
+Bugünün dilbilgisi konusu: $grammarTopic
+Bugünün kelime teması: $vocabTheme
+Ders süresi: $dailyMinutes dakika
+$review
+Şu bölümleri üret:
+
+1) vocab — tam ${size.vocab} kelime/kalıp:
+   - word: İngilizce kelime veya kalıp
+   - meaning: TÜRKÇE karşılığı
+   - example: kelimeyi kullanan, bugünün dilbilgisi konusuna uygun İngilizce örnek cümle
+
+2) gapFill — tam ${size.gapFill} boşluk doldurma sorusu:
+   - sentence: içinde tam olarak bir tane "___" geçen İngilizce cümle
+   - answer: boşluğa gelecek doğru ifade
+   - options: doğru cevabın da içinde olduğu 4 seçenek
+   - hintTr: cümlenin TÜRKÇE anlamı
+
+3) translate — tam ${size.translate} çeviri sorusu (Türkçeden İngilizceye):
+   - tr: çevrilecek TÜRKÇE cümle
+   - en: beklenen İngilizce çeviri
+   - accepted: aynı anlama gelen 2-4 alternatif İngilizce çeviri.
+     ÖNEMLİ: Cevap bilgisayarda metin karşılaştırmasıyla puanlanıyor. Bu yüzden
+     kelime sırası, eşanlamlı ve kısaltmasız/kısaltmalı biçim farklarını burada
+     mutlaka say. Hatalı puanlama olmasın.
+
+4) quiz — tam ${size.quiz} çoktan seçmeli soru:
+   - question: bugünün dilbilgisi konusunu ölçen İngilizce soru
+   - options: 4 seçenek
+   - answerIndex: doğru seçeneğin 0'dan başlayan sırası
+   - explanationTr: doğru cevabın neden doğru olduğunun TÜRKÇE açıklaması
+
+Kurallar:
+- Tüm İngilizce içerik $level seviyesine uygun olsun.
+- Kelimeler ve cümleler "$vocabTheme" temasıyla, dilbilgisi yapıları "$grammarTopic" konusuyla ilgili olsun.
+- Aynı cümleyi iki bölümde tekrar kullanma.
+- Türkçe alanlar Türkçe, İngilizce alanlar İngilizce olsun; karıştırma.
+''';
+  }
+
   static const Map<String, dynamic> _planSchema = {
     'type': 'ARRAY',
     'items': {
@@ -133,26 +268,84 @@ Kurallar:
       'required': ['grammarTopic', 'vocabTheme'],
     },
   };
+
+  static const Map<String, dynamic> _lessonSchema = {
+    'type': 'OBJECT',
+    'properties': {
+      'vocab': {
+        'type': 'ARRAY',
+        'items': {
+          'type': 'OBJECT',
+          'properties': {
+            'word': {'type': 'STRING'},
+            'meaning': {'type': 'STRING'},
+            'example': {'type': 'STRING'},
+          },
+          'required': ['word', 'meaning', 'example'],
+        },
+      },
+      'gapFill': {
+        'type': 'ARRAY',
+        'items': {
+          'type': 'OBJECT',
+          'properties': {
+            'sentence': {'type': 'STRING'},
+            'answer': {'type': 'STRING'},
+            'options': {
+              'type': 'ARRAY',
+              'items': {'type': 'STRING'},
+            },
+            'hintTr': {'type': 'STRING'},
+          },
+          'required': ['sentence', 'answer', 'options', 'hintTr'],
+        },
+      },
+      'translate': {
+        'type': 'ARRAY',
+        'items': {
+          'type': 'OBJECT',
+          'properties': {
+            'tr': {'type': 'STRING'},
+            'en': {'type': 'STRING'},
+            'accepted': {
+              'type': 'ARRAY',
+              'items': {'type': 'STRING'},
+            },
+          },
+          'required': ['tr', 'en', 'accepted'],
+        },
+      },
+      'quiz': {
+        'type': 'ARRAY',
+        'items': {
+          'type': 'OBJECT',
+          'properties': {
+            'question': {'type': 'STRING'},
+            'options': {
+              'type': 'ARRAY',
+              'items': {'type': 'STRING'},
+            },
+            'answerIndex': {'type': 'INTEGER'},
+            'explanationTr': {'type': 'STRING'},
+          },
+          'required': ['question', 'options', 'answerIndex', 'explanationTr'],
+        },
+      },
+    },
+    'required': ['vocab', 'gapFill', 'translate', 'quiz'],
+  };
 }
 
 /// Gemini `generateContent` yanıtını [PlanDaySpec] listesine çevirir.
 ///
-/// Yanıt beklenen biçimde değilse boş liste döner — çağıran taraf bunu
-/// yedek programa geçiş sinyali olarak kullanır.
+/// Yanıt beklenen biçimde değilse boş liste döner — çağıran taraf bunu yedek
+/// programa geçiş sinyali olarak kullanır.
 List<PlanDaySpec> parseWeeklyPlanResponse(String responseBody) {
+  final text = extractModelText(responseBody);
+  if (text == null) return const [];
+
   try {
-    final decoded = jsonDecode(responseBody) as Map<String, dynamic>;
-    final candidates = decoded['candidates'] as List<dynamic>?;
-    if (candidates == null || candidates.isEmpty) return const [];
-
-    final parts = ((candidates.first as Map<String, dynamic>)['content']
-        as Map<String, dynamic>?)?['parts'] as List<dynamic>?;
-    if (parts == null || parts.isEmpty) return const [];
-
-    final text = (parts.first as Map<String, dynamic>)['text'] as String?;
-    if (text == null || text.trim().isEmpty) return const [];
-
-    final raw = jsonDecode(_stripCodeFence(text));
+    final raw = jsonDecode(text);
     // responseSchema bir dizi istiyor; yine de nesne sarmalı gelirse kurtar.
     final list = switch (raw) {
       List<dynamic> l => l,
@@ -164,21 +357,13 @@ List<PlanDaySpec> parseWeeklyPlanResponse(String responseBody) {
       for (final item in list)
         if (item is Map<String, dynamic>)
           PlanDaySpec(
-            grammarTopic: (item['grammarTopic'] as String?)?.trim() ?? '',
-            vocabTheme: (item['vocabTheme'] as String?)?.trim() ?? '',
+            grammarTopic: readString(item, 'grammarTopic'),
+            vocabTheme: readString(item, 'vocabTheme'),
           ),
     ].where((d) => d.grammarTopic.isNotEmpty && d.vocabTheme.isNotEmpty).toList();
   } catch (_) {
     return const [];
   }
-}
-
-/// Model bazen JSON'u ```json ... ``` bloğuna sarar; sarmalı temizler.
-String _stripCodeFence(String text) {
-  final trimmed = text.trim();
-  if (!trimmed.startsWith('```')) return trimmed;
-  final withoutOpen = trimmed.replaceFirst(RegExp(r'^```[a-zA-Z]*\s*'), '');
-  return withoutOpen.replaceFirst(RegExp(r'```\s*$'), '').trim();
 }
 
 /// API erişimi olmadığında kullanılan yerleşik haftalık program.

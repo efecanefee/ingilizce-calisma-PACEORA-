@@ -16,6 +16,16 @@ abstract class AppConstants {
   /// Onboarding tamamlandı bayrağı (SharedPreferences anahtarı).
   static const prefOnboardingDone = 'onboarding_done';
 
+  /// Kullanıcının Ayarlar'dan girdiği Gemini anahtarı; boşsa derleme zamanı
+  /// anahtarı kullanılır.
+  static const prefApiKey = 'gemini_api_key';
+
+  /// Tema tercihi: system | light | dark
+  static const prefThemeMode = 'theme_mode';
+
+  /// Bir derste modele hatırlatılacak en fazla çözülmemiş hata sayısı.
+  static const maxReviewItems = 8;
+
   /// Haftanın günleri — plan listesinde dayIndex 0..6 ile eşleşir.
   static const weekdayNames = [
     'Pazartesi',

@@ -1,6 +1,8 @@
 import 'package:drift/drift.dart';
 
+import '../app/constants.dart';
 import 'database.dart';
+import 'lesson_models.dart';
 
 /// Haftalık plandaki tek bir günün konusu — henüz veritabanına yazılmamış hali.
 class PlanDaySpec {
@@ -140,6 +142,141 @@ class Repository {
           lastStudyDate: Value(today),
         ),
       );
+    });
+  }
+
+  // --- Günlük ders ---------------------------------------------------------
+
+  /// [date] gününe ait ders kaydı; henüz üretilmediyse null.
+  Future<Lesson?> lessonFor(DateTime date) => (_db.select(_db.lessons)
+        ..where((t) => t.lessonDate.equals(dayOf(date)))
+        ..limit(1))
+      .getSingleOrNull();
+
+  /// Dersi kaydeder ya da var olanı günceller.
+  ///
+  /// İçerik ve ilerleme tek JSON olarak `contentJson`'a yazılır; böylece ders
+  /// yarıda bırakılıp geri dönüldüğünde kaldığı adımdan devam eder ve aynı gün
+  /// içinde Gemini'ye ikinci kez istek gitmez.
+  Future<void> saveLesson(
+    DateTime date,
+    LessonState state, {
+    double? score,
+    int? durationSeconds,
+    bool? completed,
+  }) async {
+    final day = dayOf(date);
+    final existing = await lessonFor(day);
+
+    if (existing == null) {
+      await _db.into(_db.lessons).insert(
+            LessonsCompanion.insert(
+              lessonDate: day,
+              contentJson: state.encode(),
+              score: Value(score),
+              durationSeconds: Value(durationSeconds ?? 0),
+              completed: Value(completed ?? false),
+            ),
+          );
+      return;
+    }
+
+    await (_db.update(_db.lessons)..where((t) => t.id.equals(existing.id))).write(
+      LessonsCompanion(
+        contentJson: Value(state.encode()),
+        score: score == null ? const Value.absent() : Value(score),
+        durationSeconds: durationSeconds == null
+            ? const Value.absent()
+            : Value(durationSeconds),
+        completed:
+            completed == null ? const Value.absent() : Value(completed),
+      ),
+    );
+  }
+
+  // --- Hata defteri --------------------------------------------------------
+
+  /// Ders sonundaki cevapları hata defterine işler.
+  ///
+  /// Doğru bilinen ve daha önce hiç yanlış yapılmamış bir ifade deftere
+  /// girmez. `timesCorrect` **üst üste** doğru sayısıdır: yanlış yapılınca
+  /// sıfırlanır ve kayıt yeniden çözülmemiş sayılır. Üç kez üst üste doğru
+  /// yapılınca `resolved` olur (`database.dart` içindeki kural).
+  Future<void> recordOutcomes(
+    List<AnswerOutcome> outcomes, {
+    DateTime? now,
+  }) async {
+    if (outcomes.isEmpty) return;
+    final at = now ?? DateTime.now();
+
+    await _db.transaction(() async {
+      for (final outcome in outcomes) {
+        final existing = await (_db.select(_db.mistakes)
+              ..where((t) =>
+                  t.item.equals(outcome.item) & t.type.equals(outcome.type))
+              ..limit(1))
+            .getSingleOrNull();
+
+        if (existing == null) {
+          if (outcome.correct) continue;
+          await _db.into(_db.mistakes).insert(
+                MistakesCompanion.insert(
+                  item: outcome.item,
+                  context: outcome.context,
+                  type: outcome.type,
+                  lastAskedAt: Value(at),
+                ),
+              );
+          continue;
+        }
+
+        final correctStreak = outcome.correct ? existing.timesCorrect + 1 : 0;
+        await (_db.update(_db.mistakes)
+              ..where((t) => t.id.equals(existing.id)))
+            .write(
+          MistakesCompanion(
+            timesCorrect: Value(correctStreak),
+            timesWrong: Value(
+              existing.timesWrong + (outcome.correct ? 0 : 1),
+            ),
+            lastAskedAt: Value(at),
+            resolved: Value(correctStreak >= 3),
+          ),
+        );
+      }
+    });
+  }
+
+  /// Henüz pekişmemiş ifadeler — sonraki dersin promptuna beslenir.
+  ///
+  /// En çok yanlış yapılanlar önce, eşitlikte en uzun süredir sorulmayanlar.
+  Future<List<String>> unresolvedMistakeItems({
+    int limit = AppConstants.maxReviewItems,
+  }) async {
+    final rows = await (_db.select(_db.mistakes)
+          ..where((t) => t.resolved.equals(false))
+          ..orderBy([
+            (t) => OrderingTerm(
+                  expression: t.timesWrong,
+                  mode: OrderingMode.desc,
+                ),
+            (t) => OrderingTerm(expression: t.lastAskedAt),
+          ])
+          ..limit(limit))
+        .get();
+    return [for (final row in rows) row.item];
+  }
+
+  /// Tüm kullanıcı verisini siler (Ayarlar → "Verileri sıfırla").
+  Future<void> resetAll() async {
+    await _db.transaction(() async {
+      await _db.delete(_db.weeklyPlanDays).go();
+      await _db.delete(_db.lessons).go();
+      await _db.delete(_db.mistakes).go();
+      await _db.delete(_db.flashcards).go();
+      await _db.delete(_db.stories).go();
+      await _db.delete(_db.weeklyReviews).go();
+      await _db.delete(_db.userProfiles).go();
     });
   }
 }

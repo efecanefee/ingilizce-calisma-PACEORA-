@@ -1,6 +1,7 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paceora/data/database.dart';
+import 'package:paceora/data/lesson_models.dart';
 import 'package:paceora/data/repository.dart';
 
 void main() {
@@ -151,6 +152,101 @@ void main() {
       await repository.completeDay(tuesday, now: DateTime(2026, 7, 28, 9));
       profile = await repository.profile();
       expect(profile?.streak, 2);
+    });
+
+    group('günlük ders', () {
+      final lesson = DailyLesson(
+        vocab: const [],
+        gapFill: const [
+          GapFillItem(
+            sentence: 'I ___ tea.',
+            answer: 'drink',
+            options: ['drink', 'drinks'],
+            hintTr: '',
+          ),
+        ],
+        translate: const [],
+        quiz: const [],
+      );
+
+      test('gün için ders yoksa null döner', () async {
+        expect(await repository.lessonFor(DateTime(2026, 7, 29)), isNull);
+      });
+
+      test('ders kaydedilir ve saat fark etmeksizin aynı gün bulunur', () async {
+        await repository.saveLesson(
+          DateTime(2026, 7, 29, 8, 30),
+          LessonState(lesson: lesson),
+        );
+
+        final saved = await repository.lessonFor(DateTime(2026, 7, 29, 23, 15));
+        expect(saved, isNotNull);
+        expect(saved!.completed, isFalse);
+        expect(saved.score, isNull);
+        expect(LessonState.decode(saved.contentJson)?.lesson.questionCount, 1);
+      });
+
+      test('aynı güne ikinci kayıt yeni satır açmaz, ilerlemeyi günceller',
+          () async {
+        final date = DateTime(2026, 7, 29, 9);
+        await repository.saveLesson(date, LessonState(lesson: lesson));
+
+        await repository.saveLesson(
+          date,
+          LessonState(lesson: lesson).copyWith(
+            progress: const LessonProgress(stepIndex: 1)
+                .withAnswer(gapFillKey(0), correct: true, input: 'drink'),
+          ),
+        );
+
+        expect(await db.select(db.lessons).get(), hasLength(1));
+        final saved = await repository.lessonFor(date);
+        final restored = LessonState.decode(saved!.contentJson)!;
+        expect(restored.progress.stepIndex, 1);
+        expect(restored.correctCount, 1);
+      });
+
+      test('skor ve süre yazılmayan alanları ezmez', () async {
+        final date = DateTime(2026, 7, 29, 9);
+        await repository.saveLesson(
+          date,
+          LessonState(lesson: lesson),
+          score: 80,
+          durationSeconds: 600,
+          completed: true,
+        );
+
+        // İlerleme güncellemesi skor/süreyi silmemeli.
+        await repository.saveLesson(date, LessonState(lesson: lesson));
+
+        final saved = await repository.lessonFor(date);
+        expect(saved!.score, 80);
+        expect(saved.durationSeconds, 600);
+        expect(saved.completed, isTrue);
+      });
+    });
+
+    test('resetAll tüm tabloları boşaltır', () async {
+      final week = DateTime(2026, 7, 27);
+      await repository.saveProfile(name: 'Efe', level: 'B1', dailyMinutes: 10);
+      await repository.replaceWeeklyPlan(week, [
+        for (var i = 0; i < 7; i++)
+          PlanDaySpec(grammarTopic: 'Konu $i', vocabTheme: 'Tema $i'),
+      ]);
+      await repository.recordOutcomes([
+        const AnswerOutcome(
+          item: 'drink',
+          context: 'I ___ tea.',
+          type: 'vocabulary',
+          correct: false,
+        ),
+      ]);
+
+      await repository.resetAll();
+
+      expect(await repository.profile(), isNull);
+      expect(await repository.planForWeek(week), isEmpty);
+      expect(await db.select(db.mistakes).get(), isEmpty);
     });
   });
 }

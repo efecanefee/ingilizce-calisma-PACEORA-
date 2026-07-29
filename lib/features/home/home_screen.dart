@@ -43,6 +43,11 @@ class HomeScreen extends ConsumerWidget {
             onPressed: plan.isLoading ? null : () => _regenerate(context, ref),
             icon: const Icon(Icons.refresh),
           ),
+          IconButton(
+            tooltip: 'Ayarlar',
+            onPressed: () => context.push('/settings'),
+            icon: const Icon(Icons.settings_outlined),
+          ),
         ],
       ),
       body: switch ((profile, plan)) {
@@ -66,6 +71,7 @@ class _HomeBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final today = week.today;
+    final lesson = ref.watch(todayLessonProvider).value;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
@@ -82,6 +88,8 @@ class _HomeBody extends ConsumerWidget {
           _TodayCard(
             day: today,
             dailyMinutes: user.dailyMinutes,
+            lesson: lesson,
+            onStudy: () => context.push('/lesson'),
             onComplete: () =>
                 ref.read(weekPlanProvider.notifier).completeDay(today),
           ),
@@ -190,17 +198,38 @@ class _TodayCard extends StatelessWidget {
   const _TodayCard({
     required this.day,
     required this.dailyMinutes,
+    required this.lesson,
+    required this.onStudy,
     required this.onComplete,
   });
 
   final WeeklyPlanDay day;
   final int dailyMinutes;
+
+  /// Bugünkü ders kaydı; henüz üretilmediyse null.
+  final Lesson? lesson;
+
+  final VoidCallback onStudy;
   final VoidCallback onComplete;
+
+  /// Tamamlanmış gün için skor/süre özeti.
+  ///
+  /// Gün elle işaretlenmişse ders kaydı ve skor olmaz; o durumda düz mesaj.
+  String _completedSummary() {
+    final score = lesson?.score;
+    if (score == null) return 'Bugünkü çalışman tamam. Yarın görüşürüz!';
+
+    final minutes = ((lesson?.durationSeconds ?? 0) / 60).ceil();
+    final duration = minutes > 0 ? ' · $minutes dk' : '';
+    return 'Ders tamam · %${score.round()}$duration';
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final done = day.status == 'completed';
+    // Ders başlanmış ama bitmemişse buton "devam et" der.
+    final inProgress = lesson != null && !lesson!.completed;
 
     return Card(
       child: Padding(
@@ -245,23 +274,43 @@ class _TodayCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 20),
-            if (done)
+            if (done) ...[
               Row(
                 children: [
                   const Icon(Icons.check_circle, color: Color(0xFF4ADE80)),
                   const SizedBox(width: 10),
-                  Text(
-                    'Bugünkü çalışman tamam. Yarın görüşürüz!',
-                    style: theme.textTheme.bodyMedium,
+                  Expanded(
+                    child: Text(
+                      _completedSummary(),
+                      style: theme.textTheme.bodyMedium,
+                    ),
                   ),
                 ],
-              )
-            else
-              FilledButton(
-                onPressed: onComplete,
-                // Ders motoru eklenene kadar bu buton günü tamamlandı işaretler.
-                child: const Text('Bugünü tamamla'),
               ),
+              const SizedBox(height: 6),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  onPressed: onStudy,
+                  child: const Text('Dersi tekrar aç'),
+                ),
+              ),
+            ] else ...[
+              FilledButton.icon(
+                onPressed: onStudy,
+                icon: Icon(inProgress ? Icons.play_arrow : Icons.school_outlined),
+                label: Text(inProgress ? 'Derse devam et' : 'Bugünü çalış'),
+              ),
+              // Ders üretilemediği ya da başka bir yerde çalışıldığı durumlar
+              // için elle işaretleme yolu açık kalıyor.
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  onPressed: onComplete,
+                  child: const Text('Çalışmadan tamamlandı işaretle'),
+                ),
+              ),
+            ],
           ],
         ),
       ),

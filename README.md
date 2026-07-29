@@ -28,24 +28,40 @@ dilbilgisi konusu ve bir kelime teması olur; pazar günü haftanın tekrarına 
 
 - **Kişiye özel haftalık program** — Gemini 2.0 Flash, seviyene ve süreni göre
   7 günlük konu akışı üretir; konular kolaydan zora ilerler ve tekrar etmez.
+- **Çok adımlı günlük ders** — o günün konusundan kelime kartları → boşluk
+  doldurma → Türkçe'den İngilizce'ye çeviri → çoktan seçmeli test üretilir.
+  Soru sayısı seçtiğin günlük süreye göre ölçeklenir.
+- **Hata defteri ve adaptif tekrar** — yanlış yaptığın kelime/kalıplar kaydedilir
+  ve sonraki dersin üretimine beslenir. Üç kez üst üste doğru yapınca kayıt
+  kapanır; araya bir yanlış girerse seri sıfırlanır.
+- **Yarıda bırakabilirsin** — her cevap anında cihaza yazılır; dersi kapatıp
+  geri döndüğünde kaldığın adımdan devam edersin ve aynı gün için ikinci kez
+  Gemini'ye istek gitmez.
+- **Kendi API anahtarını kullanabilirsin** — Ayarlar'dan girdiğin anahtar
+  uygulamayla gelene göre önceliklidir ve yalnızca cihazında saklanır.
 - **Anahtarsız da çalışır** — API anahtarı yoksa, ağ koparsa ya da yanıt bozuksa
-  uygulama kilitlenmez: B1/B2 için yerleşik yedek programa düşer ve ana ekranda
-  *çevrimdışı plan* rozeti gösterir.
+  uygulama kilitlenmez: haftalık program B1/B2 için yerleşik yedek listeden gelir
+  ve ana ekranda *çevrimdışı plan* rozeti görünür.
 - **Seri (streak) takibi** — gün atlarsan sıfırlanır, aynı gün iki kez
   tamamlarsan şişmez; yaz saati kaymalarından etkilenmeyen gün hesabı kullanır.
 - **İlerlemen korunur** — programı yenilediğinde çalıştığın günlerin durumu
-  silinmez, dolayısıyla serin de bozulmaz.
+  silinmez, dolayısıyla serin de bozulmaz. Yeni haftaya geçtiğinde program
+  kendiliğinden üretilir.
 - **Tamamen yerel veri** — her şey cihazdaki SQLite'ta (drift). Hesap yok,
-  sunucu yok; Gemini'ye yalnızca program üretirken istek gider.
+  sunucu yok; Gemini'ye yalnızca içerik üretirken istek gider.
 - **6 kademeli seviye** — B1-, B1, B1+, B2-, B2, B2+ (adaptif zorluk için ara
   kademeler).
-- **Açık/koyu tema** — "Lime Spark + Graphite" paleti, her iki modda da hazır.
+- **Açık/koyu tema** — "Lime Spark + Graphite" paleti, Ayarlar'dan seçilebilir.
 
 ## Ekranlar
 
-| Onboarding | Ana ekran |
+| Ekran | İçerik |
 |---|---|
-| İsim → seviye → günlük süre (10/15/20 dk) akışı; sonunda program üretilir | Seri sayacı, bugünün konusu, haftanın tamamı ve tamamla butonu |
+| **Onboarding** | İsim → seviye → günlük süre (10/15/20 dk); sonunda program üretilir |
+| **Ana ekran** | Seri sayacı, bugünün konusu ve skoru, haftanın tamamı |
+| **Ders** | Adım adım kelime / boşluk doldurma / çeviri / test, anında geri bildirim |
+| **Sonuç** | Yüzdelik skor, doğru sayısı ve tekrar edilecekler listesi |
+| **Ayarlar** | Profil, Gemini anahtarı, tema, verileri sıfırlama |
 
 ## Kurulum
 
@@ -72,8 +88,13 @@ oluştur (bu dosya `.gitignore`'da, depoya girmez):
 ```
 
 Anahtarı [Google AI Studio](https://aistudio.google.com/apikey)'dan
-ücretsiz alabilirsin. Vermezsen uygulama yine çalışır — program yerleşik
-yedek listeden gelir.
+ücretsiz alabilirsin. Alternatif olarak uygulama içinden **Ayarlar → Gemini API
+anahtarı** alanına yapıştırabilirsin; oradaki anahtar derlemeye gömülü olana göre
+önceliklidir ve yalnızca o cihazda saklanır.
+
+Hiç anahtar vermezsen haftalık program yerleşik yedek listeden gelir, ancak
+günlük ders üretimi çalışmaz — ders ekranı bunu söyler ve günü elle
+işaretlemene izin verir.
 
 ### Çalıştırma
 
@@ -117,9 +138,10 @@ uygulamayla ilgisi yoktur.
 flutter test
 ```
 
-Kapsam: Gemini yanıt ayrıştırma ve yedek plana düşme, repository (streak
-mantığı, plan yenilerken ilerlemenin korunması), onboarding akışı ve widget
-testleri.
+70 test. Kapsam: Gemini yanıt ayrıştırma ve yedek plana düşme, ders JSON'unun
+bozuk öğelere dayanıklı okunması, çeviri puanlaması (noktalama, büyük/küçük harf,
+kısaltmalar), hata defteri kuralları, repository (streak, plan yenilerken
+ilerlemenin korunması, ders önbelleği) ve uçtan uca ders akışı widget testleri.
 
 > `flutter analyze` bu makinede analiz sunucusunu çökertiyor (yine ASCII
 > olmayan proje yolu yüzünden). Bunun yerine `dart analyze` kullanın.
@@ -129,10 +151,13 @@ testleri.
 ```
 lib/
   app/          sabitler, tema, router, logo widget'ları
-  data/         drift şeması, repository, Riverpod provider'ları, Gemini servisi
+  data/         drift şeması, repository, Riverpod provider'ları, Gemini servisi,
+                ders modelleri ve puanlama
   features/
     onboarding/ isim + seviye + günlük süre akışı
-    home/       streak, bugünün planı, haftalık program
+    home/       streak, bugünün planı ve skoru, haftalık program
+    lesson/     adım adım ders akışı ve sonuç ekranı
+    settings/   profil, API anahtarı, tema, veri sıfırlama
 assets/images/  paceora_mark.png (amblem), paceora_logo.png (tam logo)
 ```
 
@@ -145,19 +170,24 @@ assets/images/  paceora_mark.png (amblem), paceora_logo.png (tam logo)
 |---|---|---|
 | `UserProfiles` | ad, CEFR seviyesi, günlük dakika, streak | ✅ kullanımda |
 | `WeeklyPlanDays` | haftanın 7 günü: dilbilgisi konusu + kelime teması, durum | ✅ kullanımda |
-| `Lessons` | üretilen günlük ders içeriği (JSON), skor, süre | 🔜 şema hazır |
-| `Mistakes` | yanlış yapılan kelime/kalıplar, 3 doğruda çözülür | 🔜 şema hazır |
+| `Lessons` | günlük ders içeriği + ilerleme (JSON), skor, süre | ✅ kullanımda |
+| `Mistakes` | yanlış yapılan kelime/kalıplar, 3 doğruda çözülür | ✅ kullanımda |
 | `Flashcards` | SM-2 aralıklı tekrar kartları | 🔜 şema hazır |
 | `Stories` | günün hikayesi + test sonucu | 🔜 şema hazır |
 | `WeeklyReviews` | haftalık değerlendirme raporu | 🔜 şema hazır |
 
+Ders içeriği ve o ders içindeki ilerleme tek bir JSON olarak `contentJson`'a
+yazılır; yarıda bırakılan ders bu sayede şemaya kolon eklemeden kaldığı adımdan
+devam edebiliyor.
+
 ## Yol haritası
 
-Veritabanı şeması aşağıdaki özellikler düşünülerek tasarlandı; arayüzleri henüz yazılmadı:
-
-- [ ] Günlük ders akışı (çeviri, boşluk doldurma, sohbet alıştırmaları)
-- [ ] Hata defteri — yanlışların takibi ve hedefli tekrar
+- [x] Günlük ders akışı (kelime, boşluk doldurma, çeviri, test) ve puanlama
+- [x] Hata defteri — yanlışların takibi ve sonraki derse beslenmesi
+- [x] Ayarlar: profil düzenleme, kendi Gemini anahtarın, tema
+- [ ] Günlük hatırlatma bildirimi (saat seçmeli)
 - [ ] SM-2 aralıklı tekrarlı flash kartlar
+- [ ] İlerleme ekranı: streak takvimi, haftalık skor grafiği
 - [ ] Günün hikayesi + okuduğunu anlama testi
 - [ ] Haftalık değerlendirme raporu ve adaptif seviye ayarı (B1- ↔ B2+)
 
