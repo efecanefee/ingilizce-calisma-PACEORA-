@@ -1,0 +1,51 @@
+name: iOS IPA
+
+# Windows'ta iOS derlemesi yapılamadığı için IPA burada, macOS runner'ında
+# üretilir. Çıktı imzasızdır; imzalamayı Sideloadly kendi Apple ID'nle yapar.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.7
+          channel: stable
+          cache: true
+
+      - name: Bağımlılıklar
+        run: flutter pub get
+
+      - name: Drift kod üretimi
+        run: dart run build_runner build
+
+      - name: Testler
+        run: flutter test
+
+      - name: iOS derlemesi (imzasız)
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          flutter build ios --release --no-codesign \
+            --dart-define=GEMINI_API_KEY="$GEMINI_API_KEY"
+
+      - name: IPA paketle
+        run: |
+          mkdir -p build/ipa/Payload
+          cp -R build/ios/iphoneos/Runner.app build/ipa/Payload/
+          cd build/ipa
+          zip -qry Paceora-unsigned.ipa Payload
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Paceora-unsigned-ipa
+          path: build/ipa/Paceora-unsigned.ipa
+          if-no-files-found: error
