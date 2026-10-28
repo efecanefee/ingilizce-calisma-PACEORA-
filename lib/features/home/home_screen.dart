@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/constants.dart';
 import '../../app/logo.dart';
+import '../../app/motion.dart';
+import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../data/providers.dart';
 
@@ -72,39 +75,196 @@ class _HomeBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final today = week.today;
     final lesson = ref.watch(todayLessonProvider).value;
+    final sectionStyle = Theme.of(context)
+        .textTheme
+        .titleMedium
+        ?.copyWith(fontWeight: FontWeight.w700);
+
+    var index = 0;
+    Widget item(Widget child) => child.entrance(index++);
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
       children: [
-        _Greeting(user: user),
+        item(_Greeting(user: user)),
         const SizedBox(height: 20),
         if (week.offline) ...[
-          const _OfflineBadge(),
+          item(const _OfflineBadge()),
           const SizedBox(height: 12),
         ],
         if (today == null)
-          const _EmptyPlanCard()
+          item(const _EmptyPlanCard())
         else
-          _TodayCard(
-            day: today,
-            dailyMinutes: user.dailyMinutes,
-            lesson: lesson,
-            onStudy: () => context.push('/lesson'),
-            onComplete: () =>
-                ref.read(weekPlanProvider.notifier).completeDay(today),
+          item(
+            _TodayCard(
+              day: today,
+              dailyMinutes: user.dailyMinutes,
+              lesson: lesson,
+              onStudy: () => context.push('/lesson'),
+              onComplete: () =>
+                  ref.read(weekPlanProvider.notifier).completeDay(today),
+            ),
           ),
         const SizedBox(height: 28),
-        Text(
-          'Bu hafta',
-          style: Theme.of(context)
-              .textTheme
-              .titleMedium
-              ?.copyWith(fontWeight: FontWeight.w700),
-        ),
+        item(Text('Pratik alanı', style: sectionStyle)),
+        const SizedBox(height: 12),
+        item(const _PracticeGrid()),
+        const SizedBox(height: 28),
+        item(Text('Bu hafta', style: sectionStyle)),
         const SizedBox(height: 12),
         for (final day in week.days)
-          _WeekDayTile(day: day, isToday: day.dayIndex == today?.dayIndex),
+          item(
+            _WeekDayTile(day: day, isToday: day.dayIndex == today?.dayIndex),
+          ),
       ],
+    );
+  }
+}
+
+/// Dersin dışındaki çalışma alanlarına kısayollar.
+class _PracticeGrid extends ConsumerWidget {
+  const _PracticeGrid();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cards = ref.watch(flashcardSummaryProvider).value;
+    final due = cards?.due ?? 0;
+
+    final tiles = [
+      _PracticeTile(
+        icon: Icons.style_rounded,
+        title: 'Flash kartlar',
+        subtitle: due > 0
+            ? '$due kart seni bekliyor'
+            : cards == null || cards.total == 0
+                ? 'Ders bitirince dolar'
+                : 'Bugünlük tamam',
+        badge: due > 0 ? '$due' : null,
+        onTap: () async {
+          await context.push('/flashcards');
+          ref.invalidate(flashcardSummaryProvider);
+        },
+      ),
+      _PracticeTile(
+        icon: Icons.auto_stories_rounded,
+        title: 'Günün hikayesi',
+        subtitle: 'Oku ve anla',
+        onTap: () => context.push('/story'),
+      ),
+      _PracticeTile(
+        icon: Icons.insights_rounded,
+        title: 'İlerlemem',
+        subtitle: 'Takvim ve skorlar',
+        onTap: () => context.push('/progress'),
+      ),
+      _PracticeTile(
+        icon: Icons.assessment_rounded,
+        title: 'Haftalık rapor',
+        subtitle: 'Seviye önerisi',
+        onTap: () => context.push('/review'),
+      ),
+    ];
+
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: 12,
+      crossAxisSpacing: 12,
+      childAspectRatio: 1.45,
+      children: [
+        for (final (i, tile) in tiles.indexed)
+          tile
+              .animate(delay: Motion.stagger * i)
+              .fadeIn(duration: Motion.medium)
+              .scale(begin: const Offset(0.9, 0.9), curve: Curves.easeOutBack),
+      ],
+    );
+  }
+}
+
+class _PracticeTile extends StatelessWidget {
+  const _PracticeTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+    this.badge,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  final String? badge;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return PressableScale(
+      onTap: onTap,
+      child: Ink(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainer,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: theme.colorScheme.outlineVariant),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: (isDark ? AppColors.limeSpark : AppColors.limeDark)
+                        .withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, size: 20, color: theme.colorScheme.primary),
+                ),
+                const Spacer(),
+                if (badge != null)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      badge!,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onPrimary,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  )
+                      .animate(onPlay: (c) => c.repeat(reverse: true))
+                      .scaleXY(begin: 1, end: 1.12, duration: 800.ms),
+              ],
+            ),
+            const Spacer(),
+            Text(
+              title,
+              style: theme.textTheme.titleSmall
+                  ?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -150,12 +310,24 @@ class _Greeting extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('🔥', style: TextStyle(fontSize: 18)),
+              PulsingFlame(active: user.streak > 0),
               const SizedBox(width: 6),
-              Text(
-                '${user.streak} gün',
-                style: theme.textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w700),
+              // Seri arttığında yeni sayı aşağıdan kayarak gelir.
+              AnimatedSwitcher(
+                duration: Motion.medium,
+                transitionBuilder: (child, animation) => SlideTransition(
+                  position: Tween(
+                    begin: const Offset(0, 0.6),
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: FadeTransition(opacity: animation, child: child),
+                ),
+                child: Text(
+                  '${user.streak} gün',
+                  key: ValueKey(user.streak),
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w700),
+                ),
               ),
             ],
           ),
@@ -277,7 +449,9 @@ class _TodayCard extends StatelessWidget {
             if (done) ...[
               Row(
                 children: [
-                  const Icon(Icons.check_circle, color: Color(0xFF4ADE80)),
+                  const Icon(Icons.check_circle, color: Color(0xFF4ADE80))
+                      .animate()
+                      .scale(duration: Motion.slow, curve: Curves.elasticOut),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -300,7 +474,14 @@ class _TodayCard extends StatelessWidget {
                 onPressed: onStudy,
                 icon: Icon(inProgress ? Icons.play_arrow : Icons.school_outlined),
                 label: Text(inProgress ? 'Derse devam et' : 'Bugünü çalış'),
-              ),
+              )
+                  // Ara ara geçen parıltı asıl eyleme dikkat çeker.
+                  .animate(onPlay: (c) => c.repeat())
+                  .shimmer(
+                    delay: 2500.ms,
+                    duration: 1200.ms,
+                    color: Colors.white.withValues(alpha: 0.45),
+                  ),
               // Ders üretilemediği ya da başka bir yerde çalışıldığı durumlar
               // için elle işaretleme yolu açık kalıyor.
               Align(

@@ -1,9 +1,14 @@
 import 'package:go_router/go_router.dart';
 
+import '../features/flashcards/flashcards_screen.dart';
 import '../features/home/home_screen.dart';
 import '../features/lesson/lesson_screen.dart';
 import '../features/onboarding/onboarding_screen.dart';
+import '../features/progress/progress_screen.dart';
+import '../features/review/weekly_review_screen.dart';
 import '../features/settings/settings_screen.dart';
+import '../features/story/story_screen.dart';
+import 'motion.dart';
 
 GoRouter createRouter({required bool onboardingDone}) {
   return GoRouter(
@@ -11,19 +16,42 @@ GoRouter createRouter({required bool onboardingDone}) {
     routes: [
       GoRoute(
         path: '/onboarding',
-        builder: (context, state) => const OnboardingScreen(),
+        pageBuilder: (context, state) =>
+            motionPage(state, const OnboardingScreen()),
       ),
       GoRoute(
         path: '/',
-        builder: (context, state) => const HomeScreen(),
+        pageBuilder: (context, state) => motionPage(state, const HomeScreen()),
         routes: [
           GoRoute(
             path: 'lesson',
-            builder: (context, state) => const LessonScreen(),
+            pageBuilder: (context, state) =>
+                motionPage(state, const LessonScreen()),
+          ),
+          GoRoute(
+            path: 'flashcards',
+            pageBuilder: (context, state) =>
+                motionPage(state, const FlashcardsScreen()),
+          ),
+          GoRoute(
+            path: 'story',
+            pageBuilder: (context, state) =>
+                motionPage(state, const StoryScreen()),
+          ),
+          GoRoute(
+            path: 'progress',
+            pageBuilder: (context, state) =>
+                motionPage(state, const ProgressScreen()),
+          ),
+          GoRoute(
+            path: 'review',
+            pageBuilder: (context, state) =>
+                motionPage(state, const WeeklyReviewScreen()),
           ),
           GoRoute(
             path: 'settings',
-            builder: (context, state) => const SettingsScreen(),
+            pageBuilder: (context, state) =>
+                motionPage(state, const SettingsScreen()),
           ),
         ],
       ),

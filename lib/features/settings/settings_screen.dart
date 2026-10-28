@@ -28,6 +28,9 @@ class SettingsScreen extends ConsumerWidget {
           const _SectionTitle('Gemini API anahtarı'),
           const _ApiKeySection(),
           const SizedBox(height: 28),
+          const _SectionTitle('Günlük hatırlatma'),
+          const _ReminderSection(),
+          const SizedBox(height: 28),
           const _SectionTitle('Görünüm'),
           const _ThemeSection(),
           const SizedBox(height: 28),
@@ -296,6 +299,84 @@ class _ApiKeySectionState extends ConsumerState<_ApiKeySection> {
   }
 }
 
+class _ReminderSection extends ConsumerWidget {
+  const _ReminderSection();
+
+  Future<void> _toggle(BuildContext context, WidgetRef ref, bool value) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final ok = await ref.read(reminderProvider.notifier).setEnabled(value);
+    if (!ok) {
+      messenger.showSnackBar(const SnackBar(
+        content: Text(
+          'Bildirim izni verilmedi. Telefon ayarlarından Paceora için '
+          'bildirimlere izin verebilirsin.',
+        ),
+      ));
+    }
+  }
+
+  Future<void> _pickTime(BuildContext context, WidgetRef ref) async {
+    final current = ref.read(reminderProvider).time;
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: current,
+      helpText: 'Hatırlatma saati',
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+        child: child!,
+      ),
+    );
+    if (picked != null) {
+      await ref.read(reminderProvider.notifier).setTime(picked);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final settings = ref.watch(reminderProvider);
+    final time =
+        '${settings.time.hour.toString().padLeft(2, '0')}:${settings.time.minute.toString().padLeft(2, '0')}';
+
+    return Card(
+      child: Column(
+        children: [
+          SwitchListTile(
+            value: settings.enabled,
+            onChanged: (v) => _toggle(context, ref, v),
+            secondary: const Icon(Icons.notifications_active_outlined),
+            title: const Text('Her gün hatırlat'),
+            subtitle: const Text('Serini kaybetmemen için bildirim gönderir'),
+          ),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOutCubic,
+            child: settings.enabled
+                ? Column(
+                    children: [
+                      const Divider(height: 1),
+                      ListTile(
+                        leading: const Icon(Icons.schedule),
+                        title: const Text('Saat'),
+                        trailing: Text(
+                          time,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                        onTap: () => _pickTime(context, ref),
+                      ),
+                    ],
+                  )
+                : const SizedBox(width: double.infinity),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _ThemeSection extends ConsumerWidget {
   const _ThemeSection();
 
@@ -366,6 +447,9 @@ class _ResetSectionState extends ConsumerState<_ResetSection> {
       ref.invalidate(profileProvider);
       ref.invalidate(weekPlanProvider);
       ref.invalidate(todayLessonProvider);
+      ref.invalidate(flashcardSummaryProvider);
+      ref.invalidate(progressProvider);
+      ref.invalidate(weeklyReportsProvider);
 
       router.go('/onboarding');
     } finally {

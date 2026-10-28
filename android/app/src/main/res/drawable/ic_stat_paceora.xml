@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bildirim çubuğu simgesi: Android küçük simgeyi tek renk siluet olarak
+     çizer, renkli uygulama ikonu beyaz kareye dönüşür. Logodaki şimşek. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M14.5,1.5L4.5,13.5H11L9.5,22.5L19.5,10.5H13L14.5,1.5Z" />
+</vector>

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
+import '../../app/motion.dart';
 import '../../app/theme.dart';
 import '../../data/lesson_models.dart';
 
@@ -171,12 +173,14 @@ class _OptionTile extends StatelessWidget {
         ),
     };
 
-    return Padding(
+    final tile = Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
         onTap: onTap,
-        child: Container(
+        child: AnimatedContainer(
+          duration: Motion.medium,
+          curve: Motion.curve,
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
@@ -190,21 +194,37 @@ class _OptionTile extends StatelessWidget {
           child: Row(
             children: [
               Expanded(
-                child: Text(
-                  label,
-                  style: theme.textTheme.bodyLarge?.copyWith(
+                child: AnimatedDefaultTextStyle(
+                  duration: Motion.medium,
+                  style: theme.textTheme.bodyLarge!.copyWith(
                     color: state == _OptionState.muted
                         ? theme.colorScheme.onSurface.withValues(alpha: 0.45)
-                        : null,
+                        : theme.colorScheme.onSurface,
                   ),
+                  child: Text(label),
                 ),
               ),
-              if (icon != null) Icon(icon, size: 20, color: border),
+              if (icon != null)
+                Icon(icon, size: 20, color: border)
+                    .animate()
+                    .scale(duration: Motion.medium, curve: Curves.elasticOut),
             ],
           ),
         ),
       ),
     );
+
+    // Yanlış seçim hafifçe sallanır; doğru cevap kısa bir parlama alır.
+    return switch (state) {
+      _OptionState.wrong => tile.animate().shakeX(hz: 5, amount: 4, duration: 400.ms),
+      _OptionState.correct => tile.animate().scaleXY(
+          begin: 1,
+          end: 1.02,
+          duration: Motion.fast,
+          curve: Curves.easeOut,
+        ).then().scaleXY(begin: 1.02, end: 1, duration: Motion.fast),
+      _ => tile,
+    };
   }
 }
 

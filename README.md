@@ -52,16 +52,35 @@ dilbilgisi konusu ve bir kelime teması olur; pazar günü haftanın tekrarına 
 - **6 kademeli seviye** — B1-, B1, B1+, B2-, B2, B2+ (adaptif zorluk için ara
   kademeler).
 - **Açık/koyu tema** — "Lime Spark + Graphite" paleti, Ayarlar'dan seçilebilir.
+- **SM-2 flash kartlar** — dersi bitirince o günün kelimeleri ve yanlış yaptığın
+  ifadeler desteye girer. Kart çevrilir, "Tekrar / Zor / İyi / Kolay" ile
+  notlanır; her düğmenin altında kartın ne zaman yeniden geleceği yazar.
+- **Günün hikayesi** — günün teması ve kelimeleriyle kısa bir okuma parçası,
+  sözlükçe ve okuduğunu anlama testi. Anahtar yoksa yerleşik yedek hikaye gelir.
+- **İlerleme ekranı** — 5 haftalık seri takvimi, son 8 haftanın ortalama skor
+  grafiği, en uzun seri ve öğrenilen kart sayısı.
+- **Haftalık rapor ve adaptif seviye** — haftanın verisinden güçlü yönler ve
+  odak noktaları çıkarılır. Seviye önerisi cihazda kuralla hesaplanır (en az 3
+  ders ve %85+ ortalama → bir kademe yukarı; en az 2 ders ve %55 altı → bir
+  kademe aşağı); öneriyi tek dokunuşla uygularsın.
+- **Günlük hatırlatma** — seçtiğin saatte yerel bildirim. Sunucu yok;
+  "Alarmlar ve hatırlatıcılar" izni verilirse tam saatinde gelir.
+- **Animasyonlu arayüz** — sayfa geçişleri, sırayla beliren kartlar, dönen
+  flash kart, sayarak artan skorlar, "nefes alan" seri alevi.
 
 ## Ekranlar
 
 | Ekran | İçerik |
 |---|---|
 | **Onboarding** | İsim → seviye → günlük süre (10/15/20 dk); sonunda program üretilir |
-| **Ana ekran** | Seri sayacı, bugünün konusu ve skoru, haftanın tamamı |
+| **Ana ekran** | Seri sayacı, bugünün konusu ve skoru, pratik alanı, haftanın tamamı |
 | **Ders** | Adım adım kelime / boşluk doldurma / çeviri / test, anında geri bildirim |
 | **Sonuç** | Yüzdelik skor, doğru sayısı ve tekrar edilecekler listesi |
-| **Ayarlar** | Profil, Gemini anahtarı, tema, verileri sıfırlama |
+| **Flash kartlar** | SM-2 tekrar oturumu: çevir, notla, bir sonraki karta geç |
+| **Günün hikayesi** | Okuma parçası, sözlükçe, okuduğunu anlama testi ve skor |
+| **İlerlemem** | Seri takvimi, haftalık skor grafiği, istatistikler |
+| **Haftalık rapor** | Haftanın değerlendirmesi ve seviye önerisi |
+| **Ayarlar** | Profil, Gemini anahtarı, günlük hatırlatma, tema, verileri sıfırlama |
 
 ## Kurulum
 
@@ -176,10 +195,12 @@ flutter build apk --release --dart-define-from-file=env.json
 flutter test
 ```
 
-70 test. Kapsam: Gemini yanıt ayrıştırma ve yedek plana düşme, ders JSON'unun
+101 test. Kapsam: Gemini yanıt ayrıştırma ve yedek plana düşme, ders JSON'unun
 bozuk öğelere dayanıklı okunması, çeviri puanlaması (noktalama, büyük/küçük harf,
 kısaltmalar), hata defteri kuralları, repository (streak, plan yenilerken
-ilerlemenin korunması, ders önbelleği) ve uçtan uca ders akışı widget testleri.
+ilerlemenin korunması, ders önbelleği), SM-2 aralık hesabı, flash kart destesi,
+hikaye ayrıştırma ve puanlama, adaptif seviye kuralı, haftalık istatistikler ve
+uçtan uca ders / onboarding / flash kart widget testleri.
 
 > `flutter analyze` bu makinede analiz sunucusunu çökertiyor (yine ASCII
 > olmayan proje yolu yüzünden). Bunun yerine `dart analyze` kullanın.
@@ -188,19 +209,24 @@ ilerlemenin korunması, ders önbelleği) ve uçtan uca ders akışı widget tes
 
 ```
 lib/
-  app/          sabitler, tema, router, logo widget'ları
+  app/          sabitler, tema, router, logo widget'ları, ortak animasyonlar (motion)
   data/         drift şeması, repository, Riverpod provider'ları, Gemini servisi,
-                ders modelleri ve puanlama
+                ders / hikaye / rapor modelleri, SM-2, hatırlatma servisi
   features/
     onboarding/ isim + seviye + günlük süre akışı
-    home/       streak, bugünün planı ve skoru, haftalık program
+    home/       streak, bugünün planı, pratik alanı, haftalık program
     lesson/     adım adım ders akışı ve sonuç ekranı
-    settings/   profil, API anahtarı, tema, veri sıfırlama
+    flashcards/ SM-2 tekrar oturumu
+    story/      günün hikayesi ve okuduğunu anlama testi
+    progress/   seri takvimi ve haftalık skor grafiği
+    review/     haftalık rapor ve adaptif seviye
+    settings/   profil, API anahtarı, hatırlatma, tema, veri sıfırlama
 assets/images/  paceora_mark.png (amblem), paceora_logo.png (tam logo)
 ```
 
 **Teknolojiler:** Flutter · Riverpod (durum yönetimi) · drift + SQLite
-(yerel veritabanı, web'de WASM) · Google Fonts · `http` · Gemini REST API.
+(yerel veritabanı, web'de WASM) · Google Fonts · `http` · Gemini REST API ·
+flutter_animate · flutter_local_notifications.
 
 ### Veri modeli
 
@@ -210,9 +236,9 @@ assets/images/  paceora_mark.png (amblem), paceora_logo.png (tam logo)
 | `WeeklyPlanDays` | haftanın 7 günü: dilbilgisi konusu + kelime teması, durum | ✅ kullanımda |
 | `Lessons` | günlük ders içeriği + ilerleme (JSON), skor, süre | ✅ kullanımda |
 | `Mistakes` | yanlış yapılan kelime/kalıplar, 3 doğruda çözülür | ✅ kullanımda |
-| `Flashcards` | SM-2 aralıklı tekrar kartları | 🔜 şema hazır |
-| `Stories` | günün hikayesi + test sonucu | 🔜 şema hazır |
-| `WeeklyReviews` | haftalık değerlendirme raporu | 🔜 şema hazır |
+| `Flashcards` | SM-2 aralıklı tekrar kartları | ✅ kullanımda |
+| `Stories` | günün hikayesi + cevaplar (JSON), test skoru | ✅ kullanımda |
+| `WeeklyReviews` | haftalık değerlendirme raporu (JSON) | ✅ kullanımda |
 
 Ders içeriği ve o ders içindeki ilerleme tek bir JSON olarak `contentJson`'a
 yazılır; yarıda bırakılan ders bu sayede şemaya kolon eklemeden kaldığı adımdan
@@ -223,11 +249,12 @@ devam edebiliyor.
 - [x] Günlük ders akışı (kelime, boşluk doldurma, çeviri, test) ve puanlama
 - [x] Hata defteri — yanlışların takibi ve sonraki derse beslenmesi
 - [x] Ayarlar: profil düzenleme, kendi Gemini anahtarın, tema
-- [ ] Günlük hatırlatma bildirimi (saat seçmeli)
-- [ ] SM-2 aralıklı tekrarlı flash kartlar
-- [ ] İlerleme ekranı: streak takvimi, haftalık skor grafiği
-- [ ] Günün hikayesi + okuduğunu anlama testi
-- [ ] Haftalık değerlendirme raporu ve adaptif seviye ayarı (B1- ↔ B2+)
+- [x] Günlük hatırlatma bildirimi (saat seçmeli)
+- [x] SM-2 aralıklı tekrarlı flash kartlar
+- [x] İlerleme ekranı: streak takvimi, haftalık skor grafiği
+- [x] Günün hikayesi + okuduğunu anlama testi
+- [x] Haftalık değerlendirme raporu ve adaptif seviye ayarı (B1- ↔ B2+)
+- [x] Animasyonlu arayüz ve Türkçe sistem metinleri
 
 ## Logo
 

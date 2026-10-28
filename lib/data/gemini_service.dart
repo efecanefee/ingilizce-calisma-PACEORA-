@@ -6,6 +6,8 @@ import '../app/constants.dart';
 import 'gemini_json.dart';
 import 'lesson_models.dart';
 import 'repository.dart';
+import 'review_models.dart';
+import 'story_models.dart';
 
 /// Haftalık plan üretiminin sonucu.
 ///
@@ -119,6 +121,206 @@ class GeminiService {
     }
     return DailyLessonResult(lesson: lesson);
   }
+
+  /// Günün temasında kısa bir hikaye ve okuduğunu anlama soruları üretir.
+  ///
+  /// Hiçbir koşulda hata fırlatmaz: üretilemezse yerleşik yedek hikaye döner
+  /// ve `offline` true olur, böylece çevrimdışıyken de okuma yapılabilir.
+  Future<({DailyStory story, bool offline})> generateDailyStory({
+    required String name,
+    required String level,
+    required int dailyMinutes,
+    required String grammarTopic,
+    required String vocabTheme,
+    List<String> targetWords = const [],
+    DateTime? date,
+  }) async {
+    final response = await _post(
+      prompt: _storyPrompt(
+        name: name,
+        level: level,
+        dailyMinutes: dailyMinutes,
+        grammarTopic: grammarTopic,
+        vocabTheme: vocabTheme,
+        targetWords: targetWords,
+      ),
+      schema: _storySchema,
+      timeout: const Duration(seconds: 45),
+      temperature: 1.0,
+    );
+
+    final story =
+        response.body == null ? null : parseDailyStoryResponse(response.body!);
+    if (story == null) {
+      return (story: fallbackStory(level, date ?? DateTime.now()), offline: true);
+    }
+    return (story: story, offline: false);
+  }
+
+  /// Haftanın istatistiklerinden Türkçe değerlendirme yorumu üretir.
+  ///
+  /// Seviye önerisi burada verilmez; [recommendLevelDelta] cihazda hesaplar ve
+  /// modele yalnızca bilgi olarak geçilir. Ulaşılamazsa yerel şablon kullanılır.
+  Future<({ReportCommentary commentary, bool offline})> generateWeeklyReport({
+    required String name,
+    required String level,
+    required WeeklyStats stats,
+    required int levelDelta,
+  }) async {
+    final response = await _post(
+      prompt: _reportPrompt(
+        name: name,
+        level: level,
+        stats: stats,
+        levelDelta: levelDelta,
+      ),
+      schema: _reportSchema,
+      timeout: const Duration(seconds: 30),
+      temperature: 0.7,
+    );
+
+    final commentary =
+        response.body == null ? null : parseReportResponse(response.body!);
+    if (commentary == null) {
+      return (commentary: localCommentary(stats, levelDelta), offline: true);
+    }
+    return (commentary: commentary, offline: false);
+  }
+
+  String _storyPrompt({
+    required String name,
+    required String level,
+    required int dailyMinutes,
+    required String grammarTopic,
+    required String vocabTheme,
+    required List<String> targetWords,
+  }) {
+    final length = switch (dailyMinutes) {
+      <= 10 => '120-170',
+      <= 15 => '170-230',
+      _ => '230-300',
+    };
+    final words = targetWords.isEmpty
+        ? ''
+        : '\nHikayede şu kelimelerden olabildiğince çoğunu doğal biçimde kullan: '
+            '${targetWords.join(", ")}.\n';
+
+    return '''
+Sen bir İngilizce öğretmenisin. Türkçe konuşan bir öğrenci için kısa bir okuma parçası hazırlıyorsun.
+
+Öğrenci: $name
+CEFR seviyesi: $level
+Tema: $vocabTheme
+Dilbilgisi konusu: $grammarTopic
+$words
+Üret:
+- title: hikayenin İngilizce başlığı
+- paragraphs: toplam $length kelimelik, 3-5 paragraftan oluşan özgün bir İngilizce hikaye. Dilbilgisi konusundaki yapıları doğal biçimde kullan.
+- glossary: hikayede geçen ve seviyeye göre zor olabilecek 4-6 kelime/kalıp; word (İngilizce) ve meaning (TÜRKÇE)
+- questions: 4 adet okuduğunu anlama sorusu
+  - question: İngilizce soru
+  - options: 4 İngilizce seçenek
+  - answerIndex: doğru seçeneğin 0'dan başlayan sırası
+  - explanationTr: cevabın metnin neresinden çıktığını anlatan TÜRKÇE açıklama
+
+Kurallar:
+- Hikaye ve sorular $level seviyesine uygun olsun.
+- Soruların cevabı yalnızca metinden çıkarılabilsin; genel kültür sorusu sorma.
+- En az bir soru çıkarım (inference) gerektirsin.
+''';
+  }
+
+  String _reportPrompt({
+    required String name,
+    required String level,
+    required WeeklyStats stats,
+    required int levelDelta,
+  }) {
+    final levelNote = switch (levelDelta) {
+      1 => 'Sonuçlar seviyenin üstünde; uygulama bir kademe yukarı önerecek.',
+      -1 => 'Öğrenci zorlandı; uygulama bir kademe aşağı önerecek.',
+      _ => 'Seviye değişikliği önerilmiyor.',
+    };
+
+    return '''
+Sen destekleyici bir İngilizce koçusun. Öğrencinin haftalık çalışma verisini değerlendir.
+
+Öğrenci: $name
+CEFR seviyesi: $level
+Çalışılan gün: ${stats.daysCompleted}/7
+Bitirilen ders: ${stats.lessonsCompleted}
+Ortalama ders skoru: ${stats.averageLessonScore?.round() ?? 'yok'}
+Toplam ders süresi: ${stats.studyMinutes} dakika
+Okunan hikaye: ${stats.storiesRead}, ortalama anlama skoru: ${stats.averageStoryScore?.round() ?? 'yok'}
+Tekrar edilen flash kart: ${stats.cardsReviewed}
+Henüz pekişmemiş ifadeler (${stats.openMistakes}): ${stats.topMistakes.join(", ")}
+Seviye notu: $levelNote
+
+TÜRKÇE yaz:
+- summary: 2-3 cümlelik genel değerlendirme, öğrenciye "sen" diye hitap et
+- strengths: 2-3 maddelik güçlü yönler
+- focus: 2-3 maddelik gelecek hafta odaklanılacak somut konular (pekişmemiş ifadeleri kullan)
+- tip: tek cümlelik pratik bir öneri
+
+Verilerde olmayan bir şey uydurma. Veri azsa bunu nazikçe belirt.
+''';
+  }
+
+  static const Map<String, dynamic> _storySchema = {
+    'type': 'OBJECT',
+    'properties': {
+      'title': {'type': 'STRING'},
+      'paragraphs': {
+        'type': 'ARRAY',
+        'items': {'type': 'STRING'},
+      },
+      'glossary': {
+        'type': 'ARRAY',
+        'items': {
+          'type': 'OBJECT',
+          'properties': {
+            'word': {'type': 'STRING'},
+            'meaning': {'type': 'STRING'},
+          },
+          'required': ['word', 'meaning'],
+        },
+      },
+      'questions': {
+        'type': 'ARRAY',
+        'items': {
+          'type': 'OBJECT',
+          'properties': {
+            'question': {'type': 'STRING'},
+            'options': {
+              'type': 'ARRAY',
+              'items': {'type': 'STRING'},
+            },
+            'answerIndex': {'type': 'INTEGER'},
+            'explanationTr': {'type': 'STRING'},
+          },
+          'required': ['question', 'options', 'answerIndex', 'explanationTr'],
+        },
+      },
+    },
+    'required': ['title', 'paragraphs', 'glossary', 'questions'],
+  };
+
+  static const Map<String, dynamic> _reportSchema = {
+    'type': 'OBJECT',
+    'properties': {
+      'summary': {'type': 'STRING'},
+      'strengths': {
+        'type': 'ARRAY',
+        'items': {'type': 'STRING'},
+      },
+      'focus': {
+        'type': 'ARRAY',
+        'items': {'type': 'STRING'},
+      },
+      'tip': {'type': 'STRING'},
+    },
+    'required': ['summary', 'strengths', 'focus', 'tip'],
+  };
 
   /// Gemini `generateContent` çağrısının ortak gövdesi.
   ///

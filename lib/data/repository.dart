@@ -3,6 +3,9 @@ import 'package:drift/drift.dart';
 import '../app/constants.dart';
 import 'database.dart';
 import 'lesson_models.dart';
+import 'review_models.dart';
+import 'srs.dart';
+import 'story_models.dart';
 
 /// Haftalık plandaki tek bir günün konusu — henüz veritabanına yazılmamış hali.
 class PlanDaySpec {
@@ -265,6 +268,247 @@ class Repository {
           ..limit(limit))
         .get();
     return [for (final row in rows) row.item];
+  }
+
+  // --- Flash kartlar (SM-2) ------------------------------------------------
+
+  /// Kartları desteye ekler; aynı kelime zaten varsa yeni kart açılmaz.
+  ///
+  /// [source] `new_word` (dersin kelimeleri) ya da `mistake` (yanlış yapılan
+  /// ifade). Hatadan gelen kart zaten destedeyse bugüne çekilir: yanlış
+  /// yapılan şeyin bir sonraki tekrarı ertelenmemeli.
+  Future<int> addFlashcards(
+    List<({String word, String meaning, String example})> cards, {
+    required String source,
+    DateTime? now,
+  }) async {
+    if (cards.isEmpty) return 0;
+    final today = dayOf(now ?? DateTime.now());
+    var added = 0;
+
+    await _db.transaction(() async {
+      for (final card in cards) {
+        final word = card.word.trim();
+        if (word.isEmpty) continue;
+
+        final existing = await (_db.select(_db.flashcards)
+              ..where((t) => t.word.lower().equals(word.toLowerCase()))
+              ..limit(1))
+            .getSingleOrNull();
+
+        if (existing == null) {
+          await _db.into(_db.flashcards).insert(
+                FlashcardsCompanion.insert(
+                  word: word,
+                  meaning: card.meaning.trim(),
+                  exampleSentence: card.example.trim(),
+                  source: source,
+                  dueDate: today,
+                ),
+              );
+          added++;
+        } else if (source == 'mistake' && existing.dueDate.isAfter(today)) {
+          await (_db.update(_db.flashcards)
+                ..where((t) => t.id.equals(existing.id)))
+              .write(FlashcardsCompanion(dueDate: Value(today)));
+        }
+      }
+    });
+    return added;
+  }
+
+  /// Bugün (veya daha önce) tekrar zamanı gelmiş kartlar, en gecikmiş önce.
+  Future<List<Flashcard>> dueFlashcards({DateTime? now, int? limit}) {
+    final today = dayOf(now ?? DateTime.now());
+    final query = _db.select(_db.flashcards)
+      ..where((t) => t.dueDate.isSmallerOrEqualValue(today))
+      ..orderBy([
+        (t) => OrderingTerm(expression: t.dueDate),
+        (t) => OrderingTerm(expression: t.id),
+      ]);
+    if (limit != null) query.limit(limit);
+    return query.get();
+  }
+
+  /// Destedeki kart sayıları: toplam ve "öğrenilmiş" (aralığı 21+ gün).
+  Future<({int total, int mature})> flashcardCounts() async {
+    final all = await _db.select(_db.flashcards).get();
+    return (
+      total: all.length,
+      mature: all.where((c) => c.intervalDays >= 21).length,
+    );
+  }
+
+  /// Kartı değerlendirir ve SM-2'ye göre bir sonraki tekrarını yazar.
+  Future<SrsSchedule> reviewFlashcard(
+    Flashcard card,
+    ReviewGrade grade, {
+    DateTime? now,
+  }) async {
+    final schedule = nextSchedule(
+      ease: card.ease,
+      intervalDays: card.intervalDays,
+      reps: card.reps,
+      grade: grade,
+      today: now ?? DateTime.now(),
+    );
+    await (_db.update(_db.flashcards)..where((t) => t.id.equals(card.id)))
+        .write(
+      FlashcardsCompanion(
+        ease: Value(schedule.ease),
+        intervalDays: Value(schedule.intervalDays),
+        reps: Value(schedule.reps),
+        dueDate: Value(schedule.dueDate),
+      ),
+    );
+    return schedule;
+  }
+
+  // --- Günün hikayesi ------------------------------------------------------
+
+  Future<Story?> storyFor(DateTime date) => (_db.select(_db.stories)
+        ..where((t) => t.storyDate.equals(dayOf(date)))
+        ..limit(1))
+      .getSingleOrNull();
+
+  /// Hikayeyi ve cevapları kaydeder; test bittiyse skoru da yazar.
+  Future<void> saveStory(DateTime date, StoryState state) async {
+    final day = dayOf(date);
+    final existing = await storyFor(day);
+    final score = state.isFinished ? Value(state.scorePercent) : const Value<double?>.absent();
+
+    if (existing == null) {
+      await _db.into(_db.stories).insert(
+            StoriesCompanion.insert(
+              storyDate: day,
+              title: state.story.title,
+              contentJson: state.encode(),
+              quizScore: score,
+            ),
+          );
+      return;
+    }
+    await (_db.update(_db.stories)..where((t) => t.id.equals(existing.id)))
+        .write(
+      StoriesCompanion(
+        title: Value(state.story.title),
+        contentJson: Value(state.encode()),
+        quizScore: score,
+      ),
+    );
+  }
+
+  // --- İlerleme ------------------------------------------------------------
+
+  /// Çalışılan günler: tamamlanan plan günleri ve bitirilen dersler.
+  ///
+  /// Gün elle işaretlenmiş olabilir (ders kaydı yok) ya da plan yenilenmiş
+  /// olabilir; ikisinin birleşimi takvim için doğru kaynak.
+  Future<Set<DateTime>> studiedDays() async {
+    final planDays = await (_db.select(_db.weeklyPlanDays)
+          ..where((t) => t.status.equals('completed')))
+        .get();
+    final lessons = await (_db.select(_db.lessons)
+          ..where((t) => t.completed.equals(true)))
+        .get();
+    return {
+      for (final day in planDays)
+        DateTime(
+          day.weekStart.year,
+          day.weekStart.month,
+          day.weekStart.day + day.dayIndex,
+        ),
+      for (final lesson in lessons) dayOf(lesson.lessonDate),
+    };
+  }
+
+  /// Tamamlanmış dersler, tarihe göre artan.
+  Future<List<Lesson>> completedLessons() => (_db.select(_db.lessons)
+        ..where((t) => t.completed.equals(true))
+        ..orderBy([(t) => OrderingTerm(expression: t.lessonDate)]))
+      .get();
+
+  /// [date]'in haftasının istatistikleri. [cardsReviewed] tekrar kaydı
+  /// veritabanında tutulmadığı için dışarıdan verilir.
+  Future<WeeklyStats> weeklyStats(
+    DateTime date, {
+    int cardsReviewed = 0,
+  }) async {
+    final start = mondayOf(date);
+    final end = DateTime(start.year, start.month, start.day + 7);
+
+    bool inWeek(DateTime d) => !d.isBefore(start) && d.isBefore(end);
+
+    final plan = await planForWeek(start);
+    final lessons = (await completedLessons())
+        .where((l) => inWeek(l.lessonDate))
+        .toList();
+    final stories = (await _db.select(_db.stories).get())
+        .where((s) => inWeek(s.storyDate) && s.quizScore != null)
+        .toList();
+    final mistakes = await (_db.select(_db.mistakes)
+          ..where((t) => t.resolved.equals(false))
+          ..orderBy([
+            (t) => OrderingTerm(
+                  expression: t.timesWrong,
+                  mode: OrderingMode.desc,
+                ),
+          ]))
+        .get();
+
+    final scores = [for (final l in lessons) if (l.score != null) l.score!];
+    final storyScores = [for (final s in stories) s.quizScore!];
+
+    double? average(List<double> values) => values.isEmpty
+        ? null
+        : values.reduce((a, b) => a + b) / values.length;
+
+    return WeeklyStats(
+      weekStart: start,
+      daysCompleted: plan.where((d) => d.status == 'completed').length,
+      lessonsCompleted: lessons.length,
+      averageLessonScore: average(scores),
+      studyMinutes: (lessons.fold<int>(0, (sum, l) => sum + l.durationSeconds) / 60)
+          .round(),
+      storiesRead: stories.length,
+      averageStoryScore: average(storyScores),
+      cardsReviewed: cardsReviewed,
+      openMistakes: mistakes.length,
+      topMistakes: [for (final m in mistakes.take(5)) m.item],
+    );
+  }
+
+  // --- Haftalık rapor ------------------------------------------------------
+
+  /// Kayıtlı raporlar, en yeni hafta önce.
+  Future<List<WeeklyReview>> weeklyReviews() => (_db.select(_db.weeklyReviews)
+        ..orderBy([
+          (t) => OrderingTerm(expression: t.weekStart, mode: OrderingMode.desc),
+        ]))
+      .get();
+
+  /// Haftanın raporunu yazar; aynı hafta için önceki rapor değiştirilir.
+  Future<void> saveWeeklyReport(WeeklyReport report) async {
+    final start = mondayOf(report.stats.weekStart);
+    await _db.transaction(() async {
+      await (_db.delete(_db.weeklyReviews)
+            ..where((t) => t.weekStart.equals(start)))
+          .go();
+      await _db.into(_db.weeklyReviews).insert(
+            WeeklyReviewsCompanion.insert(
+              weekStart: start,
+              reportJson: report.encode(),
+            ),
+          );
+    });
+  }
+
+  /// Profilin seviyesini değiştirir (adaptif seviye ayarı).
+  Future<void> updateLevel(String level) async {
+    final current = await profile();
+    if (current == null) return;
+    await (_db.update(_db.userProfiles)..where((t) => t.id.equals(current.id)))
+        .write(UserProfilesCompanion(level: Value(level)));
   }
 
   /// Tüm kullanıcı verisini siler (Ayarlar → "Verileri sıfırla").

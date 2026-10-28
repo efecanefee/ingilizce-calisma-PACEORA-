@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/motion.dart';
 import '../../app/theme.dart';
 import '../../data/lesson_models.dart';
 import '../../data/providers.dart';
@@ -163,9 +165,25 @@ class _LessonBody extends ConsumerWidget {
       children: [
         _StepHeader(steps: steps, index: index, state: state),
         Expanded(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-            children: [_stepContent(ref, kind)],
+          // Adım değişince içerik yandan kayarak gelir.
+          child: AnimatedSwitcher(
+            duration: Motion.medium,
+            switchInCurve: Motion.curve,
+            transitionBuilder: (child, animation) => FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween(
+                  begin: const Offset(0.08, 0),
+                  end: Offset.zero,
+                ).animate(animation),
+                child: child,
+              ),
+            ),
+            child: ListView(
+              key: ValueKey(kind),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+              children: [_stepContent(ref, kind)],
+            ),
           ),
         ),
         _StepFooter(
@@ -294,10 +312,15 @@ class _StepHeader extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          LinearProgressIndicator(
-            value: (index + 1) / (steps.length + 1),
-            minHeight: 6,
-            borderRadius: BorderRadius.circular(3),
+          TweenAnimationBuilder<double>(
+            tween: Tween(end: (index + 1) / (steps.length + 1)),
+            duration: Motion.medium,
+            curve: Motion.curve,
+            builder: (context, value, _) => LinearProgressIndicator(
+              value: value,
+              minHeight: 6,
+              borderRadius: BorderRadius.circular(3),
+            ),
           ),
         ],
       ),
@@ -424,8 +447,20 @@ class _ResultViewState extends ConsumerState<_ResultView> {
               Center(
                 child: Column(
                   children: [
-                    Text(
-                      '%$score',
+                    Icon(
+                      score >= 85 ? Icons.emoji_events : Icons.star_rounded,
+                      size: 56,
+                      color: color,
+                    )
+                        .animate()
+                        .scale(duration: Motion.slow, curve: Curves.elasticOut)
+                        .then()
+                        .shake(hz: 3, rotation: 0.06),
+                    const SizedBox(height: 8),
+                    CountUpText(
+                      value: score,
+                      prefix: '%',
+                      duration: const Duration(milliseconds: 900),
                       style: theme.textTheme.displaySmall?.copyWith(
                         fontWeight: FontWeight.w800,
                         color: color,
@@ -479,8 +514,9 @@ class _ResultViewState extends ConsumerState<_ResultView> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                for (final outcome in wrong)
-                  _WrongItemTile(item: outcome.item, context: outcome.context),
+                for (final (i, outcome) in wrong.indexed)
+                  _WrongItemTile(item: outcome.item, context: outcome.context)
+                      .entrance(i + 2),
               ],
             ],
           ),

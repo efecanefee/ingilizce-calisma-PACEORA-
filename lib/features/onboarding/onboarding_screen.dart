@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/constants.dart';
 import '../../app/logo.dart';
+import '../../app/motion.dart';
 import '../../data/providers.dart';
 
 /// Üç adımlı onboarding: isim → seviye → günlük süre.
@@ -44,6 +46,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   bool get _canContinue => _step != 0 || _nameController.text.trim().isNotEmpty;
 
   void _next() {
+    // İsim adımından sonra klavye açık kalıp seçenekleri örtmesin.
+    FocusScope.of(context).unfocus();
     if (_step < _stepCount - 1) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 250),
@@ -210,22 +214,25 @@ class _StepScaffold extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (header != null) ...[
-            header!,
+            header!
+                .animate()
+                .fadeIn(duration: Motion.slow)
+                .scale(begin: const Offset(0.85, 0.85), curve: Curves.easeOutBack),
             const SizedBox(height: 32),
           ],
           Text(
             title,
             style: theme.textTheme.headlineSmall
                 ?.copyWith(fontWeight: FontWeight.w800),
-          ),
+          ).entrance(1),
           const SizedBox(height: 8),
           Text(
             subtitle,
             style: theme.textTheme.bodyMedium
                 ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.7)),
-          ),
+          ).entrance(2),
           const SizedBox(height: 28),
-          child,
+          child.entrance(3),
         ],
       ),
     );

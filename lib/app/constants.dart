@@ -23,6 +23,13 @@ abstract class AppConstants {
   /// Tema tercihi: system | light | dark
   static const prefThemeMode = 'theme_mode';
 
+  /// Günlük hatırlatma açık mı ve hangi saatte (dakika cinsinden, 0-1439).
+  static const prefReminderEnabled = 'reminder_enabled';
+  static const prefReminderMinutes = 'reminder_minutes';
+
+  /// Hatırlatmanın varsayılan saati: 20:00
+  static const defaultReminderMinutes = 20 * 60;
+
   /// Bir derste modele hatırlatılacak en fazla çözülmemiş hata sayısı.
   static const maxReviewItems = 8;
 
