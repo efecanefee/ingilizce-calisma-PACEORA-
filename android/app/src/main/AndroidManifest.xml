@@ -1,4 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Gemini isteği ve Google Fonts indirmesi için gerekli. Debug/profile
+         manifest'lerinde zaten var; burada olmazsa yalnızca release APK
+         ağa çıkamaz ve uygulama hep çevrimdışı plana düşer. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="Paceora"
         android:name="${applicationName}"

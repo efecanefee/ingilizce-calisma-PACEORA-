@@ -132,6 +132,44 @@ adımla yeniden kurulur), aynı anda en fazla 3 sideload uygulaması bulunabilir
 ve her yenilemede USB bağlantısı gerekir. Bu kısıtlar Apple'a aittir,
 uygulamayla ilgisi yoktur.
 
+## Android'e kurulum
+
+Uygulama Flutter olduğu için Android sürümü aynı koddan derlenir. Bu makinede
+Android SDK kurulu olmadığından APK, iOS'taki gibi GitHub Actions'ta üretilir.
+
+1. **Anahtar:** `GEMINI_API_KEY` secret'ı iOS için eklendiyse Android de onu
+   kullanır.
+2. **Derlemeyi başlat:** Actions sekmesi → *Android APK* → Run workflow
+   (`main`'e her push'ta da kendiliğinden çalışır).
+3. **Çıktıyı indir:** Artifacts altındaki `Paceora-apk` → içinden `Paceora.apk`.
+4. **Telefona kur:** APK'yı telefona at, aç; Android "bilinmeyen kaynaklardan
+   yükleme" izni ister, o uygulama (Dosyalar, Chrome vb.) için izin ver.
+
+iOS'tan farklı olarak 7 günlük imza süresi yoktur; APK bir kez kurulur.
+
+### Kalıcı imza anahtarı (isteğe bağlı)
+
+Secret verilmezse APK, her derlemede değişebilen debug anahtarıyla imzalanır;
+bu durumda güncelleme kurarken Android "imza uyuşmuyor" diyebilir ve eski
+sürümü silmek (verilerle birlikte) gerekir. Bunu önlemek ve ileride Play
+Store'a çıkmak için bir kez anahtar üret:
+
+```bash
+keytool -genkey -v -keystore upload-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+```
+
+ve şu secret'ları ekle: `ANDROID_KEYSTORE_BASE64` (`.jks` dosyasının base64
+hali), `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` (`upload`),
+`ANDROID_KEY_PASSWORD`. Yerelde derlerken aynı bilgiler `android/key.properties`
+dosyasından okunur (`storeFile`, `storePassword`, `keyAlias`, `keyPassword`);
+bu dosya ve `.jks` `.gitignore`'dadır.
+
+Yerelde Android SDK kuruluysa:
+
+```bash
+flutter build apk --release --dart-define-from-file=env.json
+```
+
 ## Testler
 
 ```bash
