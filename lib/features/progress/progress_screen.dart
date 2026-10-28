@@ -49,13 +49,15 @@ class _ProgressBody extends StatelessWidget {
           _LevelCard(game: game!).entrance(0),
           const SizedBox(height: 16),
         ],
-        GridView.count(
-          crossAxisCount: 2,
+        GridView(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: 1.7,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            mainAxisExtent: 36 + MediaQuery.textScalerOf(context).scale(76),
+          ),
           children: [
             _StatTile(
               icon: Icons.local_fire_department,
@@ -312,14 +314,18 @@ class _BadgeGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // Yükseklik yazı ölçeğiyle büyür; sabit oran büyük yazıda taşırıyordu.
+    final scaler = MediaQuery.textScalerOf(context);
 
-    return GridView.count(
-      crossAxisCount: 3,
+    return GridView(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 12,
-      crossAxisSpacing: 12,
-      childAspectRatio: 0.78,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        mainAxisExtent: 96 + scaler.scale(56),
+      ),
       children: [
         for (final (i, badge) in badges.indexed)
           Builder(
@@ -533,6 +539,7 @@ class _StatTile extends StatelessWidget {
                   child: Text(
                     label,
                     style: theme.textTheme.labelMedium,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),

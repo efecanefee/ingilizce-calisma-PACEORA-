@@ -26,8 +26,8 @@ class HomeScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const PaceoraWordmark(markSize: 28)),
       body: switch ((profile, plan)) {
-        (AsyncError(:final error), _) || (_, AsyncError(:final error)) =>
-          _ErrorView(message: '$error'),
+        (AsyncError(:final error), _) ||
+        (_, AsyncError(:final error)) => _ErrorView(message: '$error'),
         (AsyncData(value: null), _) => const _NoProfileView(),
         (AsyncData(value: final user?), AsyncData(value: final week)) =>
           _HomeBody(user: user, week: week),
@@ -48,10 +48,9 @@ class _HomeBody extends ConsumerWidget {
     final today = week.today;
     final lesson = ref.watch(todayLessonProvider).value;
     final game = ref.watch(gameProvider).value;
-    final sectionStyle = Theme.of(context)
-        .textTheme
-        .titleMedium
-        ?.copyWith(fontWeight: FontWeight.w700);
+    final sectionStyle = Theme.of(
+      context,
+    ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700);
 
     var index = 0;
     Widget item(Widget child) => child.entrance(index++);
@@ -90,8 +89,7 @@ class _HomeBody extends ConsumerWidget {
           item(
             Row(
               children: [
-                Text('Bu hafta', style: sectionStyle),
-                const Spacer(),
+                Expanded(child: Text('Bu hafta', style: sectionStyle)),
                 TextButton(
                   onPressed: () => context.go('/program'),
                   child: const Text('Programı gör'),
@@ -176,13 +174,14 @@ class _HeroCardState extends State<_HeroCard>
           Positioned(
             right: -18,
             top: -18,
-            child: Icon(
-              Icons.bolt_rounded,
-              size: 140,
-              color: AppColors.limeSpark.withValues(alpha: 0.08),
-            )
-                .animate(onPlay: (c) => c.repeat(reverse: true))
-                .rotate(begin: -0.03, end: 0.03, duration: 3.seconds),
+            child:
+                Icon(
+                      Icons.bolt_rounded,
+                      size: 140,
+                      color: AppColors.limeSpark.withValues(alpha: 0.08),
+                    )
+                    .animate(onPlay: (c) => c.repeat(reverse: true))
+                    .rotate(begin: -0.03, end: 0.03, duration: 3.seconds),
           ),
           Padding(
             padding: const EdgeInsets.all(20),
@@ -303,14 +302,18 @@ class _XpBar extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 10),
-            Text(
-              level.title,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
+            // Dar ekranda ve büyük yazıda unvan kısalır, XP her zaman görünür.
+            Expanded(
+              child: Text(
+                level.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
               ),
             ),
-            const Spacer(),
             CountUpText(
               value: level.xp,
               suffix: ' XP',
@@ -330,18 +333,23 @@ class _XpBar extends StatelessWidget {
             curve: Motion.curve,
             builder: (context, v, _) => Stack(
               children: [
-                Container(height: 10, color: Colors.white.withValues(alpha: 0.12)),
+                Container(
+                  height: 10,
+                  color: Colors.white.withValues(alpha: 0.12),
+                ),
                 FractionallySizedBox(
-                  widthFactor: v.clamp(0.02, 1.0),
-                  child: Container(
-                    height: 10,
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [AppColors.limeDim, AppColors.limeSpark],
+                      widthFactor: v.clamp(0.02, 1.0),
+                      child: Container(
+                        height: 10,
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [AppColors.limeDim, AppColors.limeSpark],
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                ).animate(onPlay: (c) => c.repeat()).shimmer(
+                    )
+                    .animate(onPlay: (c) => c.repeat())
+                    .shimmer(
                       delay: 2.seconds,
                       duration: 1200.ms,
                       color: Colors.white.withValues(alpha: 0.6),
@@ -353,8 +361,9 @@ class _XpBar extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           'Seviye ${level.level + 1} için ${level.xpToNext} XP',
-          style: theme.textTheme.labelSmall
-              ?.copyWith(color: Colors.white.withValues(alpha: 0.65)),
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: Colors.white.withValues(alpha: 0.65),
+          ),
         ),
       ],
     );
@@ -387,8 +396,9 @@ class _DailyGoalCard extends ConsumerWidget {
                     children: [
                       Text(
                         'Bugünkü hedefin',
-                        style: theme.textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w800),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       AnimatedSwitcher(
@@ -397,11 +407,12 @@ class _DailyGoalCard extends ConsumerWidget {
                           goal.complete
                               ? 'Hepsi tamam! Serin güvende 🎉'
                               : '${goal.doneCount}/${goal.tasks.length} adım · '
-                                  'sıradaki: ${next!.label.toLowerCase()}',
+                                    'sıradaki: ${next!.label.toLowerCase()}',
                           key: ValueKey(goal.doneCount),
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface
-                                .withValues(alpha: 0.7),
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.7,
+                            ),
                           ),
                         ),
                       ),
@@ -457,7 +468,9 @@ class _GoalTaskRow extends ConsumerWidget {
           borderRadius: BorderRadius.circular(14),
           color: isNext
               ? accent.withValues(alpha: 0.1)
-              : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+              : theme.colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.4,
+                ),
           border: Border.all(
             color: isNext ? accent : Colors.transparent,
             width: 1.5,
@@ -512,8 +525,13 @@ class _GoalTaskRow extends ConsumerWidget {
 
     return isNext
         ? row
-            .animate(onPlay: (c) => c.repeat(reverse: true))
-            .scaleXY(begin: 1, end: 1.015, duration: 1100.ms, curve: Curves.easeInOut)
+              .animate(onPlay: (c) => c.repeat(reverse: true))
+              .scaleXY(
+                begin: 1,
+                end: 1.015,
+                duration: 1100.ms,
+                curve: Curves.easeInOut,
+              )
         : row;
   }
 }
@@ -548,12 +566,16 @@ class _GoalRing extends StatelessWidget {
           ),
           child: Center(
             child: complete
-                ? const Icon(Icons.emoji_events_rounded,
-                    color: AppColors.success, size: 28)
+                ? const Icon(
+                    Icons.emoji_events_rounded,
+                    color: AppColors.success,
+                    size: 28,
+                  )
                 : Text(
                     '%${(v * 100).round().clamp(0, 100)}',
-                    style: theme.textTheme.labelLarge
-                        ?.copyWith(fontWeight: FontWeight.w800),
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
           ),
         ),
@@ -562,14 +584,18 @@ class _GoalRing extends StatelessWidget {
 
     return complete
         ? ring
-            .animate(onPlay: (c) => c.repeat(reverse: true))
-            .scaleXY(begin: 1, end: 1.08, duration: 900.ms)
+              .animate(onPlay: (c) => c.repeat(reverse: true))
+              .scaleXY(begin: 1, end: 1.08, duration: 900.ms)
         : ring;
   }
 }
 
 class _RingPainter extends CustomPainter {
-  _RingPainter({required this.progress, required this.color, required this.track});
+  _RingPainter({
+    required this.progress,
+    required this.color,
+    required this.track,
+  });
 
   final double progress;
   final Color color;
@@ -597,7 +623,13 @@ class _RingPainter extends CustomPainter {
         colors: [color.withValues(alpha: 0.6), color],
         transform: const GradientRotation(-pi / 2),
       ).createShader(rect);
-    canvas.drawArc(arcRect, -pi / 2, 2 * pi * progress.clamp(0, 1), false, paint);
+    canvas.drawArc(
+      arcRect,
+      -pi / 2,
+      2 * pi * progress.clamp(0, 1),
+      false,
+      paint,
+    );
   }
 
   @override
@@ -645,11 +677,11 @@ class _WeekStrip extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     _DayDot(
-                      done: status[i] == 'completed',
-                      today: i == todayIndex,
-                      past: i < todayIndex,
-                      accent: accent,
-                    )
+                          done: status[i] == 'completed',
+                          today: i == todayIndex,
+                          past: i < todayIndex,
+                          accent: accent,
+                        )
                         .animate(delay: (60 * i).ms)
                         .scale(
                           begin: const Offset(0.3, 0.3),
@@ -690,17 +722,21 @@ class _DayDot extends StatelessWidget {
         color: done
             ? AppColors.success
             : today
-                ? accent.withValues(alpha: 0.15)
-                : theme.colorScheme.surfaceContainerHighest
-                    .withValues(alpha: past ? 0.9 : 0.4),
+            ? accent.withValues(alpha: 0.15)
+            : theme.colorScheme.surfaceContainerHighest.withValues(
+                alpha: past ? 0.9 : 0.4,
+              ),
         border: today ? Border.all(color: accent, width: 2) : null,
       ),
       child: done
           ? const Icon(Icons.check_rounded, size: 18, color: Colors.white)
           : past
-              ? Icon(Icons.remove_rounded,
-                  size: 16, color: theme.colorScheme.outline)
-              : null,
+          ? Icon(
+              Icons.remove_rounded,
+              size: 16,
+              color: theme.colorScheme.outline,
+            )
+          : null,
     );
   }
 }
@@ -728,8 +764,8 @@ class _PracticeGrid extends ConsumerWidget {
         subtitle: due > 0
             ? '$due kart seni bekliyor'
             : cards == null || cards.total == 0
-                ? 'Ders bitirince dolar'
-                : 'Bugünlük tamam',
+            ? 'Ders bitirince dolar'
+            : 'Bugünlük tamam',
         badge: due > 0 ? '$due' : null,
         onTap: () => open('/flashcards'),
       ),
@@ -753,13 +789,18 @@ class _PracticeGrid extends ConsumerWidget {
       ),
     ];
 
-    return GridView.count(
-      crossAxisCount: 2,
+    // Sabit en-boy oranı büyük yazı boyutunda kutucuğu taşırıyordu;
+    // yükseklik yazı ölçeğiyle birlikte büyür.
+    final scaler = MediaQuery.textScalerOf(context);
+    return GridView(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 12,
-      crossAxisSpacing: 12,
-      childAspectRatio: 1.45,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        mainAxisExtent: 84 + scaler.scale(56),
+      ),
       children: [
         for (final (i, tile) in tiles.indexed)
           tile
@@ -817,20 +858,22 @@ class _PracticeTile extends StatelessWidget {
                 const Spacer(),
                 if (badge != null)
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      badge!,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onPrimary,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  )
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          badge!,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.onPrimary,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      )
                       .animate(onPlay: (c) => c.repeat(reverse: true))
                       .scaleXY(begin: 1, end: 1.12, duration: 800.ms),
               ],
@@ -838,8 +881,11 @@ class _PracticeTile extends StatelessWidget {
             const Spacer(),
             Text(
               title,
-              style: theme.textTheme.titleSmall
-                  ?.copyWith(fontWeight: FontWeight.w700),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: 2),
             Text(
@@ -951,17 +997,24 @@ class _TodayCard extends StatelessWidget {
             const SizedBox(height: 14),
             Text(
               day.grammarTopic,
-              style: theme.textTheme.titleLarge
-                  ?.copyWith(fontWeight: FontWeight.w700),
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: 8),
             Row(
               children: [
-                Icon(Icons.style_outlined,
-                    size: 18, color: theme.colorScheme.outline),
+                Icon(
+                  Icons.style_outlined,
+                  size: 18,
+                  color: theme.colorScheme.outline,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(day.vocabTheme, style: theme.textTheme.bodyMedium),
+                  child: Text(
+                    day.vocabTheme,
+                    style: theme.textTheme.bodyMedium,
+                  ),
                 ),
               ],
             ),
@@ -991,10 +1044,12 @@ class _TodayCard extends StatelessWidget {
               ),
             ] else ...[
               FilledButton.icon(
-                onPressed: onStudy,
-                icon: Icon(inProgress ? Icons.play_arrow : Icons.school_outlined),
-                label: Text(inProgress ? 'Derse devam et' : 'Bugünü çalış'),
-              )
+                    onPressed: onStudy,
+                    icon: Icon(
+                      inProgress ? Icons.play_arrow : Icons.school_outlined,
+                    ),
+                    label: Text(inProgress ? 'Derse devam et' : 'Bugünü çalış'),
+                  )
                   // Ara ara geçen parıltı asıl eyleme dikkat çeker.
                   .animate(onPlay: (c) => c.repeat())
                   .shimmer(
@@ -1032,10 +1087,9 @@ class _EmptyPlanCard extends ConsumerWidget {
           children: [
             Text(
               'Bu hafta için henüz plan yok',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w700),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 8),
             const Text('Yeni bir haftalık program oluşturalım.'),
@@ -1092,8 +1146,11 @@ class _ErrorView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline,
-                size: 40, color: Theme.of(context).colorScheme.error),
+            Icon(
+              Icons.error_outline,
+              size: 40,
+              color: Theme.of(context).colorScheme.error,
+            ),
             const SizedBox(height: 16),
             Text(message, textAlign: TextAlign.center),
           ],

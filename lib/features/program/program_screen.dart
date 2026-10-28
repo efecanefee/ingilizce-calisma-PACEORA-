@@ -183,16 +183,20 @@ class _WeekHeader extends StatelessWidget {
                   color: Colors.white,
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8, left: 4),
-                child: Text(
-                  '/ $total gün tamam',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.85),
+              // Dar ekranda büyük sayının yanında kalan alana sığsın.
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 8, left: 4),
+                  child: Text(
+                    '/ $total gün tamam',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: Colors.white.withValues(alpha: 0.85),
+                    ),
                   ),
                 ),
               ),
-              const Spacer(),
               if (offline)
                 Tooltip(
                   message: 'Hazır program (çevrimdışı)',
@@ -349,16 +353,20 @@ class _TimelineRow extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          Text(
-                            '${AppConstants.weekdayNames[day.dayIndex]} · '
-                            '${date.day}.${date.month}',
-                            style: theme.textTheme.labelMedium?.copyWith(
-                              color: theme.colorScheme.onSurface.withValues(
-                                alpha: 0.6,
+                          Expanded(
+                            child: Text(
+                              '${AppConstants.weekdayNames[day.dayIndex]} · '
+                              '${date.day}.${date.month}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.labelMedium?.copyWith(
+                                color: theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.6,
+                                ),
                               ),
                             ),
                           ),
-                          const Spacer(),
+                          const SizedBox(width: 8),
                           Text(
                             label,
                             style: theme.textTheme.labelMedium?.copyWith(
