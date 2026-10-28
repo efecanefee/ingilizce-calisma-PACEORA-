@@ -9,6 +9,17 @@
 # packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
+analyzer:
+  # drift'in ürettiği kod elle düzeltilmez.
+  exclude:
+    - "**/*.g.dart"
+  # Örtük dynamic dönüşümleri ve tip çıkarımı boşluklarını hata say:
+  # Gemini'den gelen JSON'u okurken sessiz tip hatalarını derlemede yakalar.
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`

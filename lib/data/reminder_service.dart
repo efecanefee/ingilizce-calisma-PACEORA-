@@ -85,21 +85,30 @@ class LocalReminderService implements ReminderService {
 
   @override
   Future<bool> requestPermission() async {
-    final android = _plugin.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>();
+    final android = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
     if (android != null) {
       final allowed = await android.requestNotificationsPermission() ?? false;
       // Android 14+ kesin alarmı varsayılan olarak kapalı başlatır; izin
       // verilmezse hatırlatma yine kurulur, yalnızca gecikebilir.
-      if (allowed && !(await android.canScheduleExactNotifications() ?? false)) {
+      if (allowed &&
+          !(await android.canScheduleExactNotifications() ?? false)) {
         await android.requestExactAlarmsPermission();
       }
       return allowed;
     }
-    final ios = _plugin.resolvePlatformSpecificImplementation<
-        IOSFlutterLocalNotificationsPlugin>();
+    final ios = _plugin
+        .resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin
+        >();
     if (ios != null) {
-      return await ios.requestPermissions(alert: true, badge: true, sound: true) ??
+      return await ios.requestPermissions(
+            alert: true,
+            badge: true,
+            sound: true,
+          ) ??
           false;
     }
     return false;
@@ -108,8 +117,10 @@ class LocalReminderService implements ReminderService {
   @override
   Future<void> scheduleDaily(TimeOfDay time) async {
     await cancel();
-    final android = _plugin.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>();
+    final android = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
     final exact = await android?.canScheduleExactNotifications() ?? false;
 
     await _plugin.zonedSchedule(

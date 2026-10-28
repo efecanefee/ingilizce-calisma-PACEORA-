@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../app/constants.dart';
+import '../app/motion.dart';
 import 'providers.dart';
 
 /// Kullanıcının Ayarlar'dan girdiği Gemini anahtarı.
@@ -55,6 +56,29 @@ class ThemeModeNotifier extends Notifier<ThemeMode> {
 
 final themeModeProvider =
     NotifierProvider<ThemeModeNotifier, ThemeMode>(ThemeModeNotifier.new);
+
+/// Dokunsal geri bildirim (titreşim) açık mı.
+class HapticsNotifier extends Notifier<bool> {
+  static const _key = 'haptics_enabled';
+
+  @override
+  bool build() {
+    final enabled =
+        ref.watch(sharedPreferencesProvider).getBool(_key) ?? true;
+    Haptics.enabled = enabled;
+    return enabled;
+  }
+
+  Future<void> set(bool enabled) async {
+    await ref.read(sharedPreferencesProvider).setBool(_key, enabled);
+    Haptics.enabled = enabled;
+    state = enabled;
+    Haptics.tap();
+  }
+}
+
+final hapticsProvider =
+    NotifierProvider<HapticsNotifier, bool>(HapticsNotifier.new);
 
 /// Günlük hatırlatma tercihi.
 class ReminderSettings {

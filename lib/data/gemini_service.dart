@@ -552,7 +552,7 @@ List<PlanDaySpec> parseWeeklyPlanResponse(String responseBody) {
     final list = switch (raw) {
       List<dynamic> l => l,
       Map<String, dynamic> m => m['days'] as List<dynamic>? ?? const [],
-      _ => const [],
+      _ => const <dynamic>[],
     };
 
     return [

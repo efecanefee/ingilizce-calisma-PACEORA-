@@ -1,12 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../app/constants.dart';
 import 'database.dart';
 import 'gemini_service.dart';
 import 'lesson_models.dart';
 import 'reminder_service.dart';
 import 'repository.dart';
 import 'review_models.dart';
+import 'rewards.dart';
 import 'srs.dart';
 import 'settings_providers.dart';
 import 'story_models.dart';
@@ -327,6 +329,7 @@ class LessonNotifier extends AsyncNotifier<LessonState> {
     ref.invalidate(todayLessonProvider);
     ref.invalidate(flashcardSummaryProvider);
     ref.invalidate(progressProvider);
+    ref.invalidate(gameProvider);
   }
 }
 
@@ -404,6 +407,8 @@ class FlashcardSessionNotifier extends AsyncNotifier<FlashcardSession> {
       ),
     );
     ref.invalidate(flashcardSummaryProvider);
+    // XP/rozetler oturum bitince bir kez hesaplanır, her kartta değil.
+    if (state.value?.isDone ?? false) ref.invalidate(gameProvider);
   }
 }
 
@@ -475,7 +480,10 @@ class StoryNotifier extends AsyncNotifier<StoryState> {
     final next = current.withAnswer(index, option);
     state = AsyncValue.data(next);
     await ref.read(repositoryProvider).saveStory(DateTime.now(), next);
-    if (next.isFinished) ref.invalidate(progressProvider);
+    if (next.isFinished) {
+      ref.invalidate(progressProvider);
+      ref.invalidate(gameProvider);
+    }
   }
 }
 
@@ -510,26 +518,6 @@ class ProgressData {
   final int totalMinutes;
   final int cardsTotal;
   final int cardsMature;
-}
-
-/// Çalışılan günlerden en uzun kesintisiz seri.
-int bestStreakOf(Set<DateTime> days) {
-  final sorted = days.map(dayOf).toSet().toList()..sort();
-  var best = 0;
-  var run = 0;
-  DateTime? previous;
-  for (final day in sorted) {
-    final consecutive = previous != null &&
-        DateTime.utc(day.year, day.month, day.day)
-                .difference(
-                    DateTime.utc(previous.year, previous.month, previous.day))
-                .inDays ==
-            1;
-    run = consecutive ? run + 1 : 1;
-    if (run > best) best = run;
-    previous = day;
-  }
-  return best;
 }
 
 final progressProvider = FutureProvider<ProgressData>((ref) async {
@@ -631,10 +619,72 @@ class WeeklyReportsNotifier extends AsyncNotifier<List<WeeklyReport>> {
     final repository = ref.read(repositoryProvider);
     await repository.updateLevel(report.suggestedLevel);
     await repository.saveWeeklyReport(report.copyWith(applied: true));
+    // Yükseliş ayrı sayılır: aynı haftanın raporu yenilenirse "uygulandı"
+    // bilgisi kaybolur, ödül kaybolmamalı.
+    if (DifficultyLevel.fromCode(report.suggestedLevel).index >
+        DifficultyLevel.fromCode(report.fromLevel).index) {
+      final prefs = ref.read(sharedPreferencesProvider);
+      await prefs.setInt(levelUpsKey, (prefs.getInt(levelUpsKey) ?? 0) + 1);
+    }
     await ref.read(profileProvider.notifier).refresh();
     state = await AsyncValue.guard(build);
+    ref.invalidate(gameProvider);
   }
 }
+
+// --- Ödüller ----------------------------------------------------------------
+
+/// Tüm haftalardaki flash kart tekrarlarının toplamı.
+int totalCardsReviewed(SharedPreferences prefs) => [
+      for (final key in prefs.getKeys())
+        if (key.startsWith('cards_reviewed_')) prefs.getInt(key) ?? 0,
+    ].fold(0, (a, b) => a + b);
+
+/// XP, oyuncu seviyesi ve rozetler.
+///
+/// Plan değişince kendiliğinden yeniden hesaplanır. Tüm geçmişi taradığı
+/// için her kart notunda değil; ders/hikaye bitişi, tekrar oturumu sonu ve
+/// seviye değişimi gibi olaylarda açıkça geçersiz kılınır.
+final gameProvider = FutureProvider<GameState>((ref) async {
+  ref.watch(weekPlanProvider);
+  final prefs = ref.read(sharedPreferencesProvider);
+  final stats = await ref.read(repositoryProvider).gameStats(
+        cardsReviewed: totalCardsReviewed(prefs),
+        levelUps: prefs.getInt(levelUpsKey) ?? 0,
+      );
+  return GameState(stats);
+});
+
+/// Bugünkü hedef: ders, hikaye ve (deste doluysa) kart tekrarı.
+final dailyGoalProvider = FutureProvider<DailyGoal>((ref) async {
+  ref.watch(gameProvider);
+  final week = await ref.watch(weekPlanProvider.future);
+  final cards = await ref.watch(flashcardSummaryProvider.future);
+  final repository = ref.read(repositoryProvider);
+  final now = DateTime.now();
+
+  final story = await repository.storyFor(now);
+  final lessonDone = week.today?.status == 'completed';
+
+  return DailyGoal(
+    tasks: [
+      DailyTask.lesson,
+      DailyTask.story,
+      if (cards.total > 0) DailyTask.cards,
+    ],
+    done: {
+      if (lessonDone) DailyTask.lesson,
+      if (story?.quizScore != null) DailyTask.story,
+      if (cards.total > 0 && cards.due == 0) DailyTask.cards,
+    },
+  );
+});
+
+/// Hata defteri listesi.
+final mistakesProvider = FutureProvider<List<Mistake>>((ref) {
+  ref.watch(progressProvider);
+  return ref.read(repositoryProvider).mistakes();
+});
 
 final weeklyReportsProvider =
     AsyncNotifierProvider<WeeklyReportsNotifier, List<WeeklyReport>>(

@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paceora/data/database.dart';
@@ -31,19 +32,22 @@ void main() {
   group('flash kart deposu', () {
     final today = DateTime(2026, 10, 28, 10);
 
-    test('aynı kelime ikinci kez eklenmez (büyük/küçük harf duyarsız)', () async {
-      final added = await repository.addFlashcards(
-        [
-          (word: 'commute', meaning: 'işe gidip gelmek', example: ''),
-          (word: 'Commute', meaning: 'tekrar', example: ''),
-          (word: '  ', meaning: 'boş', example: ''),
-        ],
-        source: 'new_word',
-        now: today,
-      );
-      expect(added, 1);
-      expect(await db.select(db.flashcards).get(), hasLength(1));
-    });
+    test(
+      'aynı kelime ikinci kez eklenmez (büyük/küçük harf duyarsız)',
+      () async {
+        final added = await repository.addFlashcards(
+          [
+            (word: 'commute', meaning: 'işe gidip gelmek', example: ''),
+            (word: 'Commute', meaning: 'tekrar', example: ''),
+            (word: '  ', meaning: 'boş', example: ''),
+          ],
+          source: 'new_word',
+          now: today,
+        );
+        expect(added, 1);
+        expect(await db.select(db.flashcards).get(), hasLength(1));
+      },
+    );
 
     test('vadesi gelen kartlar listelenir, değerlendirme ertelenir', () async {
       await repository.addFlashcards(
@@ -54,8 +58,11 @@ void main() {
       final due = await repository.dueFlashcards(now: today);
       expect(due, hasLength(1));
 
-      final schedule =
-          await repository.reviewFlashcard(due.single, ReviewGrade.good, now: today);
+      final schedule = await repository.reviewFlashcard(
+        due.single,
+        ReviewGrade.good,
+        now: today,
+      );
       expect(schedule.dueDate, DateTime(2026, 10, 29));
       expect(await repository.dueFlashcards(now: today), isEmpty);
       expect(
@@ -97,10 +104,7 @@ void main() {
         3,
       );
       // Ay geçişi de ardışık sayılır.
-      expect(
-        bestStreakOf({DateTime(2026, 10, 31), DateTime(2026, 11, 1)}),
-        2,
-      );
+      expect(bestStreakOf({DateTime(2026, 10, 31), DateTime(2026, 11, 1)}), 2);
     });
 
     test('çalışılan günler plan ve derslerin birleşimidir', () async {
@@ -113,21 +117,27 @@ void main() {
       final plan = await repository.planForWeek(monday);
       await repository.completeDay(plan[0], now: monday);
 
-      await db.into(db.lessons).insert(LessonsCompanion.insert(
-            lessonDate: DateTime(2026, 10, 28),
-            contentJson: '{}',
-            score: const Value(80),
-            durationSeconds: const Value(600),
-            completed: const Value(true),
-          ));
+      await db
+          .into(db.lessons)
+          .insert(
+            LessonsCompanion.insert(
+              lessonDate: DateTime(2026, 10, 28),
+              contentJson: '{}',
+              score: const Value(80),
+              durationSeconds: const Value(600),
+              completed: const Value(true),
+            ),
+          );
 
-      expect(
-        await repository.studiedDays(),
-        {DateTime(2026, 10, 26), DateTime(2026, 10, 28)},
+      expect(await repository.studiedDays(), {
+        DateTime(2026, 10, 26),
+        DateTime(2026, 10, 28),
+      });
+
+      final stats = await repository.weeklyStats(
+        DateTime(2026, 10, 29),
+        cardsReviewed: 7,
       );
-
-      final stats =
-          await repository.weeklyStats(DateTime(2026, 10, 29), cardsReviewed: 7);
       expect(stats.weekStart, monday);
       expect(stats.daysCompleted, 1);
       expect(stats.lessonsCompleted, 1);
@@ -153,10 +163,9 @@ void main() {
       for (var i = 0; i < 7; i++)
         PlanDaySpec(grammarTopic: 'Konu $i', vocabTheme: 'Tema $i'),
     ]);
-    await repository.addFlashcards(
-      [(word: 'reliable', meaning: 'güvenilir', example: 'She is reliable.')],
-      source: 'new_word',
-    );
+    await repository.addFlashcards([
+      (word: 'reliable', meaning: 'güvenilir', example: 'She is reliable.'),
+    ], source: 'new_word');
 
     await tester.pumpWidget(
       ProviderScope(
@@ -170,12 +179,15 @@ void main() {
     await _advance(tester);
 
     // Ana ekrandaki pratik alanı vadesi gelen kartı rozetle gösterir.
-    expect(find.text('Pratik alanı'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('1 kart seni bekliyor'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await _advance(tester);
     expect(find.text('1 kart seni bekliyor'), findsOneWidget);
 
-    await tester.ensureVisible(find.text('Flash kartlar'));
-    await _advance(tester);
-    await tester.tap(find.text('Flash kartlar'));
+    await tester.tap(find.text('1 kart seni bekliyor'));
     await _advance(tester);
 
     expect(find.text('reliable'), findsOneWidget);
@@ -196,10 +208,12 @@ void main() {
   test('ders bitince kelimeler ve hatalar desteye girer', () async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
-    final container = ProviderContainer(overrides: [
-      sharedPreferencesProvider.overrideWithValue(prefs),
-      databaseProvider.overrideWithValue(db),
-    ]);
+    final container = ProviderContainer(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        databaseProvider.overrideWithValue(db),
+      ],
+    );
     addTearDown(container.dispose);
 
     await repository.saveProfile(name: 'Efe', level: 'B1', dailyMinutes: 10);
@@ -209,14 +223,26 @@ void main() {
     ]);
 
     const lesson = DailyLesson(
-      vocab: [VocabItem(word: 'commute', meaning: 'işe gidip gelmek', example: 'I commute.')],
+      vocab: [
+        VocabItem(
+          word: 'commute',
+          meaning: 'işe gidip gelmek',
+          example: 'I commute.',
+        ),
+      ],
       gapFill: [],
-      translate: [TranslateItem(tr: 'Mutluyum.', en: 'I am happy.', accepted: [])],
+      translate: [
+        TranslateItem(tr: 'Mutluyum.', en: 'I am happy.', accepted: []),
+      ],
       quiz: [],
     );
     final state = LessonState(
       lesson: lesson,
-      progress: const LessonProgress().withAnswer(translateKey(0), correct: false, input: 'happy'),
+      progress: const LessonProgress().withAnswer(
+        translateKey(0),
+        correct: false,
+        input: 'happy',
+      ),
     );
     await repository.saveLesson(DateTime.now(), state);
 

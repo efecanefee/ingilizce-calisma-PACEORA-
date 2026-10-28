@@ -7,6 +7,7 @@ import '../../app/motion.dart';
 import '../../app/theme.dart';
 import '../../data/lesson_models.dart';
 import '../../data/providers.dart';
+import '../../data/rewards.dart';
 import 'lesson_steps.dart';
 
 /// Günün dersi: kelimeler → boşluk doldurma → çeviri → test → sonuç.
@@ -431,6 +432,9 @@ class _ResultViewState extends ConsumerState<_ResultView> {
     final state = widget.state;
     final score = state.scorePercent.round();
     final wrong = state.outcomes().where((o) => !o.correct).toList();
+    // XP ders başına bir kez verilir; zaten bitmiş ders tekrar açıldıysa
+    // "+XP" gösterilmez.
+    final earnsXp = !(ref.watch(todayLessonProvider).value?.completed ?? false);
 
     final (color, message) = switch (score) {
       >= 85 => (AppColors.success, 'Harika gidiyorsun!'),
@@ -480,6 +484,40 @@ class _ResultViewState extends ConsumerState<_ResultView> {
                       style: theme.textTheme.titleMedium
                           ?.copyWith(fontWeight: FontWeight.w600),
                     ),
+                    if (earnsXp) ...[
+                    const SizedBox(height: 14),
+                    // Kazanılan XP: dersi bitirince ödül sistemine işlenir.
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.limeSpark.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppColors.limeDim),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.bolt_rounded,
+                              size: 20, color: AppColors.limeDim),
+                          const SizedBox(width: 6),
+                          CountUpText(
+                            value: lessonXp(state.scorePercent),
+                            prefix: '+',
+                            suffix: ' XP',
+                            duration: const Duration(milliseconds: 1100),
+                            style: theme.textTheme.titleSmall
+                                ?.copyWith(fontWeight: FontWeight.w800),
+                          ),
+                        ],
+                      ),
+                    )
+                        .animate(delay: 500.ms)
+                        .fadeIn()
+                        .scale(curve: Curves.elasticOut, duration: Motion.slow),
+                    ],
                   ],
                 ),
               ),

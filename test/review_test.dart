@@ -10,19 +10,18 @@ WeeklyStats _stats({
   double? storyAverage,
   int stories = 0,
   int openMistakes = 0,
-}) =>
-    WeeklyStats(
-      weekStart: DateTime(2026, 10, 26),
-      daysCompleted: days,
-      lessonsCompleted: lessons,
-      averageLessonScore: average,
-      studyMinutes: 60,
-      storiesRead: stories,
-      averageStoryScore: storyAverage,
-      cardsReviewed: 30,
-      openMistakes: openMistakes,
-      topMistakes: const ['make a decision', 'used to'],
-    );
+}) => WeeklyStats(
+  weekStart: DateTime(2026, 10, 26),
+  daysCompleted: days,
+  lessonsCompleted: lessons,
+  averageLessonScore: average,
+  studyMinutes: 60,
+  storiesRead: stories,
+  averageStoryScore: storyAverage,
+  cardsReviewed: 30,
+  openMistakes: openMistakes,
+  topMistakes: const ['make a decision', 'used to'],
+);
 
 void main() {
   group('recommendLevelDelta', () {
@@ -35,10 +34,7 @@ void main() {
     });
 
     test('okuma testi zayıfsa yükseltme yapılmaz', () {
-      expect(
-        recommendLevelDelta(_stats(stories: 2, storyAverage: 50)),
-        0,
-      );
+      expect(recommendLevelDelta(_stats(stories: 2, storyAverage: 50)), 0);
     });
 
     test('düşük ortalama bir kademe düşürür', () {
@@ -91,7 +87,9 @@ void main() {
       suggestedLevel: 'B1+',
       offline: true,
     );
-    final decoded = WeeklyReport.decode(report.copyWith(applied: true).encode())!;
+    final decoded = WeeklyReport.decode(
+      report.copyWith(applied: true).encode(),
+    )!;
 
     expect(decoded.summary, report.summary);
     expect(decoded.stats.averageStoryScore, 75);
@@ -103,23 +101,27 @@ void main() {
 
   test('Gemini rapor yanıtı ayrıştırılır, bozuksa null', () {
     String envelope(String text) => jsonEncode({
-          'candidates': [
-            {
-              'content': {
-                'parts': [
-                  {'text': text},
-                ],
-              },
-            },
-          ],
-        });
+      'candidates': [
+        {
+          'content': {
+            'parts': [
+              {'text': text},
+            ],
+          },
+        },
+      ],
+    });
 
-    final parsed = parseReportResponse(envelope(jsonEncode({
-      'summary': 'İyi iş.',
-      'strengths': ['Seri'],
-      'focus': ['Kelime'],
-      'tip': 'Her gün 5 dk.',
-    })));
+    final parsed = parseReportResponse(
+      envelope(
+        jsonEncode({
+          'summary': 'İyi iş.',
+          'strengths': ['Seri'],
+          'focus': ['Kelime'],
+          'tip': 'Her gün 5 dk.',
+        }),
+      ),
+    );
     expect(parsed?.summary, 'İyi iş.');
     expect(parsed?.strengths, ['Seri']);
 

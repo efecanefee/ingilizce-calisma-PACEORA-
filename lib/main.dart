@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'app/celebration.dart';
 import 'app/constants.dart';
 import 'app/router.dart';
 import 'app/theme.dart';
@@ -69,6 +70,9 @@ class _PaceoraAppState extends ConsumerState<PaceoraApp>
 
   @override
   Widget build(BuildContext context) {
+    // Titreşim tercihi uygulama genelindeki Haptics bayrağını günceller.
+    ref.watch(hapticsProvider);
+
     return MaterialApp.router(
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
@@ -76,6 +80,8 @@ class _PaceoraAppState extends ConsumerState<PaceoraApp>
       darkTheme: darkTheme,
       themeMode: ref.watch(themeModeProvider),
       routerConfig: _router,
+      // Seviye/rozet kutlaması her ekranın üstünde gösterilebilsin.
+      builder: (context, child) => CelebrationHost(child: child!),
       // Saat seçici, iletişim kutuları vb. sistem metinleri Türkçe olsun.
       locale: const Locale('tr'),
       supportedLocales: const [Locale('tr')],

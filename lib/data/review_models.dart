@@ -34,17 +34,17 @@ class WeeklyStats {
   final List<String> topMistakes;
 
   Map<String, dynamic> toJson() => {
-        'weekStart': weekStart.toIso8601String(),
-        'daysCompleted': daysCompleted,
-        'lessonsCompleted': lessonsCompleted,
-        'averageLessonScore': averageLessonScore,
-        'studyMinutes': studyMinutes,
-        'storiesRead': storiesRead,
-        'averageStoryScore': averageStoryScore,
-        'cardsReviewed': cardsReviewed,
-        'openMistakes': openMistakes,
-        'topMistakes': topMistakes,
-      };
+    'weekStart': weekStart.toIso8601String(),
+    'daysCompleted': daysCompleted,
+    'lessonsCompleted': lessonsCompleted,
+    'averageLessonScore': averageLessonScore,
+    'studyMinutes': studyMinutes,
+    'storiesRead': storiesRead,
+    'averageStoryScore': averageStoryScore,
+    'cardsReviewed': cardsReviewed,
+    'openMistakes': openMistakes,
+    'topMistakes': topMistakes,
+  };
 
   static WeeklyStats? fromJson(Object? raw) {
     if (raw is! Map<String, dynamic>) return null;
@@ -121,28 +121,28 @@ class WeeklyReport {
   bool get suggestsChange => suggestedLevel != fromLevel;
 
   WeeklyReport copyWith({bool? applied}) => WeeklyReport(
-        stats: stats,
-        summary: summary,
-        strengths: strengths,
-        focus: focus,
-        tip: tip,
-        fromLevel: fromLevel,
-        suggestedLevel: suggestedLevel,
-        applied: applied ?? this.applied,
-        offline: offline,
-      );
+    stats: stats,
+    summary: summary,
+    strengths: strengths,
+    focus: focus,
+    tip: tip,
+    fromLevel: fromLevel,
+    suggestedLevel: suggestedLevel,
+    applied: applied ?? this.applied,
+    offline: offline,
+  );
 
   String encode() => jsonEncode({
-        'stats': stats.toJson(),
-        'summary': summary,
-        'strengths': strengths,
-        'focus': focus,
-        'tip': tip,
-        'fromLevel': fromLevel,
-        'suggestedLevel': suggestedLevel,
-        'applied': applied,
-        'offline': offline,
-      });
+    'stats': stats.toJson(),
+    'summary': summary,
+    'strengths': strengths,
+    'focus': focus,
+    'tip': tip,
+    'fromLevel': fromLevel,
+    'suggestedLevel': suggestedLevel,
+    'applied': applied,
+    'offline': offline,
+  });
 
   static WeeklyReport? decode(String json) {
     try {
@@ -210,34 +210,47 @@ ReportCommentary localCommentary(WeeklyStats stats, int levelDelta) {
     0 when stats.daysCompleted == 0 =>
       'Bu hafta henüz çalışma kaydın yok. Küçük bir adımla başlamak bile seriyi '
           'yeniden kurar.',
-    0 => 'Bu hafta ${stats.daysCompleted} gün çalıştın ama ders testini '
-        'tamamlamadın; skorlu dersler ilerlemeni daha iyi ölçer.',
-    _ => 'Bu hafta ${stats.daysCompleted} gün çalıştın, '
-        '${stats.lessonsCompleted} ders bitirdin ve ortalama %$average '
-        'başarı yakaladın.',
+    0 =>
+      'Bu hafta ${stats.daysCompleted} gün çalıştın ama ders testini '
+          'tamamlamadın; skorlu dersler ilerlemeni daha iyi ölçer.',
+    _ =>
+      'Bu hafta ${stats.daysCompleted} gün çalıştın, '
+          '${stats.lessonsCompleted} ders bitirdin ve ortalama %$average '
+          'başarı yakaladın.',
   };
 
   final strengths = <String>[
-    if (stats.daysCompleted >= 5) 'Düzenli çalışma: haftanın çoğunu boş geçmedin.',
+    if (stats.daysCompleted >= 5)
+      'Düzenli çalışma: haftanın çoğunu boş geçmedin.',
     if (average != null && average >= 80) 'Ders testlerinde yüksek doğruluk.',
     if ((stats.averageStoryScore ?? 0) >= 75) 'Okuduğunu anlama güçlü.',
     if (stats.cardsReviewed >= 20) 'Flash kart tekrarlarını aksatmadın.',
   ];
-  if (strengths.isEmpty) strengths.add('Uygulamayı açıp devam etmen bile önemli bir adım.');
+  if (strengths.isEmpty) {
+    strengths.add('Uygulamayı açıp devam etmen bile önemli bir adım.');
+  }
 
   final focus = <String>[
-    if (stats.daysCompleted < 4) 'Daha düzenli çalış: hedef haftada en az 5 gün.',
-    if (average != null && average < 65) 'Dersteki konuları tekrar et; hata defterindeki ifadeler sana yardımcı olur.',
-    if (stats.storiesRead == 0) 'Günün hikayesini oku; okuma pratiği kelime dağarcığını genişletir.',
+    if (stats.daysCompleted < 4)
+      'Daha düzenli çalış: hedef haftada en az 5 gün.',
+    if (average != null && average < 65)
+      'Dersteki konuları tekrar et; hata defterindeki ifadeler sana yardımcı olur.',
+    if (stats.storiesRead == 0)
+      'Günün hikayesini oku; okuma pratiği kelime dağarcığını genişletir.',
     if (stats.openMistakes > 0)
       '${stats.openMistakes} ifade hâlâ pekişmedi: ${stats.topMistakes.take(3).join(', ')}.',
   ];
-  if (focus.isEmpty) focus.add('Böyle devam et; bir sonraki seviyeye hazırlanıyorsun.');
+  if (focus.isEmpty) {
+    focus.add('Böyle devam et; bir sonraki seviyeye hazırlanıyorsun.');
+  }
 
   final tip = switch (levelDelta) {
-    1 => 'Sonuçların seviyenin üstünde. Bir kademe zorlaştırmayı deneyebilirsin.',
-    -1 => 'Bu hafta zorlandın. Bir kademe kolaylaştırıp temeli sağlamlaştırmak iyi olur.',
-    _ => 'Her gün 5 dakikalık flash kart tekrarı kalıcı öğrenmeyi çok hızlandırır.',
+    1 =>
+      'Sonuçların seviyenin üstünde. Bir kademe zorlaştırmayı deneyebilirsin.',
+    -1 =>
+      'Bu hafta zorlandın. Bir kademe kolaylaştırıp temeli sağlamlaştırmak iyi olur.',
+    _ =>
+      'Her gün 5 dakikalık flash kart tekrarı kalıcı öğrenmeyi çok hızlandırır.',
   };
 
   return ReportCommentary(

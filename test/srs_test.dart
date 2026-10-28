@@ -9,14 +9,13 @@ void main() {
     double ease = 2.5,
     int interval = 0,
     int reps = 0,
-  }) =>
-      nextSchedule(
-        ease: ease,
-        intervalDays: interval,
-        reps: reps,
-        grade: grade,
-        today: today,
-      );
+  }) => nextSchedule(
+    ease: ease,
+    intervalDays: interval,
+    reps: reps,
+    grade: grade,
+    today: today,
+  );
 
   group('SM-2', () {
     test('ilk başarılı tekrar 1 gün sonraya planlanır', () {

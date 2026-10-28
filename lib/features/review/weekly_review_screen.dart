@@ -26,12 +26,18 @@ class _WeeklyReviewScreenState extends ConsumerState<WeeklyReviewScreen> {
     try {
       final report = await ref.read(weeklyReportsProvider.notifier).generate();
       if (report.offline) {
-        messenger.showSnackBar(const SnackBar(
-          content: Text('Gemini\'ye ulaşılamadı; rapor verilerinden hazırlandı.'),
-        ));
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Gemini\'ye ulaşılamadı; rapor verilerinden hazırlandı.',
+            ),
+          ),
+        );
       }
     } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('Rapor hazırlanamadı: $e')));
+      messenger.showSnackBar(
+        SnackBar(content: Text('Rapor hazırlanamadı: $e')),
+      );
     } finally {
       if (mounted) setState(() => _generating = false);
     }
@@ -47,27 +53,27 @@ class _WeeklyReviewScreenState extends ConsumerState<WeeklyReviewScreen> {
       body: switch (reports) {
         AsyncError(:final error) => Center(child: Text('$error')),
         AsyncData(:final value) => ListView(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-            children: [
-              _GenerateCard(
-                busy: _generating,
-                hasCurrent: value.any((r) => r.stats.weekStart == thisWeek),
-                onGenerate: _generate,
-              ).entrance(0),
-              const SizedBox(height: 20),
-              if (value.isEmpty)
-                const _EmptyHint().entrance(1)
-              else
-                for (final (i, report) in value.indexed)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 20),
-                    child: _ReportCard(
-                      report: report,
-                      isCurrent: report.stats.weekStart == thisWeek,
-                    ).entrance(i + 1),
-                  ),
-            ],
-          ),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+          children: [
+            _GenerateCard(
+              busy: _generating,
+              hasCurrent: value.any((r) => r.stats.weekStart == thisWeek),
+              onGenerate: _generate,
+            ).entrance(0),
+            const SizedBox(height: 20),
+            if (value.isEmpty)
+              const _EmptyHint().entrance(1)
+            else
+              for (final (i, report) in value.indexed)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 20),
+                  child: _ReportCard(
+                    report: report,
+                    isCurrent: report.stats.weekStart == thisWeek,
+                  ).entrance(i + 1),
+                ),
+          ],
+        ),
         _ => const Center(child: CircularProgressIndicator()),
       },
     );
@@ -100,8 +106,9 @@ class _GenerateCard extends StatelessWidget {
                 const SizedBox(width: 10),
                 Text(
                   'Bu haftanın değerlendirmesi',
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w700),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ],
             ),
@@ -205,7 +212,10 @@ class _ReportCard extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 18),
-            Text(report.summary, style: theme.textTheme.bodyMedium?.copyWith(height: 1.5)),
+            Text(
+              report.summary,
+              style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
+            ),
             if (report.strengths.isNotEmpty) ...[
               const SizedBox(height: 16),
               _Bullets(
@@ -235,8 +245,11 @@ class _ReportCard extends ConsumerWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.lightbulb_outline,
-                        size: 20, color: theme.colorScheme.primary),
+                    Icon(
+                      Icons.lightbulb_outline,
+                      size: 20,
+                      color: theme.colorScheme.primary,
+                    ),
                     const SizedBox(width: 10),
                     Expanded(child: Text(report.tip)),
                   ],
@@ -268,8 +281,9 @@ class _Metric extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final style =
-        theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800);
+    final style = theme.textTheme.titleLarge?.copyWith(
+      fontWeight: FontWeight.w800,
+    );
     return Expanded(
       child: Column(
         children: [
@@ -314,8 +328,9 @@ class _Bullets extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               title,
-              style: theme.textTheme.titleSmall
-                  ?.copyWith(fontWeight: FontWeight.w700),
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ],
         ),
@@ -376,13 +391,14 @@ class _LevelSuggestion extends ConsumerWidget {
               _LevelChip(code: from.code, muted: true),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Icon(
-                  up ? Icons.trending_up : Icons.trending_down,
-                  color: color,
-                  size: 28,
-                )
-                    .animate(onPlay: (c) => c.repeat(reverse: true))
-                    .moveX(begin: -3, end: 3, duration: 700.ms),
+                child:
+                    Icon(
+                          up ? Icons.trending_up : Icons.trending_down,
+                          color: color,
+                          size: 28,
+                        )
+                        .animate(onPlay: (c) => c.repeat(reverse: true))
+                        .moveX(begin: -3, end: 3, duration: 700.ms),
               ),
               _LevelChip(code: to.code, muted: false),
             ],
@@ -402,14 +418,18 @@ class _LevelSuggestion extends ConsumerWidget {
               children: [
                 const Icon(Icons.check, color: AppColors.success, size: 18),
                 const SizedBox(width: 6),
-                Text('Seviyen ${to.code} olarak güncellendi',
-                    style: theme.textTheme.labelLarge),
+                Text(
+                  'Seviyen ${to.code} olarak güncellendi',
+                  style: theme.textTheme.labelLarge,
+                ),
               ],
             )
           else
             FilledButton(
               onPressed: () async {
-                await ref.read(weeklyReportsProvider.notifier).applyLevel(report);
+                await ref
+                    .read(weeklyReportsProvider.notifier)
+                    .applyLevel(report);
                 // Yeni seviye sonraki derslerde ve programda kullanılır.
                 ref.invalidate(weekPlanProvider);
               },

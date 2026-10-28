@@ -4,6 +4,7 @@ import '../app/constants.dart';
 import 'database.dart';
 import 'lesson_models.dart';
 import 'review_models.dart';
+import 'rewards.dart';
 import 'srs.dart';
 import 'story_models.dart';
 
@@ -29,6 +30,21 @@ DateTime mondayOf(DateTime date) => DateTime(
 int _daysBetween(DateTime from, DateTime to) => DateTime.utc(to.year, to.month, to.day)
     .difference(DateTime.utc(from.year, from.month, from.day))
     .inDays;
+
+/// Çalışılan günlerden en uzun kesintisiz seri.
+int bestStreakOf(Set<DateTime> days) {
+  final sorted = days.map(dayOf).toSet().toList()..sort();
+  var best = 0;
+  var run = 0;
+  DateTime? previous;
+  for (final day in sorted) {
+    final consecutive = previous != null && _daysBetween(previous, day) == 1;
+    run = consecutive ? run + 1 : 1;
+    if (run > best) best = run;
+    previous = day;
+  }
+  return best;
+}
 
 /// Bugün çalışma tamamlandığında streak'in alacağı yeni değer.
 ///
@@ -502,6 +518,45 @@ class Repository {
           );
     });
   }
+
+  // --- Ödüller --------------------------------------------------------------
+
+  /// Ödül sisteminin girdisi. [cardsReviewed] ve [levelUps] veritabanında
+  /// değil SharedPreferences'ta tutulduğu için dışarıdan verilir.
+  Future<GameStats> gameStats({int cardsReviewed = 0, int levelUps = 0}) async {
+    final lessons = await completedLessons();
+    final stories = (await _db.select(_db.stories).get())
+        .where((s) => s.quizScore != null)
+        .toList();
+    final days = await studiedDays();
+    final cards = await flashcardCounts();
+    final streak = (await profile())?.streak ?? 0;
+    final best = bestStreakOf(days);
+
+    return GameStats(
+      lessons: lessons.length,
+      perfectLessons: lessons.where((l) => (l.score ?? 0) >= 99.5).length,
+      lessonXpSum: lessons.fold(0, (sum, l) => sum + lessonXp(l.score ?? 0)),
+      stories: stories.length,
+      storyXpSum: stories.fold(0, (sum, s) => sum + storyXp(s.quizScore!)),
+      cardsReviewed: cardsReviewed,
+      cardsMature: cards.mature,
+      studiedDays: days.length,
+      currentStreak: streak,
+      // Elle işaretlenen günler de takvimde; ikisi genelde aynıdır.
+      bestStreak: best > streak ? best : streak,
+      levelUps: levelUps,
+    );
+  }
+
+  /// Hata defteri: henüz pekişmemiş olanlar önce, en çok yanlış yapılan üstte.
+  Future<List<Mistake>> mistakes() => (_db.select(_db.mistakes)
+        ..orderBy([
+          (t) => OrderingTerm(expression: t.resolved),
+          (t) => OrderingTerm(expression: t.timesWrong, mode: OrderingMode.desc),
+          (t) => OrderingTerm(expression: t.lastAskedAt, mode: OrderingMode.desc),
+        ]))
+      .get();
 
   /// Profilin seviyesini değiştirir (adaptif seviye ayarı).
   Future<void> updateLevel(String level) async {

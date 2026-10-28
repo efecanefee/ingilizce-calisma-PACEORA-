@@ -38,8 +38,10 @@ class FlashcardsScreen extends ConsumerWidget {
       ),
       body: switch (session) {
         AsyncError(:final error) => Center(child: Text('$error')),
-        AsyncData(:final value) when value.isDone =>
-          _DoneView(reviewed: value.reviewed, total: summary?.total ?? 0),
+        AsyncData(:final value) when value.isDone => _DoneView(
+          reviewed: value.reviewed,
+          total: summary?.total ?? 0,
+        ),
         AsyncData(:final value) => _SessionView(session: value),
         _ => const Center(child: CircularProgressIndicator()),
       },
@@ -263,10 +265,11 @@ class _CardFace extends StatelessWidget {
           Text(
             back ? 'Ne kadar iyi hatırladın?' : 'Çevirmek için dokun',
             style: theme.textTheme.labelMedium?.copyWith(
-              color: (!back && !isDark
-                      ? AppColors.graphite900
-                      : theme.colorScheme.onSurface)
-                  .withValues(alpha: 0.6),
+              color:
+                  (!back && !isDark
+                          ? AppColors.graphite900
+                          : theme.colorScheme.onSurface)
+                      .withValues(alpha: 0.6),
             ),
           ),
         ],
@@ -332,8 +335,9 @@ class _GradeButtons extends StatelessWidget {
                   children: [
                     Text(
                       grade.label,
-                      style: theme.textTheme.titleSmall
-                          ?.copyWith(fontWeight: FontWeight.w700),
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const SizedBox(height: 2),
                     Text(_nextLabel(grade), style: theme.textTheme.labelSmall),
@@ -366,10 +370,10 @@ class _DoneView extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              empty ? Icons.style_outlined : Icons.celebration,
-              size: 64,
-              color: theme.colorScheme.primary,
-            )
+                  empty ? Icons.style_outlined : Icons.celebration,
+                  size: 64,
+                  color: theme.colorScheme.primary,
+                )
                 .animate()
                 .scale(duration: Motion.slow, curve: Curves.elasticOut)
                 .then()
@@ -379,22 +383,23 @@ class _DoneView extends StatelessWidget {
               empty
                   ? 'Desten henüz boş'
                   : reviewed == 0
-                      ? 'Bugün tekrar edilecek kart yok'
-                      : 'Bugünlük bu kadar!',
-              style: theme.textTheme.titleLarge
-                  ?.copyWith(fontWeight: FontWeight.w800),
+                  ? 'Bugün tekrar edilecek kart yok'
+                  : 'Bugünlük bu kadar!',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
               textAlign: TextAlign.center,
             ).entrance(1),
             const SizedBox(height: 8),
             Text(
               empty
                   ? 'Ders bitirdikçe o günün kelimeleri ve yanlış yaptığın '
-                      'ifadeler buraya kart olarak eklenir.'
+                        'ifadeler buraya kart olarak eklenir.'
                   : reviewed == 0
-                      ? 'Kartlar SM-2 aralıklı tekrar ile planlanır; '
-                          'zamanı gelince burada olacaklar.'
-                      : '$reviewed kart tekrar ettin. Kartlar hatırlama '
-                          'durumuna göre yeniden planlandı.',
+                  ? 'Kartlar SM-2 aralıklı tekrar ile planlanır; '
+                        'zamanı gelince burada olacaklar.'
+                  : '$reviewed kart tekrar ettin. Kartlar hatırlama '
+                        'durumuna göre yeniden planlandı.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.7),

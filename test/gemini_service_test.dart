@@ -72,7 +72,7 @@ void main() {
       expect(parseWeeklyPlanResponse('bu JSON değil'), isEmpty);
       expect(parseWeeklyPlanResponse('{}'), isEmpty);
       expect(parseWeeklyPlanResponse(_response('yine JSON değil')), isEmpty);
-      expect(parseWeeklyPlanResponse(jsonEncode({'candidates': []})), isEmpty);
+      expect(parseWeeklyPlanResponse(jsonEncode({'candidates': <Object>[]})), isEmpty);
     });
   });
 

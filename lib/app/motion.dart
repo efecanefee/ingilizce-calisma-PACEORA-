@@ -17,6 +17,19 @@ abstract class Motion {
   static const stagger = Duration(milliseconds: 60);
 }
 
+/// Dokunsal geri bildirim; Ayarlar'dan kapatılabilir.
+abstract class Haptics {
+  static bool enabled = true;
+
+  static void tap() {
+    if (enabled) HapticFeedback.selectionClick();
+  }
+
+  static void success() {
+    if (enabled) HapticFeedback.mediumImpact();
+  }
+}
+
 /// Alt sayfalar için yumuşak kayma + solma geçişi.
 CustomTransitionPage<void> motionPage(GoRouterState state, Widget child) {
   return CustomTransitionPage<void>(
@@ -29,8 +42,10 @@ CustomTransitionPage<void> motionPage(GoRouterState state, Widget child) {
       return FadeTransition(
         opacity: curved,
         child: SlideTransition(
-          position: Tween(begin: const Offset(0, 0.06), end: Offset.zero)
-              .animate(curved),
+          position: Tween(
+            begin: const Offset(0, 0.06),
+            end: Offset.zero,
+          ).animate(curved),
           child: child,
         ),
       );
@@ -42,7 +57,12 @@ extension EntranceAnimation on Widget {
   /// Listede [index]. sıradaki öğe için yukarı kayarak belirme.
   Widget entrance(int index) => animate(delay: Motion.stagger * index)
       .fadeIn(duration: Motion.medium, curve: Motion.curve)
-      .slideY(begin: 0.12, end: 0, duration: Motion.medium, curve: Motion.curve);
+      .slideY(
+        begin: 0.12,
+        end: 0,
+        duration: Motion.medium,
+        curve: Motion.curve,
+      );
 }
 
 /// Basılınca hafifçe küçülen dokunma alanı; kartlara fiziksel his verir.
@@ -83,7 +103,7 @@ class _PressableScaleState extends State<PressableScale> {
           onTap: widget.onTap == null
               ? null
               : () {
-                  HapticFeedback.selectionClick();
+                  Haptics.tap();
                   widget.onTap!();
                 },
           onTapDown: (_) => _set(true),
@@ -140,7 +160,12 @@ class PulsingFlame extends StatelessWidget {
     if (!active) return Opacity(opacity: 0.35, child: flame);
     return flame
         .animate(onPlay: (c) => c.repeat(reverse: true))
-        .scaleXY(begin: 0.9, end: 1.12, duration: 900.ms, curve: Curves.easeInOut)
+        .scaleXY(
+          begin: 0.9,
+          end: 1.12,
+          duration: 900.ms,
+          curve: Curves.easeInOut,
+        )
         .rotate(begin: -0.02, end: 0.02, duration: 900.ms);
   }
 }

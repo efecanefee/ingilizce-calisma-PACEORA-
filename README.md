@@ -65,8 +65,17 @@ dilbilgisi konusu ve bir kelime teması olur; pazar günü haftanın tekrarına 
   kademe aşağı); öneriyi tek dokunuşla uygularsın.
 - **Günlük hatırlatma** — seçtiğin saatte yerel bildirim. Sunucu yok;
   "Alarmlar ve hatırlatıcılar" izni verilirse tam saatinde gelir.
-- **Animasyonlu arayüz** — sayfa geçişleri, sırayla beliren kartlar, dönen
-  flash kart, sayarak artan skorlar, "nefes alan" seri alevi.
+- **XP, seviye ve rozetler** — ders, hikaye, kart tekrarı ve çalışılan her gün
+  XP kazandırır; "Çaylak"tan "Efsane"ye oyuncu seviyeleri ve ilerleme çubuklu
+  10 rozet var. Yeni seviye ya da rozet hangi ekranda olursan ol konfetili
+  bir kutlamayla gelir. XP ayrı tutulmaz, çalışma geçmişinden hesaplanır.
+- **Bugünkü hedef ve yönlendirme** — ders, hikaye ve kart tekrarından oluşan
+  günlük hedef halkası; "sıradaki" adım işaretlenir ve tek dokunuşla açılır.
+- **Program sekmesi** — haftanın zaman çizelgesi: tamamlanan, kaçırılan,
+  bugünkü ve yaklaşan günler; güne dokununca ayrıntılar.
+- **Animasyonlu arayüz** — alt gezinme çubuğu, hareketli gradyanlı karşılama
+  kartı, sayfa geçişleri, sırayla beliren kartlar, dönen flash kart, sayarak
+  artan skorlar ve XP, "nefes alan" seri alevi, titreşimli dokunuşlar.
 
 ## Ekranlar
 
@@ -195,11 +204,12 @@ flutter build apk --release --dart-define-from-file=env.json
 flutter test
 ```
 
-101 test. Kapsam: Gemini yanıt ayrıştırma ve yedek plana düşme, ders JSON'unun
+108 test. Kapsam: Gemini yanıt ayrıştırma ve yedek plana düşme, ders JSON'unun
 bozuk öğelere dayanıklı okunması, çeviri puanlaması (noktalama, büyük/küçük harf,
 kısaltmalar), hata defteri kuralları, repository (streak, plan yenilerken
 ilerlemenin korunması, ders önbelleği), SM-2 aralık hesabı, flash kart destesi,
-hikaye ayrıştırma ve puanlama, adaptif seviye kuralı, haftalık istatistikler ve
+hikaye ayrıştırma ve puanlama, adaptif seviye kuralı, haftalık istatistikler,
+XP/seviye/rozet kuralları, günlük hedef ve
 uçtan uca ders / onboarding / flash kart widget testleri.
 
 > `flutter analyze` bu makinede analiz sunucusunu çökertiyor (yine ASCII

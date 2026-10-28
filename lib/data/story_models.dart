@@ -72,11 +72,11 @@ class DailyStory {
   }
 
   Map<String, dynamic> toJson() => {
-        'title': title,
-        'paragraphs': paragraphs,
-        'glossary': [for (final g in glossary) g.toJson()],
-        'questions': [for (final q in questions) q.toJson()],
-      };
+    'title': title,
+    'paragraphs': paragraphs,
+    'glossary': [for (final g in glossary) g.toJson()],
+    'questions': [for (final q in questions) q.toJson()],
+  };
 }
 
 /// Hikaye + okuyucunun soru cevapları.
@@ -99,31 +99,30 @@ class StoryState {
   final bool offline;
 
   int get correctCount => [
-        for (final entry in answers.entries)
-          if (entry.key < story.questions.length &&
-              story.questions[entry.key].isCorrect(entry.value))
-            entry.key,
-      ].length;
+    for (final entry in answers.entries)
+      if (entry.key < story.questions.length &&
+          story.questions[entry.key].isCorrect(entry.value))
+        entry.key,
+  ].length;
 
   bool get isFinished => answers.length >= story.questions.length;
 
-  double get scorePercent => story.questions.isEmpty
-      ? 0
-      : correctCount / story.questions.length * 100;
+  double get scorePercent =>
+      story.questions.isEmpty ? 0 : correctCount / story.questions.length * 100;
 
   StoryState withAnswer(int index, String option) => StoryState(
-        story: story,
-        answers: {...answers, index: option},
-        offline: offline,
-      );
+    story: story,
+    answers: {...answers, index: option},
+    offline: offline,
+  );
 
   String encode() => jsonEncode({
-        'story': story.toJson(),
-        'answers': {
-          for (final entry in answers.entries) '${entry.key}': entry.value,
-        },
-        'offline': offline,
-      });
+    'story': story.toJson(),
+    'answers': {
+      for (final entry in answers.entries) '${entry.key}': entry.value,
+    },
+    'offline': offline,
+  });
 
   static StoryState? decode(String json) {
     try {
@@ -192,30 +191,50 @@ final _fallbackB1 = <DailyStory>[
       GlossaryItem(word: 'in the end', meaning: 'sonunda'),
     ],
     questions: [
-      _q('Why did Mia stay late on Friday?', [
-        'Her manager needed a report.',
-        'She wanted to read her book.',
-        'Her train was cancelled.',
-        'She was waiting for a friend.',
-      ], 0, 'Metinde müdürünün bir rapora ihtiyacı olduğu için geç kaldığı yazıyor.'),
-      _q('What happened when she arrived at the station?', [
-        'She caught the last train.',
-        'The last train was leaving.',
-        'The station was closed.',
-        'She met her manager.',
-      ], 1, 'Son tren perondan ayrılıyordu ve kapılar önünde kapandı.'),
-      _q('Who did Mia talk to?', [
-        'A taxi driver',
-        'Her manager',
-        'An old man who had worked on the railway',
-        'A student on the bench',
-      ], 2, 'Bankta oturan, demiryolunda kırk yıl çalışmış yaşlı bir adamla konuştu.'),
-      _q('How did Mia feel about the evening at the end?', [
-        'It was boring.',
-        'It was the worst night of her life.',
-        'It was very interesting.',
-        'It was too expensive.',
-      ], 2, 'Aylardır geçirdiği en ilginç akşam olduğunu söyledi.'),
+      _q(
+        'Why did Mia stay late on Friday?',
+        [
+          'Her manager needed a report.',
+          'She wanted to read her book.',
+          'Her train was cancelled.',
+          'She was waiting for a friend.',
+        ],
+        0,
+        'Metinde müdürünün bir rapora ihtiyacı olduğu için geç kaldığı yazıyor.',
+      ),
+      _q(
+        'What happened when she arrived at the station?',
+        [
+          'She caught the last train.',
+          'The last train was leaving.',
+          'The station was closed.',
+          'She met her manager.',
+        ],
+        1,
+        'Son tren perondan ayrılıyordu ve kapılar önünde kapandı.',
+      ),
+      _q(
+        'Who did Mia talk to?',
+        [
+          'A taxi driver',
+          'Her manager',
+          'An old man who had worked on the railway',
+          'A student on the bench',
+        ],
+        2,
+        'Bankta oturan, demiryolunda kırk yıl çalışmış yaşlı bir adamla konuştu.',
+      ),
+      _q(
+        'How did Mia feel about the evening at the end?',
+        [
+          'It was boring.',
+          'It was the worst night of her life.',
+          'It was very interesting.',
+          'It was too expensive.',
+        ],
+        2,
+        'Aylardır geçirdiği en ilginç akşam olduğunu söyledi.',
+      ),
     ],
   ),
   DailyStory(
@@ -237,24 +256,34 @@ final _fallbackB1 = <DailyStory>[
       GlossaryItem(word: 'practise', meaning: 'pratik yapmak'),
     ],
     questions: [
-      _q('Why didn’t Can learn to cook before?', [
-        'He didn’t like food.',
-        'He was too busy at work.',
-        'He had no kitchen.',
-        'His family cooked for him.',
-      ], 1, 'İşte çok meşgul olduğu için daha önce öğrenemedi.'),
-      _q('What was wrong with his first soup?', [
-        'It was too hot.',
-        'It had too much salt.',
-        'He forgot the salt.',
-        'It was cold.',
-      ], 2, 'Tuz eklemeyi unuttuğu için çorbanın tadı kötüydü.'),
-      _q('How often does Can cook for his family now?', [
-        'Every day',
-        'Twice a week',
-        'Once a month',
-        'Only on Saturdays',
-      ], 1, 'Artık haftada iki kez ailesine akşam yemeği yapıyor.'),
+      _q(
+        'Why didn’t Can learn to cook before?',
+        [
+          'He didn’t like food.',
+          'He was too busy at work.',
+          'He had no kitchen.',
+          'His family cooked for him.',
+        ],
+        1,
+        'İşte çok meşgul olduğu için daha önce öğrenemedi.',
+      ),
+      _q(
+        'What was wrong with his first soup?',
+        [
+          'It was too hot.',
+          'It had too much salt.',
+          'He forgot the salt.',
+          'It was cold.',
+        ],
+        2,
+        'Tuz eklemeyi unuttuğu için çorbanın tadı kötüydü.',
+      ),
+      _q(
+        'How often does Can cook for his family now?',
+        ['Every day', 'Twice a week', 'Once a month', 'Only on Saturdays'],
+        1,
+        'Artık haftada iki kez ailesine akşam yemeği yapıyor.',
+      ),
     ],
   ),
 ];
@@ -280,30 +309,50 @@ final _fallbackB2 = <DailyStory>[
       GlossaryItem(word: 'a handful of', meaning: 'bir avuç, birkaç'),
     ],
     questions: [
-      _q('Why did Selin move to the coastal town?', [
-        'Her company closed its city office.',
-        'She could work from anywhere and liked the town.',
-        'She found a new job there.',
-        'Her family lived there.',
-      ], 1, 'Şirketi her yerden çalışmaya izin verince çocukken gittiği kasabaya taşındı.'),
-      _q('What did she gradually start to miss?', [
-        'The noise of the city',
-        'Her old apartment',
-        'Unplanned conversations with colleagues',
-        'Long walks by the sea',
-      ], 2, 'İş arkadaşlarıyla plansız sohbetleri özledi; en iyi fikirleri onlardan çıkıyordu.'),
-      _q('How did she solve the problem?', [
-        'She moved back to the city.',
-        'She changed her job.',
-        'She organised meetups for remote workers.',
-        'She opened a café.',
-      ], 2, 'Şehre dönmek yerine uzaktan çalışanlar için aylık buluşmalar düzenledi.'),
-      _q('Which sentence best describes the community today?', [
-        'It has stayed very small.',
-        'It has grown to over fifty people.',
-        'It meets every day.',
-        'It moved to the city.',
-      ], 1, 'Birkaç kişiyle başlayan grup elli kişiyi aşan bir topluluğa dönüştü.'),
+      _q(
+        'Why did Selin move to the coastal town?',
+        [
+          'Her company closed its city office.',
+          'She could work from anywhere and liked the town.',
+          'She found a new job there.',
+          'Her family lived there.',
+        ],
+        1,
+        'Şirketi her yerden çalışmaya izin verince çocukken gittiği kasabaya taşındı.',
+      ),
+      _q(
+        'What did she gradually start to miss?',
+        [
+          'The noise of the city',
+          'Her old apartment',
+          'Unplanned conversations with colleagues',
+          'Long walks by the sea',
+        ],
+        2,
+        'İş arkadaşlarıyla plansız sohbetleri özledi; en iyi fikirleri onlardan çıkıyordu.',
+      ),
+      _q(
+        'How did she solve the problem?',
+        [
+          'She moved back to the city.',
+          'She changed her job.',
+          'She organised meetups for remote workers.',
+          'She opened a café.',
+        ],
+        2,
+        'Şehre dönmek yerine uzaktan çalışanlar için aylık buluşmalar düzenledi.',
+      ),
+      _q(
+        'Which sentence best describes the community today?',
+        [
+          'It has stayed very small.',
+          'It has grown to over fifty people.',
+          'It meets every day.',
+          'It moved to the city.',
+        ],
+        1,
+        'Birkaç kişiyle başlayan grup elli kişiyi aşan bir topluluğa dönüştü.',
+      ),
     ],
   ),
   DailyStory(
@@ -325,24 +374,39 @@ final _fallbackB2 = <DailyStory>[
       GlossaryItem(word: 'queue', meaning: 'kuyruk, sıra'),
     ],
     questions: [
-      _q('When did Kerem realise who the customer was?', [
-        'Before she entered',
-        'While she was ordering',
-        'After she had left',
-        'When the review was published',
-      ], 2, 'Eleştirmeni ancak dükkândan ayrıldıktan sonra fark etti.'),
-      _q('How did Kerem feel while waiting for the review?', [
-        'Excited and confident',
-        'Worried that it would be negative',
-        'Completely calm',
-        'Angry with the critic',
-      ], 1, 'Bir hafta boyunca eleştirinin olumsuz olacağından emin olup uyuyamadı.'),
-      _q('What does the last paragraph suggest?', [
-        'Not knowing her identity helped him.',
-        'He wanted to close the bakery.',
-        'The critic came back the next day.',
-        'He stopped making lemon cake.',
-      ], 0, 'Kim olduğunu bilseydi heyecandan iyi servis yapamayacağını söylüyor.'),
+      _q(
+        'When did Kerem realise who the customer was?',
+        [
+          'Before she entered',
+          'While she was ordering',
+          'After she had left',
+          'When the review was published',
+        ],
+        2,
+        'Eleştirmeni ancak dükkândan ayrıldıktan sonra fark etti.',
+      ),
+      _q(
+        'How did Kerem feel while waiting for the review?',
+        [
+          'Excited and confident',
+          'Worried that it would be negative',
+          'Completely calm',
+          'Angry with the critic',
+        ],
+        1,
+        'Bir hafta boyunca eleştirinin olumsuz olacağından emin olup uyuyamadı.',
+      ),
+      _q(
+        'What does the last paragraph suggest?',
+        [
+          'Not knowing her identity helped him.',
+          'He wanted to close the bakery.',
+          'The critic came back the next day.',
+          'He stopped making lemon cake.',
+        ],
+        0,
+        'Kim olduğunu bilseydi heyecandan iyi servis yapamayacağını söylüyor.',
+      ),
     ],
   ),
 ];
@@ -352,10 +416,9 @@ QuizItem _q(
   List<String> options,
   int answerIndex,
   String explanationTr,
-) =>
-    QuizItem(
-      question: question,
-      options: options,
-      answer: options[answerIndex],
-      explanationTr: explanationTr,
-    );
+) => QuizItem(
+  question: question,
+  options: options,
+  answer: options[answerIndex],
+  explanationTr: explanationTr,
+);

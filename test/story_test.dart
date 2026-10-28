@@ -4,16 +4,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:paceora/data/story_models.dart';
 
 String _envelope(Object story) => jsonEncode({
-      'candidates': [
-        {
-          'content': {
-            'parts': [
-              {'text': jsonEncode(story)},
-            ],
-          },
-        },
-      ],
-    });
+  'candidates': [
+    {
+      'content': {
+        'parts': [
+          {'text': jsonEncode(story)},
+        ],
+      },
+    },
+  ],
+});
 
 final _story = {
   'title': 'A Rainy Day',
@@ -35,7 +35,11 @@ final _story = {
       'answerIndex': 0,
       'explanationTr': 'Evde kalıp kitap okudu.',
     },
-    {'question': 'Bozuk soru', 'options': ['A'], 'answerIndex': 3},
+    {
+      'question': 'Bozuk soru',
+      'options': ['A'],
+      'answerIndex': 3,
+    },
   ],
 };
 
@@ -52,10 +56,13 @@ void main() {
 
   test('sorusuz ya da başlıksız hikaye reddedilir', () {
     expect(
-      parseDailyStoryResponse(_envelope({..._story, 'questions': []})),
+      parseDailyStoryResponse(_envelope({..._story, 'questions': <Object>[]})),
       isNull,
     );
-    expect(parseDailyStoryResponse(_envelope({..._story, 'title': ''})), isNull);
+    expect(
+      parseDailyStoryResponse(_envelope({..._story, 'title': ''})),
+      isNull,
+    );
     expect(parseDailyStoryResponse('{}'), isNull);
   });
 
@@ -94,8 +101,10 @@ void main() {
           expect(q.options, contains(q.answer));
         }
         // JSON'a yazılıp okunduğunda da sağlam kalmalı.
-        expect(DailyStory.tryParse(jsonDecode(jsonEncode(story.toJson()))),
-            isNotNull);
+        expect(
+          DailyStory.tryParse(jsonDecode(jsonEncode(story.toJson()))),
+          isNotNull,
+        );
       }
     }
   });

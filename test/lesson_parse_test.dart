@@ -149,7 +149,7 @@ void main() {
       expect(parseDailyLessonResponse('bu JSON değil'), isNull);
       expect(parseDailyLessonResponse('{}'), isNull);
       expect(parseDailyLessonResponse(_response('yine JSON değil')), isNull);
-      expect(parseDailyLessonResponse(jsonEncode({'candidates': []})), isNull);
+      expect(parseDailyLessonResponse(jsonEncode({'candidates': <Object>[]})), isNull);
     });
   });
 

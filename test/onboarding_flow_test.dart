@@ -80,13 +80,20 @@ void main() {
     expect(find.text('Bugünü çalış'), findsOneWidget);
 
     // Elle tamamla → streak 1 olur, buton yerini tamamlandı mesajına bırakır.
+    await tester.ensureVisible(
+      find.widgetWithText(TextButton, 'Çalışmadan tamamlandı işaretle'),
+    );
+    await _advance(tester);
     await tester.tap(
       find.widgetWithText(TextButton, 'Çalışmadan tamamlandı işaretle'),
     );
     await _advance(tester);
-
-    expect(find.text('1 gün'), findsOneWidget);
     expect(find.text('Bugünkü çalışman tamam. Yarın görüşürüz!'), findsOneWidget);
+
+    // Seri rozeti karşılama kartında, listenin en üstünde.
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, 800));
+    await _advance(tester);
+    expect(find.text('1 gün'), findsOneWidget);
     expect((await db.select(db.userProfiles).getSingle()).streak, 1);
   });
 }

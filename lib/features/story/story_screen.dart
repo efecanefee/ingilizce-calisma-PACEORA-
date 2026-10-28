@@ -20,11 +20,11 @@ class StoryScreen extends ConsumerWidget {
       appBar: AppBar(title: const Text('Günün hikayesi')),
       body: switch (story) {
         AsyncError(:final error) => Center(
-            child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Text('$error', textAlign: TextAlign.center),
-            ),
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Text('$error', textAlign: TextAlign.center),
           ),
+        ),
         AsyncData(:final value) => _StoryBody(state: value),
         _ => const _LoadingView(),
       },
@@ -44,12 +44,18 @@ class _LoadingView extends StatelessWidget {
         children: [
           Icon(Icons.auto_stories, size: 48, color: theme.colorScheme.primary)
               .animate(onPlay: (c) => c.repeat(reverse: true))
-              .moveY(begin: -4, end: 4, duration: 700.ms, curve: Curves.easeInOut),
+              .moveY(
+                begin: -4,
+                end: 4,
+                duration: 700.ms,
+                curve: Curves.easeInOut,
+              ),
           const SizedBox(height: 20),
           Text(
             'Hikayen yazılıyor…',
-            style: theme.textTheme.titleMedium
-                ?.copyWith(fontWeight: FontWeight.w600),
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ],
       ),
@@ -75,15 +81,13 @@ class _StoryBody extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
       children: [
-        if (state.offline)
-          item(
-            _OfflineNote(onRetry: notifier.regenerate),
-          ),
+        if (state.offline) item(_OfflineNote(onRetry: notifier.regenerate)),
         item(
           Text(
             story.title,
-            style: theme.textTheme.headlineSmall
-                ?.copyWith(fontWeight: FontWeight.w800),
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ),
         const SizedBox(height: 6),
@@ -202,12 +206,17 @@ class _Glossary extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.translate, size: 18, color: theme.colorScheme.primary),
+                Icon(
+                  Icons.translate,
+                  size: 18,
+                  color: theme.colorScheme.primary,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   'Sözlükçe',
-                  style: theme.textTheme.titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w700),
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ],
             ),
@@ -251,8 +260,8 @@ class _ScoreCard extends StatelessWidget {
     final color = score >= 75
         ? AppColors.success
         : score >= 50
-            ? theme.colorScheme.primary
-            : AppColors.warning;
+        ? theme.colorScheme.primary
+        : AppColors.warning;
 
     return Card(
       key: const ValueKey('score'),
@@ -263,8 +272,10 @@ class _ScoreCard extends StatelessWidget {
             CountUpText(
               value: score,
               prefix: '%',
-              style: theme.textTheme.headlineMedium
-                  ?.copyWith(fontWeight: FontWeight.w800, color: color),
+              style: theme.textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+                color: color,
+              ),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -277,6 +288,10 @@ class _ScoreCard extends StatelessWidget {
           ],
         ),
       ),
-    ).animate().scale(begin: const Offset(0.9, 0.9), curve: Curves.elasticOut, duration: Motion.slow);
+    ).animate().scale(
+      begin: const Offset(0.9, 0.9),
+      curve: Curves.elasticOut,
+      duration: Motion.slow,
+    );
   }
 }
