@@ -10,6 +10,8 @@
     <!-- Hatırlatmanın tam saatinde gelmesi için; verilmezse sistem bir saate
          kadar geciktirebilir. -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+    <!-- Konuşma pratiği: söylenen cümle cihazın konuşma tanıma servisine gider. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <application
         android:label="Paceora"
         android:name="${applicationName}"
@@ -62,6 +64,14 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
+        </intent>
+        <!-- Android 11+ paket görünürlüğü: sesli okuma ve konuşma tanıma
+             servisleri listelenmezse eklentiler onları bulamaz. -->
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE"/>
+        </intent>
+        <intent>
+            <action android:name="android.speech.RecognitionService"/>
         </intent>
     </queries>
 </manifest>

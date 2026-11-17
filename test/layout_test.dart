@@ -78,9 +78,24 @@ void main() {
         await scrollThrough(tester);
       }
 
-      // Profil ve görünüm düzenleyici.
+      // Pratik ekranları.
       await tester.tap(find.text('Bugün'));
       await advance(tester);
+      for (final tile in ['Konuşma', 'Dinle ve yaz', 'Kelime Rallisi']) {
+        await tester.scrollUntilVisible(
+          find.text(tile),
+          300,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await advance(tester);
+        await tester.tap(find.text(tile));
+        await advance(tester);
+        expect(tester.takeException(), isNull, reason: tile);
+        await tester.tap(find.byType(BackButton));
+        await advance(tester);
+      }
+
+      // Profil ve görünüm düzenleyici.
       await tester.drag(find.byType(Scrollable).first, const Offset(0, 4000));
       await advance(tester);
       await tester.tap(find.byType(PlayerAvatar).first);

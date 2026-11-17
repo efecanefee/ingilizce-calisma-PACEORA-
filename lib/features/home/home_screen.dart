@@ -797,6 +797,18 @@ class _PracticeGrid extends ConsumerWidget {
         onTap: () => open('/story'),
       ),
       _PracticeTile(
+        icon: Icons.record_voice_over_rounded,
+        title: 'Konuşma',
+        subtitle: 'Söyle, puanını gör',
+        onTap: () => open('/speaking'),
+      ),
+      _PracticeTile(
+        icon: Icons.hearing_rounded,
+        title: 'Dinle ve yaz',
+        subtitle: 'Kulağını eğit',
+        onTap: () => open('/dictation'),
+      ),
+      _PracticeTile(
         icon: Icons.edit_note_rounded,
         title: 'Hata defterim',
         subtitle: 'Pekişmeyenler',

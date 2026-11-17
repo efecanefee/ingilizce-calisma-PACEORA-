@@ -6,6 +6,7 @@ import 'database.dart';
 import 'gemini_service.dart';
 import 'lesson_models.dart';
 import 'match_game.dart';
+import 'pronunciation.dart';
 import 'reminder_service.dart';
 import 'repository.dart';
 import 'review_models.dart';
@@ -453,6 +454,42 @@ Future<MatchSummary> finishMatchRound(WidgetRef ref, MatchBoard board) async {
   return summary;
 }
 
+// --- Konuşma ve dinle-yaz ---------------------------------------------------
+
+/// Bir pratik turunun cümleleri: destedeki örnek cümleler ve bugünün
+/// hikayesi; yetmezse yerleşik cümleler.
+final practiceSentencesProvider = FutureProvider.autoDispose<List<String>>((
+  ref,
+) async {
+  final repository = ref.read(repositoryProvider);
+  final candidates = [...await repository.flashcardExamples()];
+  final story = await repository.storyFor(DateTime.now());
+  if (story != null) {
+    final state = StoryState.decode(story.contentJson);
+    for (final p in state?.story.paragraphs ?? const <String>[]) {
+      candidates.addAll(splitSentences(p));
+    }
+  }
+  final picked = pickPracticeSentences(candidates);
+  if (picked.length >= 5) return picked;
+  return [
+    ...picked,
+    ...pickPracticeSentences(
+      fallbackPracticeSentences.where((s) => !picked.contains(s)),
+      count: 5 - picked.length,
+    ),
+  ];
+});
+
+/// Başarılı bir cümleyi kaydeder; XP ve rozetler yenilenir.
+Future<void> recordGoodSentence(WidgetRef ref, {required bool spoken}) async {
+  await SpeechRecords.addGood(
+    ref.read(sharedPreferencesProvider),
+    spoken: spoken,
+  );
+  ref.invalidate(gameProvider);
+}
+
 // --- Günün hikayesi ---------------------------------------------------------
 
 /// Bugünün hikayesi: varsa kayıttan devam eder, yoksa üretir.
@@ -733,11 +770,14 @@ final gameProvider = FutureProvider<GameState>((ref) async {
   ref.watch(weekPlanProvider);
   final prefs = ref.read(sharedPreferencesProvider);
   final match = MatchRecords.read(prefs);
+  final speech = SpeechRecords.read(prefs);
   final stats = await ref.read(repositoryProvider).gameStats(
         cardsReviewed: totalCardsReviewed(prefs),
         levelUps: prefs.getInt(levelUpsKey) ?? 0,
         matchXp: match.xp,
         bestMatches: match.bestMatches,
+        speechXp: speech.xp,
+        spokenGood: speech.spokenGood,
       );
   return GameState(stats);
 });

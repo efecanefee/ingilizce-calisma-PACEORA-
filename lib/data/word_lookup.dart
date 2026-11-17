@@ -55,6 +55,12 @@ String sentenceAt(String paragraph, int offset) {
   return paragraph.substring(start).trim();
 }
 
+/// Paragrafı cümlelere böler.
+List<String> splitSentences(String paragraph) => [
+  for (final m in RegExp(r'[^.!?]+[.!?]+["”’)]*').allMatches(paragraph))
+    if (m[0]!.trim().isNotEmpty) m[0]!.trim(),
+];
+
 /// Basit İngilizce çekim eklerini atarak olası kök biçimleri üretir.
 ///
 /// Sözlükçedeki "decide" ile metindeki "decided"ı eşleştirmeye yeter;

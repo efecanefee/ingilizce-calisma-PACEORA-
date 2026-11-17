@@ -11,6 +11,7 @@ import '../features/program/program_screen.dart';
 import '../features/progress/progress_screen.dart';
 import '../features/review/weekly_review_screen.dart';
 import '../features/settings/settings_screen.dart';
+import '../features/speaking/speaking_screen.dart';
 import '../features/story/story_screen.dart';
 import 'motion.dart';
 import 'shell.dart';
@@ -58,6 +59,14 @@ GoRouter createRouter({required bool onboardingDone}) {
       fullScreen('/mistakes', (_, _) => const MistakesScreen()),
       fullScreen('/match', (_, _) => const MatchScreen()),
       fullScreen('/profile', (_, _) => const ProfileScreen()),
+      fullScreen(
+        '/speaking',
+        (_, _) => const SpeakingScreen(mode: PracticeMode.speak),
+      ),
+      fullScreen(
+        '/dictation',
+        (_, _) => const SpeakingScreen(mode: PracticeMode.dictation),
+      ),
     ],
   );
 }

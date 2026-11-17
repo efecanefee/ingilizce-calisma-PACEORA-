@@ -38,8 +38,9 @@ class _NotEnoughCards extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // Küçük ekranda ve büyük yazıda sığmayabilir; kaydırılabilir.
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,

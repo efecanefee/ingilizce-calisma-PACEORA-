@@ -4,8 +4,10 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/motion.dart';
+import '../../app/speak_button.dart';
 import '../../app/theme.dart';
 import '../../data/providers.dart';
+import '../../data/speech_service.dart';
 import '../../data/story_models.dart';
 import '../../data/word_lookup.dart';
 import '../lesson/lesson_steps.dart';
@@ -94,11 +96,20 @@ class _StoryBody extends ConsumerWidget {
         ),
         const SizedBox(height: 6),
         item(
-          Text(
-            '${story.wordCount} kelime · ~$minutes dk okuma',
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  '${story.wordCount} kelime · ~$minutes dk okuma',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+              ),
+              _ListenStoryButton(
+                text: [story.title, ...story.paragraphs].join('\n'),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 12),
@@ -159,6 +170,50 @@ class _StoryBody extends ConsumerWidget {
               : const SizedBox.shrink(),
         ),
       ],
+    );
+  }
+}
+
+/// Hikayenin tamamını sesli okur; okurken durdurma düğmesine döner.
+class _ListenStoryButton extends ConsumerStatefulWidget {
+  const _ListenStoryButton({required this.text});
+
+  final String text;
+
+  @override
+  ConsumerState<_ListenStoryButton> createState() => _ListenStoryButtonState();
+}
+
+class _ListenStoryButtonState extends ConsumerState<_ListenStoryButton> {
+  late final SpeechService _speech = ref.read(speechServiceProvider);
+  var _playing = false;
+
+  @override
+  void dispose() {
+    if (_playing) _speech.stopSpeaking();
+    super.dispose();
+  }
+
+  Future<void> _toggle() async {
+    Haptics.tap();
+    if (_playing) {
+      setState(() => _playing = false);
+      await _speech.stopSpeaking();
+      return;
+    }
+    setState(() => _playing = true);
+    await _speech.speak(widget.text);
+    if (mounted) setState(() => _playing = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton.icon(
+      onPressed: _toggle,
+      icon: Icon(
+        _playing ? Icons.stop_circle_outlined : Icons.headphones_rounded,
+      ),
+      label: Text(_playing ? 'Durdur' : 'Dinle'),
     );
   }
 }
@@ -374,6 +429,7 @@ class _WordSheetState extends ConsumerState<WordSheet> {
                     fontWeight: FontWeight.w800,
                   ),
                 ),
+                SpeakButton(text: widget.word),
                 if (meaning != null && meaning.partOfSpeech.isNotEmpty)
                   Container(
                     padding: const EdgeInsets.symmetric(

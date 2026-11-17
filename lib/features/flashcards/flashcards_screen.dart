@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/motion.dart';
+import '../../app/speak_button.dart';
 import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../data/providers.dart';
@@ -232,18 +233,32 @@ class _CardFace extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Chip(
-            avatar: Icon(switch (card.source) {
-              'mistake' => Icons.replay,
-              'story' => Icons.auto_stories,
-              _ => Icons.auto_awesome,
-            }, size: 16),
-            label: Text(switch (card.source) {
-              'mistake' => 'Hata defterinden',
-              'story' => 'Hikayeden',
-              _ => 'Yeni kelime',
-            }),
-            visualDensity: VisualDensity.compact,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Flexible(
+                child: Chip(
+                  avatar: Icon(switch (card.source) {
+                    'mistake' => Icons.replay,
+                    'story' => Icons.auto_stories,
+                    _ => Icons.auto_awesome,
+                  }, size: 16),
+                  label: Text(switch (card.source) {
+                    'mistake' => 'Hata defterinden',
+                    'story' => 'Hikayeden',
+                    _ => 'Yeni kelime',
+                  }),
+                  visualDensity: VisualDensity.compact,
+                ),
+              ),
+              // Arka yüzde örnek cümle, ön yüzde kelime okunur.
+              SpeakButton(
+                text: back && card.exampleSentence.isNotEmpty
+                    ? card.exampleSentence
+                    : card.word,
+                color: !back && !isDark ? AppColors.graphite900 : null,
+              ),
+            ],
           ),
           const Spacer(),
           Text(

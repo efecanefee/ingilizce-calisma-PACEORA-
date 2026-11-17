@@ -19,6 +19,8 @@ class GameStats {
     this.levelUps = 0,
     this.matchXp = 0,
     this.bestMatches = 0,
+    this.speechXp = 0,
+    this.spokenGood = 0,
   });
 
   final int lessons;
@@ -44,6 +46,12 @@ class GameStats {
 
   /// Kelime Rallisi'nde tek turda yapılan en çok eşleşme.
   final int bestMatches;
+
+  /// Konuşma ve dinle-yaz pratiğinden kazanılan XP.
+  final int speechXp;
+
+  /// Başarıyla söylenen cümle sayısı.
+  final int spokenGood;
 }
 
 /// Bir dersin kazandırdığı XP — sonuç ekranında da aynı formül gösterilir.
@@ -69,7 +77,8 @@ int totalXp(GameStats s) =>
     s.cardsReviewed * xpPerCardReview +
     s.studiedDays * xpPerStudiedDay +
     s.levelUps * xpPerLevelUp +
-    s.matchXp;
+    s.matchXp +
+    s.speechXp;
 
 /// [level]'e ulaşmak için gereken toplam XP: 0, 100, 300, 600, 1000, …
 ///
@@ -239,6 +248,15 @@ const badges = <BadgeDef>[
     measure: _bestMatches,
   ),
   BadgeDef(
+    id: 'speaker_25',
+    title: 'Bülbül',
+    description: 'Konuşma pratiğinde 25 cümleyi doğru söyle',
+    icon: Icons.record_voice_over_rounded,
+    color: Color(0xFFF472B6),
+    target: 25,
+    measure: _spokenGood,
+  ),
+  BadgeDef(
     id: 'streak_30',
     title: 'Yanardağ',
     description: '30 gün üst üste çalış',
@@ -257,6 +275,7 @@ int _cardsReviewed(GameStats s) => s.cardsReviewed;
 int _mature(GameStats s) => s.cardsMature;
 int _levelUps(GameStats s) => s.levelUps;
 int _bestMatches(GameStats s) => s.bestMatches;
+int _spokenGood(GameStats s) => s.spokenGood;
 
 /// Ekranlara verilen hazır ödül durumu.
 class GameState {

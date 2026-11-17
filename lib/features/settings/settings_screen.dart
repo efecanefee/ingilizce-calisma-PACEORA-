@@ -998,6 +998,7 @@ class _DataGroupState extends ConsumerState<_DataGroup> {
             key.startsWith('plan_offline_') ||
             // Kelime Rallisi XP'si ve rekorları, profil görünümü.
             key.startsWith('match_') ||
+            key.startsWith('speech_') ||
             key.startsWith('profile_') ||
             key == levelUpsKey ||
             key == 'seen_player_level' ||

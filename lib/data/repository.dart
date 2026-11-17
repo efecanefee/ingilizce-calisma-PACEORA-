@@ -346,6 +346,12 @@ class Repository {
     return [...weak, ...strong].take(limit).toList();
   }
 
+  /// Kartların örnek cümleleri (boş olanlar hariç); konuşma pratiği için.
+  Future<List<String>> flashcardExamples() async => [
+    for (final c in await _db.select(_db.flashcards).get())
+      if (c.exampleSentence.trim().isNotEmpty) c.exampleSentence.trim(),
+  ];
+
   /// Verilen kartların tekrarını bugüne çeker (ileri tarihliyse).
   Future<void> pullFlashcardsToToday(Iterable<int> ids, {DateTime? now}) async {
     if (ids.isEmpty) return;
@@ -560,6 +566,8 @@ class Repository {
     int levelUps = 0,
     int matchXp = 0,
     int bestMatches = 0,
+    int speechXp = 0,
+    int spokenGood = 0,
   }) async {
     final lessons = await completedLessons();
     final stories = (await _db.select(_db.stories).get())
@@ -585,6 +593,8 @@ class Repository {
       levelUps: levelUps,
       matchXp: matchXp,
       bestMatches: bestMatches,
+      speechXp: speechXp,
+      spokenGood: spokenGood,
     );
   }
 
