@@ -14,6 +14,7 @@ import '../../data/database.dart';
 import '../../data/profile_style.dart';
 import '../../data/providers.dart';
 import '../../data/rewards.dart';
+import '../../data/streak_freeze.dart';
 
 /// Ana ekran ("Bugün" sekmesi): karşılama, bugünün dersi, günlük hedef,
 /// haftanın özeti ve pratik alanları.
@@ -196,7 +197,7 @@ class _HeroCardState extends State<_HeroCard>
                   children: [
                     _HeroAvatar(level: level?.level ?? 1),
                     const Spacer(),
-                    _StreakChip(streak: user.streak),
+                    const _StreakChip(),
                   ],
                 ),
                 const SizedBox(height: 14),
@@ -249,46 +250,245 @@ class _HeroAvatar extends ConsumerWidget {
   }
 }
 
-class _StreakChip extends StatelessWidget {
-  const _StreakChip({required this.streak});
+/// Seri rozeti: dokununca seri koruma sayfası açılır. Gün kaçırıldıysa ve
+/// haklar seriyi koruyorsa alev yerine buz görünür.
+class _StreakChip extends ConsumerWidget {
+  const _StreakChip();
 
-  final int streak;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final display = ref.watch(streakDisplayProvider);
+    final owned = ref.watch(freezeProvider).owned;
+    final streak = display.streak;
+    final protected = display.status == StreakStatus.protected;
+
+    return Semantics(
+      button: true,
+      label: 'Seri koruma',
+      child: GestureDetector(
+        onTap: () => showFreezeSheet(context),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: protected
+                  ? const Color(0xFF7DD3FC)
+                  : Colors.white.withValues(alpha: 0.15),
+            ),
+          ),
+          child: _streakRow(theme, streak, protected, owned),
+        ),
+      ),
+    );
+  }
+
+  Widget _streakRow(ThemeData theme, int streak, bool protected, int owned) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (protected)
+          const Icon(Icons.ac_unit_rounded, color: Color(0xFF7DD3FC))
+        else
+          PulsingFlame(active: streak > 0),
+        const SizedBox(width: 6),
+        // Seri arttığında yeni sayı aşağıdan kayarak gelir.
+        AnimatedSwitcher(
+          duration: Motion.medium,
+          transitionBuilder: (child, animation) => SlideTransition(
+            position: Tween(
+              begin: const Offset(0, 0.6),
+              end: Offset.zero,
+            ).animate(animation),
+            child: FadeTransition(opacity: animation, child: child),
+          ),
+          child: Text(
+            '$streak gün',
+            key: ValueKey(streak),
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+            ),
+          ),
+        ),
+        // Eldeki haklar küçük buz taneleriyle.
+        for (var i = 0; i < owned; i++)
+          const Padding(
+            padding: EdgeInsets.only(left: 4),
+            child: Icon(
+              Icons.ac_unit_rounded,
+              size: 14,
+              color: Color(0xFF7DD3FC),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// Seri koruma: haklar, harcanabilir XP ve satın alma.
+Future<void> showFreezeSheet(BuildContext context) {
+  Haptics.tap();
+  return showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    isScrollControlled: true,
+    builder: (_) => const _FreezeSheet(),
+  );
+}
+
+class _FreezeSheet extends ConsumerStatefulWidget {
+  const _FreezeSheet();
+
+  @override
+  ConsumerState<_FreezeSheet> createState() => _FreezeSheetState();
+}
+
+class _FreezeSheetState extends ConsumerState<_FreezeSheet> {
+  var _busy = false;
+
+  Future<void> _buy() async {
+    setState(() => _busy = true);
+    final ok = await buyFreeze(ref);
+    if (!mounted) return;
+    setState(() => _busy = false);
+    if (ok) Haptics.success();
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          PulsingFlame(active: streak > 0),
-          const SizedBox(width: 6),
-          // Seri arttığında yeni sayı aşağıdan kayarak gelir.
-          AnimatedSwitcher(
-            duration: Motion.medium,
-            transitionBuilder: (child, animation) => SlideTransition(
-              position: Tween(
-                begin: const Offset(0, 0.6),
-                end: Offset.zero,
-              ).animate(animation),
-              child: FadeTransition(opacity: animation, child: child),
+    const ice = Color(0xFF7DD3FC);
+    final freeze = ref.watch(freezeProvider);
+    final display = ref.watch(streakDisplayProvider);
+    final xp = ref.watch(gameProvider).value?.level.xp ?? 0;
+    final balance = freeze.balance(xp);
+    final full = freeze.owned >= maxFreezes;
+    final muted = theme.colorScheme.onSurface.withValues(alpha: 0.7);
+
+    final statusText = switch (display.status) {
+      StreakStatus.done => 'Bugünü tamamladın, serin güvende.',
+      StreakStatus.pending =>
+        'Bugün bir ders bitirirsen serin ${display.streak + 1} güne çıkar.',
+      StreakStatus.protected =>
+        '${display.freezesNeeded} gün kaçırdın ama hakların serini koruyor. '
+            'Bugün çalışırsan ${display.freezesNeeded} hak harcanır, serin '
+            'sürer.',
+      StreakStatus.broken =>
+        'Serin koptu. Bugün çalışarak yeni bir seri başlat; bir dahaki sefere '
+            'hakların seni korusun.',
+    };
+
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                for (var i = 0; i < maxFreezes; i++)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: AnimatedContainer(
+                      duration: Motion.medium,
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: i < freeze.owned
+                            ? ice.withValues(alpha: 0.2)
+                            : theme.colorScheme.surfaceContainerHighest,
+                        border: Border.all(
+                          color: i < freeze.owned
+                              ? ice
+                              : theme.colorScheme.outlineVariant,
+                          width: 2,
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.ac_unit_rounded,
+                        size: 32,
+                        color: i < freeze.owned
+                            ? ice
+                            : theme.colorScheme.outline,
+                      ),
+                    ),
+                  ),
+              ],
             ),
-            child: Text(
-              '$streak gün',
-              key: ValueKey(streak),
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
+            const SizedBox(height: 16),
+            Text(
+              'Seri koruma',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w800,
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 6),
+            Text(
+              'Bir gün çalışamazsan hakkın o günü karşılar, serin bozulmaz. '
+              'En fazla $maxFreezes hak tutabilirsin; hak, gün kaçırıp '
+              'sonra çalıştığında kendiliğinden harcanır.',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(color: muted),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    display.status == StreakStatus.protected
+                        ? Icons.ac_unit_rounded
+                        : Icons.local_fire_department_rounded,
+                    color: display.status == StreakStatus.protected
+                        ? ice
+                        : AppColors.warning,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(statusText, style: theme.textTheme.bodyMedium),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: _busy || !freeze.canBuy(xp) ? null : _buy,
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(52),
+                ),
+                icon: const Icon(Icons.ac_unit_rounded),
+                label: Text(
+                  full
+                      ? 'Haklar dolu ($maxFreezes/$maxFreezes)'
+                      : 'Hak al · $freezeCost XP',
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              full
+                  ? 'Harcanabilir XP: $balance'
+                  : balance >= freezeCost
+                  ? 'Harcanabilir XP: $balance. Seviyen düşmez.'
+                  : 'Harcanabilir XP: $balance. '
+                        '${freezeCost - balance} XP daha kazanınca hak '
+                        'alabilirsin.',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodySmall?.copyWith(color: muted),
+            ),
+          ],
+        ),
       ),
     );
   }

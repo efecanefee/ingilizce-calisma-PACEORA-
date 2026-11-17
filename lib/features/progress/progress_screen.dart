@@ -102,7 +102,10 @@ class _ProgressBody extends StatelessWidget {
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: _StreakCalendar(days: data.studiedDays),
+            child: _StreakCalendar(
+              days: data.studiedDays,
+              frozen: data.frozenDays,
+            ),
           ),
         ).entrance(5),
         const SizedBox(height: 28),
@@ -473,9 +476,12 @@ class _StatTile extends StatelessWidget {
 
 /// Pazartesiden başlayan 5 haftalık ızgara; bugün çerçeveli.
 class _StreakCalendar extends StatelessWidget {
-  const _StreakCalendar({required this.days});
+  const _StreakCalendar({required this.days, this.frozen = const {}});
 
   final Set<DateTime> days;
+
+  /// Seri dondurma hakkıyla korunan günler; buzla gösterilir.
+  final Set<DateTime> frozen;
 
   static const _weeks = 5;
   static const _labels = ['Pt', 'Sa', 'Ça', 'Pe', 'Cu', 'Ct', 'Pz'];
@@ -518,6 +524,7 @@ class _StreakCalendar extends StatelessWidget {
                         firstMonday.day + w * 7 + d,
                       );
                       final studied = days.contains(date);
+                      final iced = !studied && frozen.contains(date);
                       final isToday = date == today;
                       final future = date.isAfter(today);
 
@@ -528,6 +535,10 @@ class _StreakCalendar extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: studied
                                 ? lit
+                                : iced
+                                ? const Color(
+                                    0xFF7DD3FC,
+                                  ).withValues(alpha: 0.35)
                                 : future
                                 ? Colors.transparent
                                 : theme.colorScheme.surfaceContainerHighest,
@@ -540,22 +551,30 @@ class _StreakCalendar extends StatelessWidget {
                                 : null,
                           ),
                           child: Center(
-                            child: Text(
-                              '${date.day}',
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                fontWeight: studied
-                                    ? FontWeight.w800
-                                    : FontWeight.w400,
-                                // Açık temada zemin koyu yeşil: yazı beyaz.
-                                color: studied
-                                    ? (isDark
-                                          ? AppColors.graphite900
-                                          : Colors.white)
-                                    : theme.colorScheme.onSurface.withValues(
-                                        alpha: future ? 0.25 : 0.6,
-                                      ),
-                              ),
-                            ),
+                            child: iced
+                                ? const Icon(
+                                    Icons.ac_unit_rounded,
+                                    size: 14,
+                                    color: Color(0xFF0EA5E9),
+                                    semanticLabel: 'Korunan gün',
+                                  )
+                                : Text(
+                                    '${date.day}',
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      fontWeight: studied
+                                          ? FontWeight.w800
+                                          : FontWeight.w400,
+                                      // Açık temada zemin koyu yeşil: yazı beyaz.
+                                      color: studied
+                                          ? (isDark
+                                                ? AppColors.graphite900
+                                                : Colors.white)
+                                          : theme.colorScheme.onSurface
+                                                .withValues(
+                                                  alpha: future ? 0.25 : 0.6,
+                                                ),
+                                    ),
+                                  ),
                           ),
                         ),
                       );

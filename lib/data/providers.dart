@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -8,6 +10,7 @@ import 'lesson_models.dart';
 import 'match_game.dart';
 import 'pronunciation.dart';
 import 'roleplay.dart';
+import 'streak_freeze.dart';
 import 'reminder_service.dart';
 import 'repository.dart';
 import 'review_models.dart';
@@ -164,9 +167,15 @@ class WeekPlanNotifier extends AsyncNotifier<WeekPlan> {
     state = await AsyncValue.guard(_loadOrGenerate);
   }
 
-  /// Günü tamamlandı işaretler, streak'i günceller.
+  /// Günü tamamlandı işaretler, streak'i günceller. Kaçırılan günler seri
+  /// dondurma haklarıyla karşılanırsa haklar harcanır.
   Future<void> completeDay(WeeklyPlanDay day) async {
-    await ref.read(repositoryProvider).completeDay(day);
+    final prefs = ref.read(sharedPreferencesProvider);
+    final bridged = await ref
+        .read(repositoryProvider)
+        .completeDay(day, freezes: FreezeState.read(prefs).owned);
+    await FreezeState.consume(prefs, bridged);
+    if (bridged.isNotEmpty) ref.invalidate(freezeProvider);
     await ref.read(profileProvider.notifier).refresh();
     state = await AsyncValue.guard(_load);
   }
@@ -491,6 +500,37 @@ Future<void> recordGoodSentence(WidgetRef ref, {required bool spoken}) async {
   ref.invalidate(gameProvider);
 }
 
+// --- Seri dondurma -----------------------------------------------------------
+
+/// Eldeki haklar ve korunan günler; satın alma ve harcamada geçersiz kılınır.
+final freezeProvider = Provider<FreezeState>(
+  (ref) => FreezeState.read(ref.read(sharedPreferencesProvider)),
+);
+
+/// Ana ekranda gösterilecek seri ve durumu.
+final streakDisplayProvider =
+    Provider<({int streak, StreakStatus status, int freezesNeeded})>((ref) {
+      final profile = ref.watch(profileProvider).value;
+      final freezes = ref.watch(freezeProvider).owned;
+      return displayStreak(
+        stored: profile?.streak ?? 0,
+        lastStudy: profile?.lastStudyDate,
+        today: DateTime.now(),
+        freezes: freezes,
+      );
+    });
+
+/// Bir hak satın alır; harcanabilir XP yetmezse ya da sınırdaysa false.
+Future<bool> buyFreeze(WidgetRef ref) async {
+  final game = await ref.read(gameProvider.future);
+  final ok = await FreezeState.buy(
+    ref.read(sharedPreferencesProvider),
+    totalXp: game.level.xp,
+  );
+  if (ok) ref.invalidate(freezeProvider);
+  return ok;
+}
+
 // --- Rol yapma sohbeti -------------------------------------------------------
 
 class RoleplayState {
@@ -767,6 +807,7 @@ final storyProvider = AsyncNotifierProvider<StoryNotifier, StoryState>(
 class ProgressData {
   const ProgressData({
     required this.studiedDays,
+    this.frozenDays = const {},
     required this.weeklyScores,
     required this.currentStreak,
     required this.bestStreak,
@@ -777,6 +818,9 @@ class ProgressData {
   });
 
   final Set<DateTime> studiedDays;
+
+  /// Seri dondurma hakkıyla korunan günler.
+  final Set<DateTime> frozenDays;
 
   /// Son haftaların ortalama ders skoru, eskiden yeniye. Ders yoksa null.
   final List<({DateTime weekStart, double? average})> weeklyScores;
@@ -820,11 +864,22 @@ final progressProvider = FutureProvider<ProgressData>((ref) async {
       }(),
   ];
 
+  final freeze = ref.watch(freezeProvider);
+  final shown = displayStreak(
+    stored: profile?.streak ?? 0,
+    lastStudy: profile?.lastStudyDate,
+    today: DateTime.now(),
+    freezes: freeze.owned,
+  );
+
   return ProgressData(
     studiedDays: days,
+    frozenDays: freeze.frozenDays,
     weeklyScores: weeklyScores,
-    currentStreak: profile?.streak ?? 0,
-    bestStreak: bestStreakOf(days),
+    currentStreak: shown.streak,
+    // Hakla korunan günler takvimde boşluk bırakır; profildeki seri de
+    // hesaba katılır.
+    bestStreak: max(bestStreakOf(days), profile?.streak ?? 0),
     lessonsCompleted: lessons.length,
     totalMinutes:
         (lessons.fold<int>(0, (sum, l) => sum + l.durationSeconds) / 60).round(),

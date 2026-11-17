@@ -291,7 +291,10 @@ class _ProfileHeader extends ConsumerWidget {
           const SizedBox(height: 18),
           Row(
             children: [
-              _HeaderStat(value: user.streak, label: 'gün seri'),
+              _HeaderStat(
+                value: ref.watch(streakDisplayProvider).streak,
+                label: 'gün seri',
+              ),
               _HeaderStat(value: game?.stats.lessons ?? 0, label: 'ders'),
               _HeaderStat(value: cards?.total ?? 0, label: 'kart'),
               _HeaderStat(value: game?.level.xp ?? 0, label: 'XP'),
@@ -1000,6 +1003,7 @@ class _DataGroupState extends ConsumerState<_DataGroup> {
             key.startsWith('match_') ||
             key.startsWith('speech_') ||
             key.startsWith('roleplay_') ||
+            key.startsWith('streak_') ||
             key.startsWith('profile_') ||
             key == levelUpsKey ||
             key == 'seen_player_level' ||
@@ -1017,6 +1021,7 @@ class _DataGroupState extends ConsumerState<_DataGroup> {
       ref.invalidate(weeklyReportsProvider);
       ref.invalidate(gameProvider);
       ref.invalidate(profileStyleProvider);
+      ref.invalidate(freezeProvider);
 
       router.go('/onboarding');
     } finally {

@@ -9,6 +9,7 @@ import 'review_models.dart';
 import 'rewards.dart';
 import 'srs.dart';
 import 'story_models.dart';
+import 'streak_freeze.dart';
 
 /// Haftalık plandaki tek bir günün konusu — henüz veritabanına yazılmamış hali.
 class PlanDaySpec {
@@ -141,8 +142,16 @@ class Repository {
   }
 
   /// Günü tamamlandı işaretler ve profildeki streak'i günceller.
-  Future<void> completeDay(WeeklyPlanDay day, {DateTime? now}) async {
+  ///
+  /// [freezes]: eldeki seri dondurma hakları. Kaçırılan günler bunlarla
+  /// karşılanırsa seri sürer; harcanan hakların günleri döner.
+  Future<List<DateTime>> completeDay(
+    WeeklyPlanDay day, {
+    DateTime? now,
+    int freezes = 0,
+  }) async {
     final today = dayOf(now ?? DateTime.now());
+    var bridged = const <DateTime>[];
     await _db.transaction(() async {
       await (_db.update(_db.weeklyPlanDays)..where((t) => t.id.equals(day.id)))
           .write(const WeeklyPlanDaysCompanion(status: Value('completed')));
@@ -150,20 +159,22 @@ class Repository {
       final current = await profile();
       if (current == null) return;
 
+      final next = nextStreakWithFreezes(
+        current: current.streak,
+        lastStudy: current.lastStudyDate,
+        today: today,
+        freezes: freezes,
+      );
+      bridged = next.bridged;
       await (_db.update(_db.userProfiles)..where((t) => t.id.equals(current.id)))
           .write(
         UserProfilesCompanion(
-          streak: Value(
-            nextStreak(
-              current: current.streak,
-              lastStudy: current.lastStudyDate,
-              today: today,
-            ),
-          ),
+          streak: Value(next.streak),
           lastStudyDate: Value(today),
         ),
       );
     });
+    return bridged;
   }
 
   // --- Günlük ders ---------------------------------------------------------
