@@ -2,6 +2,7 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:paceora/app/avatar.dart';
 import 'package:paceora/data/database.dart';
 import 'package:paceora/data/providers.dart';
 import 'package:paceora/data/repository.dart';
@@ -76,6 +77,21 @@ void main() {
         expect(tester.takeException(), isNull, reason: tab);
         await scrollThrough(tester);
       }
+
+      // Profil ve görünüm düzenleyici.
+      await tester.tap(find.text('Bugün'));
+      await advance(tester);
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, 4000));
+      await advance(tester);
+      await tester.tap(find.byType(PlayerAvatar).first);
+      await advance(tester);
+      expect(find.text('Vitrin'), findsOneWidget);
+      expect(tester.takeException(), isNull, reason: 'profil');
+      await scrollThrough(tester);
+      await tester.tap(find.byTooltip('Görünümü düzenle'));
+      await advance(tester);
+      expect(find.text('ÇERÇEVE'), findsOneWidget);
+      expect(tester.takeException(), isNull, reason: 'düzenleyici');
     });
   }
 }

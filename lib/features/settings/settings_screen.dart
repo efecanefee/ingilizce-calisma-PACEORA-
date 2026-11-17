@@ -9,6 +9,7 @@ import '../../app/motion.dart';
 import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../data/gemini_service.dart';
+import '../../data/profile_style.dart';
 import '../../data/providers.dart';
 import '../../data/rewards.dart';
 import '../../data/settings_providers.dart';
@@ -995,6 +996,9 @@ class _DataGroupState extends ConsumerState<_DataGroup> {
       for (final key in prefs.getKeys().toList()) {
         if (key.startsWith('cards_reviewed_') ||
             key.startsWith('plan_offline_') ||
+            // Kelime Rallisi XP'si ve rekorları, profil görünümü.
+            key.startsWith('match_') ||
+            key.startsWith('profile_') ||
             key == levelUpsKey ||
             key == 'seen_player_level' ||
             key == 'seen_badges') {
@@ -1010,6 +1014,7 @@ class _DataGroupState extends ConsumerState<_DataGroup> {
       ref.invalidate(progressProvider);
       ref.invalidate(weeklyReportsProvider);
       ref.invalidate(gameProvider);
+      ref.invalidate(profileStyleProvider);
 
       router.go('/onboarding');
     } finally {

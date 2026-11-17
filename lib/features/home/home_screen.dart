@@ -5,11 +5,13 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/avatar.dart';
 import '../../app/constants.dart';
 import '../../app/logo.dart';
 import '../../app/motion.dart';
 import '../../app/theme.dart';
 import '../../data/database.dart';
+import '../../data/profile_style.dart';
 import '../../data/providers.dart';
 import '../../data/rewards.dart';
 
@@ -188,34 +190,30 @@ class _HeroCardState extends State<_HeroCard>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Avatar ve seri üstte; selam altta tam genişlikte. Yan yana
+                // dizildiklerinde ad ve hedef satırı ikiye kırılıyordu.
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Merhaba, ${user.name}',
-                            style: theme.textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.w800,
-                              color: onHero,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            'Seviye ${DifficultyLevel.fromCode(user.level).label} · '
-                            'günde ${user.dailyMinutes} dk',
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              color: onHero.withValues(alpha: 0.75),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
+                    _HeroAvatar(level: level?.level ?? 1),
+                    const Spacer(),
                     _StreakChip(streak: user.streak),
                   ],
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  'Merhaba, ${user.name}',
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: onHero,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Seviye ${DifficultyLevel.fromCode(user.level).label} · '
+                  'günde ${user.dailyMinutes} dk',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: onHero.withValues(alpha: 0.75),
+                  ),
                 ),
                 const SizedBox(height: 20),
                 if (level != null) _XpBar(level: level),
@@ -223,6 +221,29 @@ class _HeroCardState extends State<_HeroCard>
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Karşılama kartındaki avatar; dokununca profil açılır.
+class _HeroAvatar extends ConsumerWidget {
+  const _HeroAvatar({required this.level});
+
+  final int level;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final style = ref.watch(profileStyleProvider);
+    return Semantics(
+      button: true,
+      label: 'Profilim',
+      child: GestureDetector(
+        onTap: () {
+          Haptics.tap();
+          context.push('/profile');
+        },
+        child: PlayerAvatar.of(style, level: level, size: 52),
       ),
     );
   }

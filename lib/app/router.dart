@@ -6,6 +6,7 @@ import '../features/lesson/lesson_screen.dart';
 import '../features/match/match_screen.dart';
 import '../features/mistakes/mistakes_screen.dart';
 import '../features/onboarding/onboarding_screen.dart';
+import '../features/profile/profile_screen.dart';
 import '../features/program/program_screen.dart';
 import '../features/progress/progress_screen.dart';
 import '../features/review/weekly_review_screen.dart';
@@ -56,6 +57,7 @@ GoRouter createRouter({required bool onboardingDone}) {
       fullScreen('/review', (_, _) => const WeeklyReviewScreen()),
       fullScreen('/mistakes', (_, _) => const MistakesScreen()),
       fullScreen('/match', (_, _) => const MatchScreen()),
+      fullScreen('/profile', (_, _) => const ProfileScreen()),
     ],
   );
 }

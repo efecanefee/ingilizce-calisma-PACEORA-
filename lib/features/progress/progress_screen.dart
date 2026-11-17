@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/badge_medal.dart';
 import '../../app/motion.dart';
 import '../../app/theme.dart';
 import '../../data/providers.dart';
@@ -271,45 +272,8 @@ class _BadgeGrid extends StatelessWidget {
 
   final GameStats stats;
 
-  void _show(BuildContext context, BadgeDef badge) {
-    Haptics.tap();
-    final theme = Theme.of(context);
-    final earned = badge.earnedBy(stats);
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      builder: (_) => SafeArea(
-        // Kısa ekranda taşmasın diye kaydırılabilir.
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 0, 24, 28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _BadgeMedal(badge: badge, earned: earned, size: 84),
-              const SizedBox(height: 16),
-              Text(
-                badge.title,
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(badge.description, textAlign: TextAlign.center),
-              const SizedBox(height: 14),
-              Text(
-                earned
-                    ? 'Kazandın!'
-                    : 'İlerleme: ${badge.progressOf(stats)}/${badge.target}',
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: earned ? AppColors.success : theme.colorScheme.primary,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  void _show(BuildContext context, BadgeDef badge) =>
+      showBadgeSheet(context, badge: badge, stats: stats);
 
   @override
   Widget build(BuildContext context) {
@@ -348,7 +312,7 @@ class _BadgeGrid extends StatelessWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          _BadgeMedal(badge: badge, earned: earned, size: 48),
+                          BadgeMedal(badge: badge, earned: earned, size: 48),
                           const SizedBox(height: 8),
                           Text(
                             badge.title,
@@ -400,58 +364,6 @@ class _BadgeGrid extends StatelessWidget {
           ),
       ],
     );
-  }
-}
-
-class _BadgeMedal extends StatelessWidget {
-  const _BadgeMedal({
-    required this.badge,
-    required this.earned,
-    required this.size,
-  });
-
-  final BadgeDef badge;
-  final bool earned;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final medal = Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: earned
-            ? RadialGradient(
-                colors: [badge.color, badge.color.withValues(alpha: 0.6)],
-              )
-            : null,
-        color: earned ? null : theme.colorScheme.surfaceContainerHighest,
-        boxShadow: earned
-            ? [
-                BoxShadow(
-                  color: badge.color.withValues(alpha: 0.45),
-                  blurRadius: 12,
-                ),
-              ]
-            : null,
-      ),
-      child: Icon(
-        earned ? badge.icon : Icons.lock_rounded,
-        size: size * 0.5,
-        color: earned ? AppColors.graphite900 : theme.colorScheme.outline,
-      ),
-    );
-    return earned
-        ? medal
-              .animate(onPlay: (c) => c.repeat())
-              .shimmer(
-                delay: 3.seconds,
-                duration: 1.seconds,
-                color: Colors.white,
-              )
-        : medal;
   }
 }
 
