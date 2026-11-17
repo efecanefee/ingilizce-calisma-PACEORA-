@@ -28,12 +28,14 @@ const _lessonJson = '''
 }
 ''';
 
-/// İstek sayısını da tutan sahte Gemini istemcisi.
+/// Üretim isteği sayısını da tutan sahte Gemini istemcisi.
 class _StubGemini {
   int requestCount = 0;
 
   http.Client get client => MockClient((request) async {
-        requestCount++;
+        // Model listesi (GET) içerik üretimi değildir; yalnızca
+        // generateContent çağrıları sayılır.
+        if (request.method == 'POST') requestCount++;
         final body = jsonEncode({
           'candidates': [
             {

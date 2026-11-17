@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
 import '../app/constants.dart';
 import 'gemini_json.dart';
+import 'gemini_models.dart';
 import 'lesson_models.dart';
 import 'repository.dart';
 import 'review_models.dart';
@@ -14,7 +16,11 @@ import 'story_models.dart';
 /// [offline] true ise plan Gemini'den değil, yerleşik yedek programdan geldi
 /// (anahtar yok, ağ hatası veya bozuk yanıt). Arayüz bunu kullanıcıya belli eder.
 class WeeklyPlanResult {
-  const WeeklyPlanResult({required this.days, required this.offline, this.error});
+  const WeeklyPlanResult({
+    required this.days,
+    required this.offline,
+    this.error,
+  });
 
   final List<PlanDaySpec> days;
   final bool offline;
@@ -35,20 +41,154 @@ class DailyLessonResult {
   bool get isSuccess => lesson != null;
 }
 
+/// "Bağlantıyı test et" sonucu.
+class GeminiConnectionReport {
+  const GeminiConnectionReport({
+    required this.ok,
+    this.model,
+    this.availableModels = const [],
+    this.listedFromApi = false,
+    this.elapsed,
+    this.error,
+  });
+
+  final bool ok;
+
+  /// Üretimi başaran model.
+  final String? model;
+
+  /// Tercih sırasıyla denenecek modeller.
+  final List<String> availableModels;
+
+  /// false ise liste Google'dan alınamadı, yerleşik yedek liste kullanıldı.
+  final bool listedFromApi;
+  final Duration? elapsed;
+  final String? error;
+}
+
 /// Gemini ile içerik üretimi.
 ///
 /// [apiKey] varsayılan olarak derleme zamanında verilen anahtardır
 /// (`--dart-define-from-file=env.json`), ancak kullanıcı Ayarlar'dan kendi
 /// anahtarını girerse `geminiServiceProvider` onu geçirir.
 class GeminiService {
-  GeminiService({http.Client? client, String? apiKey})
-      : _client = client ?? http.Client(),
-        _apiKey = (apiKey ?? AppConstants.geminiApiKey).trim();
+  GeminiService({
+    http.Client? client,
+    String? apiKey,
+    this.retryDelay = const Duration(milliseconds: 1500),
+  }) : _client = client ?? http.Client(),
+       _apiKey = (apiKey ?? AppConstants.geminiApiKey).trim();
 
   final http.Client _client;
   final String _apiKey;
 
+  /// Geçici sunucu hatasından sonra aynı modeli yeniden denemeden önceki
+  /// bekleme. Testlerde sıfırlanır.
+  final Duration retryDelay;
+
+  /// Anahtarın erişebildiği, sıralanmış modeller; ilk başarılı listeden sonra
+  /// önbellekte tutulur.
+  List<String>? _models;
+
+  /// Son başarılı isteğin modeli — önce o denenir.
+  String? _workingModel;
+
+  /// Düşünme ayarı reddedildiğinde false olur ve bir daha gönderilmez.
+  bool _thinkingConfigAccepted = true;
+
   bool get hasApiKey => _apiKey.isNotEmpty;
+
+  Map<String, String> get _headers => {
+    'Content-Type': 'application/json',
+    // Anahtar URL'de değil başlıkta: adres kayıtlarına düşmez.
+    'x-goog-api-key': _apiKey,
+  };
+
+  /// Anahtarın erişebildiği ders üretimine uygun modeller, tercih sırasıyla.
+  ///
+  /// Liste alınamazsa yerleşik yedek listeye düşer; o durumda önbelleğe
+  /// alınmaz, bir sonraki istekte yeniden sorulur.
+  Future<({List<String> models, int? status, String? error})>
+  _availableModels() async {
+    final cached = _models;
+    if (cached != null) return (models: cached, status: 200, error: null);
+    try {
+      final response = await _client
+          .get(
+            Uri.parse('${AppConstants.geminiBaseUrl}?pageSize=200'),
+            headers: _headers,
+          )
+          .timeout(const Duration(seconds: 15));
+      if (response.statusCode == 200) {
+        final ranked = rankFlashModels(
+          parseModelList(utf8.decode(response.bodyBytes)),
+        );
+        if (ranked.isNotEmpty) {
+          _models = ranked;
+          return (models: ranked, status: 200, error: null);
+        }
+      }
+      return (
+        models: AppConstants.geminiFallbackModels,
+        status: response.statusCode,
+        error: response.statusCode == 200
+            ? 'Uygun model bulunamadı'
+            : _errorMessage(response.statusCode),
+      );
+    } catch (e) {
+      return (
+        models: AppConstants.geminiFallbackModels,
+        status: null,
+        error: _networkError(e),
+      );
+    }
+  }
+
+  /// Ayarlar'daki "Bağlantıyı test et" için uçtan uca kontrol.
+  ///
+  /// Önce anahtarla model listesi istenir, sonra seçilen modelle küçük bir
+  /// üretim yapılır ve süre ölçülür.
+  Future<GeminiConnectionReport> testConnection() async {
+    if (!hasApiKey) {
+      return const GeminiConnectionReport(
+        ok: false,
+        error: 'Tanımlı API anahtarı yok',
+      );
+    }
+    _models = null;
+    final listing = await _availableModels();
+    if (listing.status == 400 ||
+        listing.status == 401 ||
+        listing.status == 403) {
+      return GeminiConnectionReport(ok: false, error: listing.error);
+    }
+
+    final watch = Stopwatch()..start();
+    final response = await _post(
+      prompt: 'Return {"ok": true}.',
+      schema: _pingSchema,
+      timeout: const Duration(seconds: 45),
+      temperature: 0,
+    );
+    watch.stop();
+
+    return GeminiConnectionReport(
+      ok: response.body != null,
+      model: _workingModel,
+      availableModels: listing.models,
+      listedFromApi: listing.error == null,
+      elapsed: watch.elapsed,
+      error: response.error,
+    );
+  }
+
+  static const Map<String, dynamic> _pingSchema = {
+    'type': 'OBJECT',
+    'properties': {
+      'ok': {'type': 'BOOLEAN'},
+    },
+    'required': ['ok'],
+  };
 
   void dispose() => _client.close();
 
@@ -64,7 +204,7 @@ class GeminiService {
     final response = await _post(
       prompt: _planPrompt(name: name, level: level, dailyMinutes: dailyMinutes),
       schema: _planSchema,
-      timeout: const Duration(seconds: 30),
+      timeout: const Duration(seconds: 60),
     );
 
     if (response.body == null) {
@@ -109,7 +249,7 @@ class GeminiService {
       ),
       schema: _lessonSchema,
       // Ders plandan çok daha büyük bir yanıt; daha uzun süre tanınıyor.
-      timeout: const Duration(seconds: 60),
+      timeout: const Duration(seconds: 90),
       temperature: 0.9,
     );
 
@@ -145,14 +285,18 @@ class GeminiService {
         targetWords: targetWords,
       ),
       schema: _storySchema,
-      timeout: const Duration(seconds: 45),
+      timeout: const Duration(seconds: 75),
       temperature: 1.0,
     );
 
-    final story =
-        response.body == null ? null : parseDailyStoryResponse(response.body!);
+    final story = response.body == null
+        ? null
+        : parseDailyStoryResponse(response.body!);
     if (story == null) {
-      return (story: fallbackStory(level, date ?? DateTime.now()), offline: true);
+      return (
+        story: fallbackStory(level, date ?? DateTime.now()),
+        offline: true,
+      );
     }
     return (story: story, offline: false);
   }
@@ -175,12 +319,13 @@ class GeminiService {
         levelDelta: levelDelta,
       ),
       schema: _reportSchema,
-      timeout: const Duration(seconds: 30),
+      timeout: const Duration(seconds: 60),
       temperature: 0.7,
     );
 
-    final commentary =
-        response.body == null ? null : parseReportResponse(response.body!);
+    final commentary = response.body == null
+        ? null
+        : parseReportResponse(response.body!);
     if (commentary == null) {
       return (commentary: localCommentary(stats, levelDelta), offline: true);
     }
@@ -203,7 +348,7 @@ class GeminiService {
     final words = targetWords.isEmpty
         ? ''
         : '\nHikayede şu kelimelerden olabildiğince çoğunu doğal biçimde kullan: '
-            '${targetWords.join(", ")}.\n';
+              '${targetWords.join(", ")}.\n';
 
     return '''
 Sen bir İngilizce öğretmenisin. Türkçe konuşan bir öğrenci için kısa bir okuma parçası hazırlıyorsun.
@@ -333,12 +478,7 @@ Verilerde olmayan bir şey uydurma. Veri azsa bunu nazikçe belirt.
   }) async {
     if (!hasApiKey) return (body: null, error: 'GEMINI_API_KEY tanımlı değil');
 
-    final uri = Uri.parse(
-      '${AppConstants.geminiBaseUrl}/${AppConstants.geminiModel}:generateContent'
-      '?key=$_apiKey',
-    );
-
-    final body = jsonEncode({
+    String bodyFor({required bool lowThinking}) => jsonEncode({
       'contents': [
         {
           'parts': [
@@ -350,31 +490,86 @@ Verilerde olmayan bir şey uydurma. Veri azsa bunu nazikçe belirt.
         'responseMimeType': 'application/json',
         'responseSchema': schema,
         'temperature': temperature,
+        // Yeni modeller varsayılan olarak uzun "düşünür"; yapılandırılmış
+        // içerik üretiminde bu dakikalar sürüp zaman aşımına yol açıyordu.
+        if (lowThinking) 'thinkingConfig': {'thinkingLevel': 'low'},
       },
     });
 
-    try {
-      final response = await _client
-          .post(uri, headers: {'Content-Type': 'application/json'}, body: body)
-          .timeout(timeout);
+    final listing = await _availableModels();
+    // Son çalışan model önce denenir; en fazla üç model.
+    final candidates = [
+      ?_workingModel,
+      ...listing.models.where((m) => m != _workingModel),
+    ].take(3);
 
-      if (response.statusCode != 200) {
-        return (body: null, error: _errorMessage(response.statusCode));
+    String? lastError;
+    models:
+    for (final model in candidates) {
+      final uri = Uri.parse(
+        '${AppConstants.geminiBaseUrl}/$model:generateContent',
+      );
+      // Geçici sunucu hatalarında (503 "aşırı yüklü") aynı model bir kez daha
+      // denenir, sonra sıradakine geçilir.
+      for (var attempt = 0; attempt < 2; attempt++) {
+        if (attempt > 0) await Future<void>.delayed(retryDelay);
+        try {
+          var response = await _client
+              .post(
+                uri,
+                headers: _headers,
+                body: bodyFor(lowThinking: _thinkingConfigAccepted),
+              )
+              .timeout(timeout);
+          // Model düşünme ayarını tanımıyorsa ayarsız tekrar gönderilir.
+          if (response.statusCode == 400 &&
+              _thinkingConfigAccepted &&
+              response.body.toLowerCase().contains('thinking')) {
+            _thinkingConfigAccepted = false;
+            response = await _client
+                .post(uri, headers: _headers, body: bodyFor(lowThinking: false))
+                .timeout(timeout);
+          }
+
+          final status = response.statusCode;
+          if (status == 200) {
+            _workingModel = model;
+            return (body: utf8.decode(response.bodyBytes), error: null);
+          }
+          lastError = _errorMessage(status);
+          if (status >= 500) continue;
+          if (status == 404) {
+            // Model kapatılmış ya da bu anahtara kapalı: listeden çıkar.
+            if (_workingModel == model) _workingModel = null;
+            _models?.remove(model);
+            continue models;
+          }
+          // Anahtar ve kota hataları her modelde aynıdır; hemen bildirilir.
+          break models;
+        } on TimeoutException {
+          lastError =
+              'Gemini zamanında yanıt vermedi — biraz sonra tekrar dene';
+          continue models;
+        } catch (e) {
+          return (body: null, error: _networkError(e));
+        }
       }
-      return (body: utf8.decode(response.bodyBytes), error: null);
-    } catch (e) {
-      return (body: null, error: e.toString());
     }
+    return (body: null, error: lastError);
   }
+
+  static String _networkError(Object e) =>
+      'Gemini\'ye bağlanılamadı — internet bağlantını kontrol et ($e)';
 
   /// HTTP hatalarını kullanıcının anlayacağı dile çevirir.
   static String _errorMessage(int statusCode) => switch (statusCode) {
-        400 => 'İstek reddedildi (400) — API anahtarı geçersiz olabilir',
-        403 => 'Erişim reddedildi (403) — anahtarı kontrol et',
-        429 => 'Kota doldu (429) — bir süre sonra tekrar dene',
-        >= 500 => 'Gemini şu an yanıt vermiyor ($statusCode)',
-        _ => 'Gemini $statusCode',
-      };
+    404 => 'Model bulunamadı (404)',
+    400 => 'İstek reddedildi (400) — API anahtarı geçersiz olabilir',
+    403 => 'Erişim reddedildi (403) — anahtarı kontrol et',
+    429 => 'Kota doldu (429) — bir süre sonra tekrar dene',
+    >= 500 => 'Gemini şu an yanıt vermiyor ($statusCode)',
+    _ => 'Gemini $statusCode',
+  };
 
   String _planPrompt({
     required String name,
@@ -412,8 +607,8 @@ Kurallar:
     final review = reviewItems.isEmpty
         ? ''
         : '\nÖğrencinin daha önce yanlış yaptığı ve hâlâ pekişmemiş ifadeler: '
-            '${reviewItems.join(", ")}.\n'
-            'Soruların bir kısmını bunların tekrarına ayır.\n';
+              '${reviewItems.join(", ")}.\n'
+              'Soruların bir kısmını bunların tekrarına ayır.\n';
 
     return '''
 Sen bir İngilizce öğretmenisin. Türkçe konuşan bir öğrenci için bugünkü dersi hazırlıyorsun.
@@ -556,13 +751,15 @@ List<PlanDaySpec> parseWeeklyPlanResponse(String responseBody) {
     };
 
     return [
-      for (final item in list)
-        if (item is Map<String, dynamic>)
-          PlanDaySpec(
-            grammarTopic: readString(item, 'grammarTopic'),
-            vocabTheme: readString(item, 'vocabTheme'),
-          ),
-    ].where((d) => d.grammarTopic.isNotEmpty && d.vocabTheme.isNotEmpty).toList();
+          for (final item in list)
+            if (item is Map<String, dynamic>)
+              PlanDaySpec(
+                grammarTopic: readString(item, 'grammarTopic'),
+                vocabTheme: readString(item, 'vocabTheme'),
+              ),
+        ]
+        .where((d) => d.grammarTopic.isNotEmpty && d.vocabTheme.isNotEmpty)
+        .toList();
   } catch (_) {
     return const [];
   }

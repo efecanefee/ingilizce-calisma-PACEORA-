@@ -9,7 +9,14 @@ abstract class AppConstants {
   /// flutter run --dart-define=GEMINI_API_KEY=xxxx
   static const geminiApiKey = String.fromEnvironment('GEMINI_API_KEY');
 
-  static const geminiModel = 'gemini-2.0-flash';
+  /// Model listesi alınamazsa (ağ hatası vb.) sırayla denenecek modeller.
+  /// Normalde model, anahtarın erişebildikleri arasından otomatik seçilir
+  /// (bkz. `gemini_models.dart`).
+  static const geminiFallbackModels = [
+    'gemini-3.5-flash-lite',
+    'gemini-3.8-flash',
+    'gemini-2.5-flash',
+  ];
   static const geminiBaseUrl =
       'https://generativelanguage.googleapis.com/v1beta/models';
 
