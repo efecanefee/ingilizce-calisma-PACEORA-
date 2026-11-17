@@ -9,6 +9,7 @@ import 'gemini_models.dart';
 import 'lesson_models.dart';
 import 'repository.dart';
 import 'review_models.dart';
+import 'roleplay.dart';
 import 'story_models.dart';
 import 'word_lookup.dart';
 
@@ -302,6 +303,50 @@ class GeminiService {
     return (story: story, offline: false);
   }
 
+  /// Rol yapma sohbetinde karakterin sıradaki cevabı ve öğrencinin son
+  /// mesajının değerlendirmesi.
+  ///
+  /// Hata fırlatmaz; ulaşılamazsa `turn` null, `error` dolu döner.
+  Future<({RoleplayTurn? turn, String? error})> roleplayTurn({
+    required RoleplayScenario scenario,
+    required String level,
+    required String name,
+    required List<ChatMessage> history,
+  }) async {
+    final transcript = [
+      for (final m in history)
+        '${m.speaker == Speaker.ai ? 'CHARACTER' : 'STUDENT'}: ${m.text}',
+    ].join('\n');
+
+    final response = await _post(
+      prompt:
+          '''
+You are role-playing as ${scenario.aiRole} in an English speaking practice app.
+The student is $name, a Turkish native speaker at CEFR level $level.
+The student's task (in Turkish): "${scenario.task}"
+
+Conversation so far:
+$transcript
+
+Respond with JSON:
+- reply: your next line, staying fully in character. 1-3 short sentences, natural spoken English suitable for level $level. Move the scene forward and give the student chances to complete their task. Never mention that you are an AI or that this is practice. If the student writes in Turkish, gently answer in English and keep the scene going.
+- hasError: true only if the student's LAST message has a real grammar, word choice or spelling mistake (ignore missing final punctuation, capitalisation and informal but correct speech).
+- corrected: if hasError, the student's last message rewritten correctly with minimal changes; otherwise empty.
+- explanationTr: if hasError, one short sentence in TURKISH explaining the mistake; otherwise empty.
+- goalReached: true once the student has completed every part of their task during the conversation.
+''',
+      schema: _roleplaySchema,
+      timeout: const Duration(seconds: 30),
+      temperature: 0.8,
+    );
+    if (response.body == null) return (turn: null, error: response.error);
+    final turn = parseRoleplayResponse(response.body!);
+    if (turn == null) {
+      return (turn: null, error: 'Cevap okunamadı — tekrar dene');
+    }
+    return (turn: turn, error: null);
+  }
+
   /// Hikayede dokunulan kelimenin cümledeki anlamını Türkçe verir.
   ///
   /// Hata fırlatmaz; ulaşılamazsa `meaning` null, `error` dolu döner.
@@ -482,6 +527,18 @@ Verilerde olmayan bir şey uydurma. Veri azsa bunu nazikçe belirt.
       },
     },
     'required': ['title', 'paragraphs', 'glossary', 'questions'],
+  };
+
+  static const Map<String, dynamic> _roleplaySchema = {
+    'type': 'OBJECT',
+    'properties': {
+      'reply': {'type': 'STRING'},
+      'hasError': {'type': 'BOOLEAN'},
+      'corrected': {'type': 'STRING'},
+      'explanationTr': {'type': 'STRING'},
+      'goalReached': {'type': 'BOOLEAN'},
+    },
+    'required': ['reply', 'hasError', 'goalReached'],
   };
 
   static const Map<String, dynamic> _wordSchema = {

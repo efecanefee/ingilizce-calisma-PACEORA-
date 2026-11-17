@@ -568,6 +568,8 @@ class Repository {
     int bestMatches = 0,
     int speechXp = 0,
     int spokenGood = 0,
+    int roleplayXp = 0,
+    int roleplays = 0,
   }) async {
     final lessons = await completedLessons();
     final stories = (await _db.select(_db.stories).get())
@@ -595,6 +597,8 @@ class Repository {
       bestMatches: bestMatches,
       speechXp: speechXp,
       spokenGood: spokenGood,
+      roleplayXp: roleplayXp,
+      roleplays: roleplays,
     );
   }
 

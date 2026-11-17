@@ -21,6 +21,8 @@ class GameStats {
     this.bestMatches = 0,
     this.speechXp = 0,
     this.spokenGood = 0,
+    this.roleplayXp = 0,
+    this.roleplays = 0,
   });
 
   final int lessons;
@@ -52,6 +54,12 @@ class GameStats {
 
   /// Başarıyla söylenen cümle sayısı.
   final int spokenGood;
+
+  /// Rol yapma sohbetlerinden kazanılan XP.
+  final int roleplayXp;
+
+  /// XP kazandıran (tamamlanan) sohbet sayısı.
+  final int roleplays;
 }
 
 /// Bir dersin kazandırdığı XP — sonuç ekranında da aynı formül gösterilir.
@@ -78,7 +86,8 @@ int totalXp(GameStats s) =>
     s.studiedDays * xpPerStudiedDay +
     s.levelUps * xpPerLevelUp +
     s.matchXp +
-    s.speechXp;
+    s.speechXp +
+    s.roleplayXp;
 
 /// [level]'e ulaşmak için gereken toplam XP: 0, 100, 300, 600, 1000, …
 ///
@@ -257,6 +266,15 @@ const badges = <BadgeDef>[
     measure: _spokenGood,
   ),
   BadgeDef(
+    id: 'chatter_5',
+    title: 'Sohbet ustası',
+    description: '5 rol yapma sohbetini tamamla',
+    icon: Icons.forum_rounded,
+    color: Color(0xFF38BDF8),
+    target: 5,
+    measure: _roleplays,
+  ),
+  BadgeDef(
     id: 'streak_30',
     title: 'Yanardağ',
     description: '30 gün üst üste çalış',
@@ -276,6 +294,7 @@ int _mature(GameStats s) => s.cardsMature;
 int _levelUps(GameStats s) => s.levelUps;
 int _bestMatches(GameStats s) => s.bestMatches;
 int _spokenGood(GameStats s) => s.spokenGood;
+int _roleplays(GameStats s) => s.roleplays;
 
 /// Ekranlara verilen hazır ödül durumu.
 class GameState {

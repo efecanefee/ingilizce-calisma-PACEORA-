@@ -7,6 +7,7 @@ import 'gemini_service.dart';
 import 'lesson_models.dart';
 import 'match_game.dart';
 import 'pronunciation.dart';
+import 'roleplay.dart';
 import 'reminder_service.dart';
 import 'repository.dart';
 import 'review_models.dart';
@@ -490,6 +491,152 @@ Future<void> recordGoodSentence(WidgetRef ref, {required bool spoken}) async {
   ref.invalidate(gameProvider);
 }
 
+// --- Rol yapma sohbeti -------------------------------------------------------
+
+class RoleplayState {
+  const RoleplayState({
+    required this.scenario,
+    required this.messages,
+    this.pending = false,
+    this.error,
+    this.goalReached = false,
+    this.xpEarned,
+  });
+
+  final RoleplayScenario scenario;
+  final List<ChatMessage> messages;
+
+  /// Karakterin cevabı bekleniyor.
+  final bool pending;
+
+  /// Son istek başarısızsa açıklama; [RoleplayNotifier.retry] yeniden dener.
+  final String? error;
+  final bool goalReached;
+
+  /// Sohbet bitirildiyse kazanılan XP (kısa sohbette 0); null = sürüyor.
+  final int? xpEarned;
+
+  bool get finished => xpEarned != null;
+
+  int get userMessages =>
+      messages.where((m) => m.speaker == Speaker.user).length;
+
+  List<ChatMessage> get corrected => [
+    for (final m in messages)
+      if (m.correction != null) m,
+  ];
+
+  RoleplayState copyWith({
+    List<ChatMessage>? messages,
+    bool? pending,
+    String? Function()? error,
+    bool? goalReached,
+    int? xpEarned,
+  }) => RoleplayState(
+    scenario: scenario,
+    messages: messages ?? this.messages,
+    pending: pending ?? this.pending,
+    error: error != null ? error() : this.error,
+    goalReached: goalReached ?? this.goalReached,
+    xpEarned: xpEarned ?? this.xpEarned,
+  );
+}
+
+class RoleplayNotifier extends Notifier<RoleplayState> {
+  RoleplayNotifier(this.scenarioId);
+
+  final String scenarioId;
+
+  @override
+  RoleplayState build() {
+    final scenario = scenarioById(scenarioId) ?? roleplayScenarios.first;
+    return RoleplayState(
+      scenario: scenario,
+      messages: [ChatMessage(Speaker.ai, scenario.opening)],
+    );
+  }
+
+  Future<void> send(String text) async {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty || state.pending || state.finished) return;
+    state = state.copyWith(
+      messages: [...state.messages, ChatMessage(Speaker.user, trimmed)],
+    );
+    await _ask();
+  }
+
+  /// Başarısız son isteği yeniden gönderir.
+  Future<void> retry() async {
+    if (state.pending || state.messages.last.speaker != Speaker.user) return;
+    await _ask();
+  }
+
+  Future<void> _ask() async {
+    state = state.copyWith(pending: true, error: () => null);
+    final profile = await ref.read(repositoryProvider).profile();
+    final result = await ref
+        .read(geminiServiceProvider)
+        .roleplayTurn(
+          scenario: state.scenario,
+          level: profile?.level ?? 'B1',
+          name: profile?.name ?? 'Student',
+          history: state.messages,
+        );
+    if (!ref.mounted) return;
+
+    final turn = result.turn;
+    if (turn == null) {
+      state = state.copyWith(
+        pending: false,
+        error: () => result.error ?? 'Cevap alınamadı',
+      );
+      return;
+    }
+    final messages = [...state.messages];
+    messages.last = messages.last.withCorrection(turn.correction);
+    state = state.copyWith(
+      messages: [...messages, ChatMessage(Speaker.ai, turn.reply)],
+      pending: false,
+      goalReached: state.goalReached || turn.goalReached,
+    );
+  }
+
+  /// Sohbeti bitirir: XP kaydedilir, düzeltmeler hata defterine işlenir.
+  Future<void> finish() async {
+    if (state.finished || state.pending) return;
+    final current = state;
+    final xp = await RoleplayRecords.save(
+      ref.read(sharedPreferencesProvider),
+      scenarioId: current.scenario.id,
+      userMessages: current.userMessages,
+      goalReached: current.goalReached,
+    );
+    await ref.read(repositoryProvider).recordOutcomes([
+      for (final m in current.corrected)
+        AnswerOutcome(
+          item: m.correction!.corrected,
+          context:
+              'Yazdığın: ${m.text}'
+              '${m.correction!.explanationTr.isEmpty ? '' : ' — ${m.correction!.explanationTr}'}',
+          type: 'chat',
+          correct: false,
+        ),
+    ]);
+    if (!ref.mounted) return;
+    state = state.copyWith(xpEarned: xp);
+    ref.invalidate(gameProvider);
+    ref.invalidate(mistakesProvider);
+    ref.invalidate(roleplayRecordsProvider);
+  }
+}
+
+final roleplayProvider = NotifierProvider.autoDispose
+    .family<RoleplayNotifier, RoleplayState, String>(RoleplayNotifier.new);
+
+final roleplayRecordsProvider = Provider.autoDispose<RoleplayRecords>(
+  (ref) => RoleplayRecords.read(ref.read(sharedPreferencesProvider)),
+);
+
 // --- Günün hikayesi ---------------------------------------------------------
 
 /// Bugünün hikayesi: varsa kayıttan devam eder, yoksa üretir.
@@ -771,6 +918,7 @@ final gameProvider = FutureProvider<GameState>((ref) async {
   final prefs = ref.read(sharedPreferencesProvider);
   final match = MatchRecords.read(prefs);
   final speech = SpeechRecords.read(prefs);
+  final roleplay = RoleplayRecords.read(prefs);
   final stats = await ref.read(repositoryProvider).gameStats(
         cardsReviewed: totalCardsReviewed(prefs),
         levelUps: prefs.getInt(levelUpsKey) ?? 0,
@@ -778,6 +926,8 @@ final gameProvider = FutureProvider<GameState>((ref) async {
         bestMatches: match.bestMatches,
         speechXp: speech.xp,
         spokenGood: speech.spokenGood,
+        roleplayXp: roleplay.xp,
+        roleplays: roleplay.completed,
       );
   return GameState(stats);
 });

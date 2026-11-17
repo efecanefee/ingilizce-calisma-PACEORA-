@@ -11,6 +11,8 @@ import 'package:paceora/data/rewards.dart';
 import 'package:paceora/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'scroll_helper.dart';
+
 /// Ekranlarda sürekli tekrarlayan animasyonlar (alev, parıltı) olduğu için
 /// pumpAndSettle hiç oturmaz; sabit sayıda kare ilerletilir.
 Future<void> _advance(WidgetTester tester) async {
@@ -154,11 +156,7 @@ void main() {
 
     await tester.tap(find.text('İlerleme'));
     await _advance(tester);
-    await tester.scrollUntilVisible(
-      find.text('Hata defterim'),
-      300,
-      scrollable: find.byType(Scrollable).first,
-    );
+    await scrollIntoView(tester, find.text('Hata defterim'));
     await tester.tap(find.text('Hata defterim'));
     await _advance(tester);
 

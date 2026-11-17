@@ -12,6 +12,8 @@ import 'package:paceora/data/word_lookup.dart';
 import 'package:paceora/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'scroll_helper.dart';
+
 /// Tekrarlayan animasyonlar yüzünden pumpAndSettle oturmaz; sabit kare.
 Future<void> _advance(WidgetTester tester) async {
   for (var i = 0; i < 15; i++) {
@@ -20,11 +22,7 @@ Future<void> _advance(WidgetTester tester) async {
 }
 
 Future<void> _scrollTo(WidgetTester tester, Finder finder) async {
-  await tester.scrollUntilVisible(
-    finder,
-    300,
-    scrollable: find.byType(Scrollable).first,
-  );
+  await scrollIntoView(tester, finder);
   await _advance(tester);
 }
 

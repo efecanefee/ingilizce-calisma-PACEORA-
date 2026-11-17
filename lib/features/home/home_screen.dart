@@ -769,6 +769,8 @@ class _PracticeGrid extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cards = ref.watch(flashcardSummaryProvider).value;
+    final rally = ref.watch(matchRecordsProvider);
+    final roleplay = ref.watch(roleplayRecordsProvider);
     final due = cards?.due ?? 0;
 
     Future<void> open(String route) async {
@@ -847,26 +849,57 @@ class _PracticeGrid extends ConsumerWidget {
                   ),
           ],
         ),
-        const SizedBox(height: 12),
-        _RallyBanner(onTap: () => open('/match'))
-            .animate(delay: Motion.stagger * tiles.length)
-            .fadeIn(duration: Motion.medium)
-            .slideY(begin: 0.15, curve: Motion.curve),
+        for (final (i, banner) in [
+          _FeatureBanner(
+            icon: Icons.forum_rounded,
+            color: const Color(0xFF38BDF8),
+            title: 'AI ile sohbet',
+            subtitle: roleplay.completed > 0
+                ? '${roleplay.completed} sohbet · ${roleplay.goalScenarios.length}'
+                      ' görev başarıldı'
+                : 'Kafede, otelde, iş görüşmesinde konuş',
+            onTap: () => open('/roleplay'),
+          ),
+          _FeatureBanner(
+            icon: Icons.bolt_rounded,
+            color: AppColors.warning,
+            title: 'Kelime Rallisi',
+            subtitle: rally.games > 0
+                ? 'Rekorun: ${rally.bestScore} puan'
+                : '60 saniyede eşleştir, rekor kır',
+            onTap: () => open('/match'),
+          ),
+        ].indexed) ...[
+          const SizedBox(height: 12),
+          banner
+              .animate(delay: Motion.stagger * (tiles.length + i))
+              .fadeIn(duration: Motion.medium)
+              .slideY(begin: 0.15, curve: Motion.curve),
+        ],
       ],
     );
   }
 }
 
-/// Kelime Rallisi girişi: rekor varsa onu gösterir.
-class _RallyBanner extends ConsumerWidget {
-  const _RallyBanner({required this.onTap});
+/// Öne çıkan pratik girişi (sohbet, ralli): renkli, tam genişlikte kart.
+class _FeatureBanner extends StatelessWidget {
+  const _FeatureBanner({
+    required this.icon,
+    required this.color,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
 
+  final IconData icon;
+  final Color color;
+  final String title;
+  final String subtitle;
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final records = ref.watch(matchRecordsProvider);
 
     return PressableScale(
       onTap: onTap,
@@ -876,25 +909,21 @@ class _RallyBanner extends ConsumerWidget {
           borderRadius: BorderRadius.circular(20),
           gradient: LinearGradient(
             colors: [
-              AppColors.warning.withValues(alpha: 0.22),
+              color.withValues(alpha: 0.22),
               theme.colorScheme.surfaceContainer,
             ],
           ),
-          border: Border.all(color: AppColors.warning.withValues(alpha: 0.5)),
+          border: Border.all(color: color.withValues(alpha: 0.5)),
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.warning.withValues(alpha: 0.2),
+                color: color.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(
-                Icons.bolt_rounded,
-                size: 22,
-                color: AppColors.warning,
-              ),
+              child: Icon(icon, size: 22, color: color),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -902,15 +931,13 @@ class _RallyBanner extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Kelime Rallisi',
+                    title,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   Text(
-                    records.games > 0
-                        ? 'Rekorun: ${records.bestScore} puan'
-                        : '60 saniyede eşleştir, rekor kır',
+                    subtitle,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurface.withValues(
                         alpha: 0.65,

@@ -1,6 +1,5 @@
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paceora/data/database.dart';
@@ -10,6 +9,8 @@ import 'package:paceora/data/repository.dart';
 import 'package:paceora/data/srs.dart';
 import 'package:paceora/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'scroll_helper.dart';
 
 /// Animasyonlar yüzünden pumpAndSettle takılmasın diye sabit kare ilerletir.
 Future<void> _advance(WidgetTester tester) async {
@@ -179,11 +180,7 @@ void main() {
     await _advance(tester);
 
     // Ana ekrandaki pratik alanı vadesi gelen kartı rozetle gösterir.
-    await tester.scrollUntilVisible(
-      find.text('1 kart seni bekliyor'),
-      300,
-      scrollable: find.byType(Scrollable).first,
-    );
+    await scrollIntoView(tester, find.text('1 kart seni bekliyor'));
     await _advance(tester);
     expect(find.text('1 kart seni bekliyor'), findsOneWidget);
 

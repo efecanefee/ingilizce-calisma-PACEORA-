@@ -69,6 +69,7 @@ class _MistakeTile extends StatelessWidget {
     final (typeLabel, typeIcon) = switch (m.type) {
       'translation' => ('Çeviri', Icons.translate_rounded),
       'grammar' => ('Dilbilgisi', Icons.rule_rounded),
+      'chat' => ('Sohbet', Icons.forum_rounded),
       _ => ('Kelime', Icons.abc_rounded),
     };
 
