@@ -5,6 +5,7 @@ import '../app/constants.dart';
 import 'database.dart';
 import 'gemini_service.dart';
 import 'lesson_models.dart';
+import 'match_game.dart';
 import 'reminder_service.dart';
 import 'repository.dart';
 import 'review_models.dart';
@@ -419,6 +420,39 @@ final flashcardSessionProvider =
   isAutoDispose: true,
 );
 
+// --- Kelime Rallisi ---------------------------------------------------------
+
+/// Oyunun kartları; deste [matchMinPairs]'ten küçükse oyun açılmaz.
+final matchDeckProvider = FutureProvider.autoDispose<List<MatchPair>>((
+  ref,
+) async {
+  final cards = await ref.read(repositoryProvider).matchCards();
+  return [
+    for (final c in cards)
+      MatchPair(id: c.id, word: c.word, meaning: c.meaning),
+  ];
+});
+
+/// Rekor ve toplamlar; tur bitince geçersiz kılınır.
+final matchRecordsProvider = Provider.autoDispose<MatchRecords>(
+  (ref) => MatchRecords.read(ref.read(sharedPreferencesProvider)),
+);
+
+/// Biten turu kaydeder: rekor/XP güncellenir, karıştırılan kartların
+/// tekrarı bugüne çekilir.
+Future<MatchSummary> finishMatchRound(WidgetRef ref, MatchBoard board) async {
+  final prefs = ref.read(sharedPreferencesProvider);
+  final summary = board.summary(
+    bestScoreBefore: MatchRecords.read(prefs).bestScore,
+  );
+  await MatchRecords.save(prefs, summary);
+  await ref.read(repositoryProvider).pullFlashcardsToToday(board.confusedIds);
+  ref.invalidate(matchRecordsProvider);
+  ref.invalidate(flashcardSummaryProvider);
+  ref.invalidate(gameProvider);
+  return summary;
+}
+
 // --- Günün hikayesi ---------------------------------------------------------
 
 /// Bugünün hikayesi: varsa kayıttan devam eder, yoksa üretir.
@@ -698,9 +732,12 @@ int totalCardsReviewed(SharedPreferences prefs) => [
 final gameProvider = FutureProvider<GameState>((ref) async {
   ref.watch(weekPlanProvider);
   final prefs = ref.read(sharedPreferencesProvider);
+  final match = MatchRecords.read(prefs);
   final stats = await ref.read(repositoryProvider).gameStats(
         cardsReviewed: totalCardsReviewed(prefs),
         levelUps: prefs.getInt(levelUpsKey) ?? 0,
+        matchXp: match.xp,
+        bestMatches: match.bestMatches,
       );
   return GameState(stats);
 });

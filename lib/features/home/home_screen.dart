@@ -792,22 +792,108 @@ class _PracticeGrid extends ConsumerWidget {
     // Sabit en-boy oranı büyük yazı boyutunda kutucuğu taşırıyordu;
     // yükseklik yazı ölçeğiyle birlikte büyür.
     final scaler = MediaQuery.textScalerOf(context);
-    return GridView(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        mainAxisExtent: 84 + scaler.scale(56),
-      ),
+    return Column(
       children: [
-        for (final (i, tile) in tiles.indexed)
-          tile
-              .animate(delay: Motion.stagger * i)
-              .fadeIn(duration: Motion.medium)
-              .scale(begin: const Offset(0.9, 0.9), curve: Curves.easeOutBack),
+        GridView(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            mainAxisExtent: 84 + scaler.scale(56),
+          ),
+          children: [
+            for (final (i, tile) in tiles.indexed)
+              tile
+                  .animate(delay: Motion.stagger * i)
+                  .fadeIn(duration: Motion.medium)
+                  .scale(
+                    begin: const Offset(0.9, 0.9),
+                    curve: Curves.easeOutBack,
+                  ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        _RallyBanner(onTap: () => open('/match'))
+            .animate(delay: Motion.stagger * tiles.length)
+            .fadeIn(duration: Motion.medium)
+            .slideY(begin: 0.15, curve: Motion.curve),
       ],
+    );
+  }
+}
+
+/// Kelime Rallisi girişi: rekor varsa onu gösterir.
+class _RallyBanner extends ConsumerWidget {
+  const _RallyBanner({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final records = ref.watch(matchRecordsProvider);
+
+    return PressableScale(
+      onTap: onTap,
+      child: Ink(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          gradient: LinearGradient(
+            colors: [
+              AppColors.warning.withValues(alpha: 0.22),
+              theme.colorScheme.surfaceContainer,
+            ],
+          ),
+          border: Border.all(color: AppColors.warning.withValues(alpha: 0.5)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.warning.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.bolt_rounded,
+                size: 22,
+                color: AppColors.warning,
+              ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Kelime Rallisi',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  Text(
+                    records.games > 0
+                        ? 'Rekorun: ${records.bestScore} puan'
+                        : '60 saniyede eşleştir, rekor kır',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.65,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

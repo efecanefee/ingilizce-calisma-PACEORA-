@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:drift/drift.dart';
 
 import '../app/constants.dart';
@@ -333,6 +335,26 @@ class Repository {
     return added;
   }
 
+  /// Kelime Rallisi için kartlar: önce az tekrarlanmış (henüz oturmamış)
+  /// olanlar, en fazla [limit] tane, karışık sırada.
+  Future<List<Flashcard>> matchCards({int limit = 40, Random? random}) async {
+    final all = await _db.select(_db.flashcards).get();
+    all.shuffle(random);
+    // Kararlı sıralama: karışık sıra korunur, zayıf kartlar öne geçer.
+    final weak = all.where((c) => c.intervalDays < 21);
+    final strong = all.where((c) => c.intervalDays >= 21);
+    return [...weak, ...strong].take(limit).toList();
+  }
+
+  /// Verilen kartların tekrarını bugüne çeker (ileri tarihliyse).
+  Future<void> pullFlashcardsToToday(Iterable<int> ids, {DateTime? now}) async {
+    if (ids.isEmpty) return;
+    final today = dayOf(now ?? DateTime.now());
+    await (_db.update(_db.flashcards)
+          ..where((t) => t.id.isIn(ids) & t.dueDate.isBiggerThanValue(today)))
+        .write(FlashcardsCompanion(dueDate: Value(today)));
+  }
+
   /// Bu kelimenin kartı destede var mı (büyük/küçük harf duyarsız)?
   Future<bool> hasFlashcard(String word) async {
     final row = await (_db.select(_db.flashcards)
@@ -531,8 +553,14 @@ class Repository {
   // --- Ödüller --------------------------------------------------------------
 
   /// Ödül sisteminin girdisi. [cardsReviewed] ve [levelUps] veritabanında
-  /// değil SharedPreferences'ta tutulduğu için dışarıdan verilir.
-  Future<GameStats> gameStats({int cardsReviewed = 0, int levelUps = 0}) async {
+  /// değil SharedPreferences'ta tutulduğu için dışarıdan verilir; Kelime
+  /// Rallisi kayıtları da öyle.
+  Future<GameStats> gameStats({
+    int cardsReviewed = 0,
+    int levelUps = 0,
+    int matchXp = 0,
+    int bestMatches = 0,
+  }) async {
     final lessons = await completedLessons();
     final stories = (await _db.select(_db.stories).get())
         .where((s) => s.quizScore != null)
@@ -555,6 +583,8 @@ class Repository {
       // Elle işaretlenen günler de takvimde; ikisi genelde aynıdır.
       bestStreak: best > streak ? best : streak,
       levelUps: levelUps,
+      matchXp: matchXp,
+      bestMatches: bestMatches,
     );
   }
 

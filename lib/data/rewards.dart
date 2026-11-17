@@ -17,6 +17,8 @@ class GameStats {
     this.currentStreak = 0,
     this.bestStreak = 0,
     this.levelUps = 0,
+    this.matchXp = 0,
+    this.bestMatches = 0,
   });
 
   final int lessons;
@@ -36,6 +38,12 @@ class GameStats {
 
   /// Haftalık raporla uygulanan seviye yükselişi sayısı.
   final int levelUps;
+
+  /// Kelime Rallisi turlarından kazanılan XP toplamı.
+  final int matchXp;
+
+  /// Kelime Rallisi'nde tek turda yapılan en çok eşleşme.
+  final int bestMatches;
 }
 
 /// Bir dersin kazandırdığı XP — sonuç ekranında da aynı formül gösterilir.
@@ -60,7 +68,8 @@ int totalXp(GameStats s) =>
     s.storyXpSum +
     s.cardsReviewed * xpPerCardReview +
     s.studiedDays * xpPerStudiedDay +
-    s.levelUps * xpPerLevelUp;
+    s.levelUps * xpPerLevelUp +
+    s.matchXp;
 
 /// [level]'e ulaşmak için gereken toplam XP: 0, 100, 300, 600, 1000, …
 ///
@@ -221,6 +230,15 @@ const badges = <BadgeDef>[
     measure: _levelUps,
   ),
   BadgeDef(
+    id: 'match_20',
+    title: 'Şimşek',
+    description: 'Kelime Rallisi\'nde tek turda 20 eşleşme yap',
+    icon: Icons.bolt_rounded,
+    color: Color(0xFFFACC15),
+    target: 20,
+    measure: _bestMatches,
+  ),
+  BadgeDef(
     id: 'streak_30',
     title: 'Yanardağ',
     description: '30 gün üst üste çalış',
@@ -238,6 +256,7 @@ int _stories(GameStats s) => s.stories;
 int _cardsReviewed(GameStats s) => s.cardsReviewed;
 int _mature(GameStats s) => s.cardsMature;
 int _levelUps(GameStats s) => s.levelUps;
+int _bestMatches(GameStats s) => s.bestMatches;
 
 /// Ekranlara verilen hazır ödül durumu.
 class GameState {

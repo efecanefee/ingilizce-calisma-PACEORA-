@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../features/flashcards/flashcards_screen.dart';
 import '../features/home/home_screen.dart';
 import '../features/lesson/lesson_screen.dart';
+import '../features/match/match_screen.dart';
 import '../features/mistakes/mistakes_screen.dart';
 import '../features/onboarding/onboarding_screen.dart';
 import '../features/program/program_screen.dart';
@@ -54,6 +55,7 @@ GoRouter createRouter({required bool onboardingDone}) {
       fullScreen('/story', (_, _) => const StoryScreen()),
       fullScreen('/review', (_, _) => const WeeklyReviewScreen()),
       fullScreen('/mistakes', (_, _) => const MistakesScreen()),
+      fullScreen('/match', (_, _) => const MatchScreen()),
     ],
   );
 }

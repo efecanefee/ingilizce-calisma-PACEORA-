@@ -178,9 +178,7 @@ void main() {
       expect(find.text('Kelime havuzunda'), findsOneWidget);
     });
 
-    testWidgets('anahtar yoksa hata ve tekrar dene gösterilir', (
-      tester,
-    ) async {
+    testWidgets('anahtar yoksa hata ve tekrar dene gösterilir', (tester) async {
       await openStory(tester);
       await tapWord(tester, 'sad');
 
@@ -193,6 +191,97 @@ void main() {
         ),
       );
       expect(button.onPressed, isNull);
+    });
+  });
+
+  group('Kelime Rallisi', () {
+    final pairs = {
+      'apple': 'elma',
+      'house': 'ev',
+      'river': 'nehir',
+      'cloud': 'bulut',
+      'chair': 'sandalye',
+      'bread': 'ekmek',
+    };
+
+    Future<void> openRally(WidgetTester tester) async {
+      await pumpApp(tester);
+      await _scrollTo(tester, find.text('Kelime Rallisi'));
+      await tester.tap(find.text('Kelime Rallisi'));
+      await _advance(tester);
+    }
+
+    testWidgets('deste küçükse yönlendirme gösterilir', (tester) async {
+      await repository.addFlashcards([
+        (word: 'apple', meaning: 'elma', example: ''),
+      ], source: 'new_word');
+      await openRally(tester);
+
+      expect(find.textContaining('en az 6 kelime gerekli'), findsOneWidget);
+      expect(find.text('Günün hikayesine git'), findsOneWidget);
+    });
+
+    testWidgets('eşleştirilir, süre dolunca sonuç kaydedilir', (tester) async {
+      await repository.addFlashcards([
+        for (final e in pairs.entries)
+          (word: e.key, meaning: e.value, example: ''),
+      ], source: 'new_word');
+      // Bir kartın tekrarı ileride: karıştırılınca bugüne çekilmeli.
+      await (db.update(
+        db.flashcards,
+      )).write(FlashcardsCompanion(dueDate: Value(DateTime(2099))));
+      await openRally(tester);
+
+      expect(find.text('60 saniyede kaç kelime?'), findsOneWidget);
+      await tester.tap(find.text('Başla'));
+      await _advance(tester);
+
+      // Tahtadaki ilk İngilizce kelime ve karşılığı.
+      final onBoard = [
+        for (final w in pairs.keys)
+          if (find.text(w).evaluate().isNotEmpty) w,
+      ];
+      expect(onBoard, hasLength(5));
+      final first = onBoard.first;
+      await tester.tap(find.text(first));
+      await tester.pump();
+      await tester.tap(find.text(pairs[first]!));
+      await _advance(tester);
+      expect(
+        tester.widget<Text>(find.byKey(const ValueKey('match-score'))).data,
+        '10',
+      );
+
+      // Bir yanlış: tahtadaki iki farklı çift.
+      final words = [
+        for (final w in pairs.keys)
+          if (find.text(w).evaluate().isNotEmpty) w,
+      ];
+      await tester.tap(find.text(words[0]));
+      await tester.pump();
+      await tester.tap(find.text(pairs[words[1]]!));
+      await _advance(tester);
+
+      // Süreyi bitir.
+      await tester.pump(const Duration(seconds: 61));
+      await _advance(tester);
+
+      expect(find.text('Süre doldu!'), findsOneWidget);
+      expect(find.text('Yeni rekor!'), findsOneWidget);
+      expect(find.text('+1'), findsOneWidget);
+      expect(find.text('KARIŞTIRDIKLARIN'), findsOneWidget);
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getInt('match_best_score'), 10);
+      expect(prefs.getInt('match_games'), 1);
+      expect(prefs.getInt('match_xp'), 1);
+
+      final cards = await db.select(db.flashcards).get();
+      final pulled = {
+        for (final c in cards)
+          if (c.dueDate.year != 2099) c.word,
+      };
+      expect(pulled, {words[0], words[1]});
     });
   });
 
