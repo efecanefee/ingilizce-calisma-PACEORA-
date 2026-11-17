@@ -261,19 +261,23 @@ class _SessionState extends ConsumerState<_Session> {
                     ),
                   ),
                 const SizedBox(height: 16),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
+                // Temadaki düğmeler tam genişlik; Wrap'ta alt alta diziliyordu.
+                Row(
                   children: [
-                    OutlinedButton.icon(
-                      onPressed: _play,
-                      icon: const Icon(Icons.volume_up_rounded),
-                      label: const Text('Dinle'),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _play,
+                        icon: const Icon(Icons.volume_up_rounded),
+                        label: const Text('Dinle'),
+                      ),
                     ),
-                    OutlinedButton.icon(
-                      onPressed: () => _play(slow: true),
-                      icon: const Icon(Icons.slow_motion_video_rounded),
-                      label: const Text('Yavaş'),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _play(slow: true),
+                        icon: const Icon(Icons.slow_motion_video_rounded),
+                        label: const Text('Yavaş'),
+                      ),
                     ),
                   ],
                 ),
