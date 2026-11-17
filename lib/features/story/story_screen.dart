@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +7,7 @@ import '../../app/motion.dart';
 import '../../app/theme.dart';
 import '../../data/providers.dart';
 import '../../data/story_models.dart';
+import '../../data/word_lookup.dart';
 import '../lesson/lesson_steps.dart';
 
 /// Günün hikayesi: okuma parçası, sözlükçe ve okuduğunu anlama testi.
@@ -99,13 +101,16 @@ class _StoryBody extends ConsumerWidget {
             ),
           ),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 12),
+        item(const _TapHint()),
+        const SizedBox(height: 14),
         for (final paragraph in story.paragraphs)
           item(
             Padding(
               padding: const EdgeInsets.only(bottom: 14),
-              child: Text(
-                paragraph,
+              child: TappableParagraph(
+                text: paragraph,
+                glossary: story.glossary,
                 style: theme.textTheme.bodyLarge?.copyWith(height: 1.6),
               ),
             ),
@@ -154,6 +159,325 @@ class _StoryBody extends ConsumerWidget {
               : const SizedBox.shrink(),
         ),
       ],
+    );
+  }
+}
+
+class _TapHint extends StatelessWidget {
+  const _TapHint();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurface.withValues(alpha: 0.6);
+    return Row(
+      children: [
+        Icon(Icons.touch_app_outlined, size: 16, color: muted),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            'Bilmediğin kelimeye dokun; anlamını gör, havuzuna ekle.',
+            style: theme.textTheme.bodySmall?.copyWith(color: muted),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Kelimeleri dokunulabilir paragraf.
+///
+/// Sözlükçedeki kelimelerin altı noktalıdır; dokunulan kelime vurgulanır ve
+/// alttan anlam kartı açılır.
+class TappableParagraph extends StatefulWidget {
+  const TappableParagraph({
+    super.key,
+    required this.text,
+    required this.glossary,
+    this.style,
+  });
+
+  final String text;
+  final List<GlossaryItem> glossary;
+  final TextStyle? style;
+
+  @override
+  State<TappableParagraph> createState() => _TappableParagraphState();
+}
+
+class _TappableParagraphState extends State<TappableParagraph> {
+  final _recognizers = <TapGestureRecognizer>[];
+
+  /// Vurgulanan kelimenin paragraftaki konumu.
+  int? _selected;
+
+  void _disposeRecognizers() {
+    for (final r in _recognizers) {
+      r.dispose();
+    }
+    _recognizers.clear();
+  }
+
+  /// Her derlemede yeniden kurulur; eskileri [_disposeRecognizers] atar.
+  TapGestureRecognizer _recognizer(VoidCallback onTap) {
+    final recognizer = TapGestureRecognizer()..onTap = onTap;
+    _recognizers.add(recognizer);
+    return recognizer;
+  }
+
+  @override
+  void dispose() {
+    _disposeRecognizers();
+    super.dispose();
+  }
+
+  Future<void> _open(StoryToken token) async {
+    setState(() => _selected = token.start);
+    await showWordSheet(
+      context,
+      word: token.text,
+      sentence: sentenceAt(widget.text, token.start),
+    );
+    if (mounted) setState(() => _selected = null);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+    _disposeRecognizers();
+
+    return Text.rich(
+      TextSpan(
+        style: widget.style,
+        children: [
+          for (final token in tokenizeParagraph(widget.text))
+            if (!token.isWord)
+              TextSpan(text: token.text)
+            else
+              TextSpan(
+                text: token.text,
+                recognizer: _recognizer(() => _open(token)),
+                style: TextStyle(
+                  backgroundColor: token.start == _selected
+                      ? primary.withValues(alpha: 0.2)
+                      : null,
+                  decoration: glossaryMatch(widget.glossary, token.text) != null
+                      ? TextDecoration.underline
+                      : null,
+                  decorationStyle: TextDecorationStyle.dotted,
+                  decorationColor: primary,
+                  decorationThickness: 2,
+                ),
+              ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Kelimenin anlam kartını alttan açar.
+Future<void> showWordSheet(
+  BuildContext context, {
+  required String word,
+  required String sentence,
+}) => showModalBottomSheet<void>(
+  context: context,
+  showDragHandle: true,
+  isScrollControlled: true,
+  builder: (_) => WordSheet(word: word, sentence: sentence),
+);
+
+/// Dokunulan kelimenin anlamı ve "havuza ekle" düğmesi.
+class WordSheet extends ConsumerStatefulWidget {
+  const WordSheet({super.key, required this.word, required this.sentence});
+
+  final String word;
+  final String sentence;
+
+  @override
+  ConsumerState<WordSheet> createState() => _WordSheetState();
+}
+
+class _WordSheetState extends ConsumerState<WordSheet> {
+  WordMeaning? _meaning;
+  String? _error;
+  bool _loading = true;
+
+  /// null: bilinmiyor, true: destede var.
+  bool? _inPool;
+  bool _adding = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    final result = await ref
+        .read(storyProvider.notifier)
+        .lookup(widget.word, widget.sentence);
+    final meaning = result.meaning;
+    final inPool = meaning == null
+        ? null
+        : await ref.read(repositoryProvider).hasFlashcard(meaning.word);
+    if (!mounted) return;
+    setState(() {
+      _loading = false;
+      _meaning = meaning;
+      _error = meaning == null ? (result.error ?? 'Çeviri bulunamadı') : null;
+      _inPool = inPool;
+    });
+  }
+
+  Future<void> _add() async {
+    final meaning = _meaning;
+    if (meaning == null || _adding) return;
+    setState(() => _adding = true);
+    await ref.read(storyProvider.notifier).addToPool(meaning, widget.sentence);
+    if (!mounted) return;
+    setState(() {
+      _adding = false;
+      _inPool = true;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurface.withValues(alpha: 0.6);
+    final meaning = _meaning;
+    final showBase =
+        meaning != null &&
+        normalizeWord(meaning.word) != normalizeWord(widget.word);
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 10,
+              runSpacing: 6,
+              children: [
+                Text(
+                  widget.word,
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                if (meaning != null && meaning.partOfSpeech.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      meaning.partOfSpeech,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            if (showBase) ...[
+              const SizedBox(height: 2),
+              Text(
+                'Sözlük biçimi: ${meaning.word}',
+                style: theme.textTheme.bodySmall?.copyWith(color: muted),
+              ),
+            ],
+            const SizedBox(height: 14),
+            AnimatedSwitcher(
+              duration: Motion.medium,
+              child: _loading
+                  ? Row(
+                      key: const ValueKey('loading'),
+                      children: [
+                        const SizedBox.square(
+                          dimension: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                        const SizedBox(width: 12),
+                        Text('Çevriliyor…', style: theme.textTheme.bodyMedium),
+                      ],
+                    )
+                  : meaning == null
+                  ? Row(
+                      key: const ValueKey('error'),
+                      children: [
+                        Icon(Icons.cloud_off, size: 18, color: muted),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            _error ?? '',
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: _load,
+                          child: const Text('Tekrar dene'),
+                        ),
+                      ],
+                    )
+                  : Text(
+                      meaning.meaning,
+                      key: const ValueKey('meaning'),
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              '“${widget.sentence}”',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontStyle: FontStyle.italic,
+                color: muted,
+              ),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: _inPool == true
+                  ? FilledButton.tonalIcon(
+                      onPressed: null,
+                      icon: const Icon(Icons.check_circle),
+                      label: const Text('Kelime havuzunda'),
+                    )
+                  : FilledButton.icon(
+                      onPressed: meaning == null || _adding ? null : _add,
+                      icon: const Icon(Icons.add),
+                      label: const Text('Kelime havuzuna ekle'),
+                    ),
+            ),
+            if (_inPool == true) ...[
+              const SizedBox(height: 8),
+              Center(
+                child: Text(
+                  'Flash kartlarda tekrar karşına çıkacak.',
+                  style: theme.textTheme.bodySmall?.copyWith(color: muted),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }

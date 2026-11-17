@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'gemini_json.dart';
 import 'lesson_models.dart';
+import 'word_lookup.dart';
 
 /// Hikayede geçen ve öğrenciye açıklanan kelime.
 class GlossaryItem {
@@ -88,6 +89,7 @@ class StoryState {
     required this.story,
     this.answers = const {},
     this.offline = false,
+    this.lookups = const {},
   });
 
   final DailyStory story;
@@ -97,6 +99,12 @@ class StoryState {
 
   /// true ise hikaye Gemini'den değil yerleşik yedekten geldi.
   final bool offline;
+
+  /// Dokunulan kelimelerin çevirileri; anahtar [normalizeWord] ile.
+  ///
+  /// Hikayeyle birlikte saklanır: aynı kelimeye yeniden dokunulduğunda
+  /// Gemini'ye tekrar gidilmez.
+  final Map<String, WordMeaning> lookups;
 
   int get correctCount => [
     for (final entry in answers.entries)
@@ -114,6 +122,14 @@ class StoryState {
     story: story,
     answers: {...answers, index: option},
     offline: offline,
+    lookups: lookups,
+  );
+
+  StoryState withLookup(String word, WordMeaning meaning) => StoryState(
+    story: story,
+    answers: answers,
+    offline: offline,
+    lookups: {...lookups, normalizeWord(word): meaning},
   );
 
   String encode() => jsonEncode({
@@ -122,6 +138,9 @@ class StoryState {
       for (final entry in answers.entries) '${entry.key}': entry.value,
     },
     'offline': offline,
+    'lookups': {
+      for (final entry in lookups.entries) entry.key: entry.value.toJson(),
+    },
   });
 
   static StoryState? decode(String json) {
@@ -131,6 +150,7 @@ class StoryState {
       final story = DailyStory.tryParse(raw['story']);
       if (story == null) return null;
       final answers = raw['answers'];
+      final lookups = raw['lookups'];
       return StoryState(
         story: story,
         answers: answers is Map
@@ -142,6 +162,14 @@ class StoryState {
               }
             : const {},
         offline: raw['offline'] == true,
+        lookups: lookups is Map
+            ? {
+                for (final entry in lookups.entries)
+                  if (WordMeaning.tryParse(entry.value)
+                      case final WordMeaning meaning)
+                    '${entry.key}': meaning,
+              }
+            : const {},
       );
     } catch (_) {
       return null;

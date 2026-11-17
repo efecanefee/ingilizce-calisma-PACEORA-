@@ -12,6 +12,7 @@ import 'rewards.dart';
 import 'srs.dart';
 import 'settings_providers.dart';
 import 'story_models.dart';
+import 'word_lookup.dart';
 
 /// main() içinde gerçek örnekle override edilir.
 final sharedPreferencesProvider = Provider<SharedPreferences>(
@@ -472,6 +473,55 @@ class StoryNotifier extends AsyncNotifier<StoryState> {
   Future<void> regenerate() async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(_generate);
+  }
+
+  /// Dokunulan kelimenin anlamı: önce sözlükçe, sonra önbellek, en son Gemini.
+  ///
+  /// Hata fırlatmaz; anlam bulunamazsa `error` dolu döner.
+  Future<({WordMeaning? meaning, String? error})> lookup(
+    String word,
+    String sentence,
+  ) async {
+    final current = state.value;
+    if (current == null) return (meaning: null, error: 'Hikaye yüklenmedi');
+
+    if (glossaryMatch(current.story.glossary, word) case final g?) {
+      return (
+        meaning: WordMeaning(word: g.word, meaning: g.meaning),
+        error: null,
+      );
+    }
+    if (current.lookups[normalizeWord(word)] case final cached?) {
+      return (meaning: cached, error: null);
+    }
+
+    final profile = await ref.read(repositoryProvider).profile();
+    final result = await ref.read(geminiServiceProvider).translateWord(
+          word: word,
+          sentence: sentence,
+          level: profile?.level ?? 'B1',
+        );
+    final meaning = result.meaning;
+    // Ekran bu arada kapandıysa sağlayıcı atılmıştır; kayda dokunulmaz.
+    if (meaning != null && ref.mounted) {
+      final latest = state.value ?? current;
+      final next = latest.withLookup(word, meaning);
+      state = AsyncValue.data(next);
+      await ref.read(repositoryProvider).saveStory(DateTime.now(), next);
+    }
+    return result;
+  }
+
+  /// Kelimeyi flash kart destesine ekler; zaten varsa false.
+  Future<bool> addToPool(WordMeaning meaning, String sentence) async {
+    final added = await ref.read(repositoryProvider).addFlashcards([
+      (word: meaning.word, meaning: meaning.meaning, example: sentence),
+    ], source: 'story');
+    if (added > 0 && ref.mounted) {
+      ref.invalidate(flashcardSummaryProvider);
+      ref.invalidate(gameProvider);
+    }
+    return added > 0;
   }
 
   Future<void> answer(int index, String option) async {

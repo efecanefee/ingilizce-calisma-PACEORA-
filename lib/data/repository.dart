@@ -290,8 +290,8 @@ class Repository {
 
   /// Kartları desteye ekler; aynı kelime zaten varsa yeni kart açılmaz.
   ///
-  /// [source] `new_word` (dersin kelimeleri) ya da `mistake` (yanlış yapılan
-  /// ifade). Hatadan gelen kart zaten destedeyse bugüne çekilir: yanlış
+  /// [source] `new_word` (dersin kelimeleri), `story` (hikayede dokunulan
+  /// kelime) ya da `mistake` (yanlış yapılan ifade). Hatadan gelen kart zaten destedeyse bugüne çekilir: yanlış
   /// yapılan şeyin bir sonraki tekrarı ertelenmemeli.
   Future<int> addFlashcards(
     List<({String word, String meaning, String example})> cards, {
@@ -331,6 +331,15 @@ class Repository {
       }
     });
     return added;
+  }
+
+  /// Bu kelimenin kartı destede var mı (büyük/küçük harf duyarsız)?
+  Future<bool> hasFlashcard(String word) async {
+    final row = await (_db.select(_db.flashcards)
+          ..where((t) => t.word.lower().equals(word.trim().toLowerCase()))
+          ..limit(1))
+        .getSingleOrNull();
+    return row != null;
   }
 
   /// Bugün (veya daha önce) tekrar zamanı gelmiş kartlar, en gecikmiş önce.

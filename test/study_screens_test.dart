@@ -8,6 +8,7 @@ import 'package:paceora/data/lesson_models.dart';
 import 'package:paceora/data/providers.dart';
 import 'package:paceora/data/repository.dart';
 import 'package:paceora/data/story_models.dart';
+import 'package:paceora/data/word_lookup.dart';
 import 'package:paceora/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -102,6 +103,97 @@ void main() {
 
     final saved = await repository.storyFor(DateTime.now());
     expect(saved!.quizScore, 100);
+  });
+
+  group('günün hikayesi: dokun-çevir', () {
+    Future<void> openStory(WidgetTester tester) async {
+      await repository.saveStory(
+        DateTime.now(),
+        const StoryState(
+          story: DailyStory(
+            title: 'The Lost Key',
+            paragraphs: ['Ali lost his key in the park. He was sad.'],
+            glossary: [GlossaryItem(word: 'key', meaning: 'anahtar')],
+            questions: [
+              QuizItem(
+                question: 'Where?',
+                options: ['Home', 'Park'],
+                answer: 'Park',
+                explanationTr: '',
+              ),
+            ],
+          ),
+          lookups: {
+            'lost': WordMeaning(
+              word: 'lose',
+              meaning: 'kaybetmek',
+              partOfSpeech: 'fiil',
+            ),
+          },
+        ),
+      );
+      await pumpApp(tester);
+      await _scrollTo(tester, find.text('Oku ve anla'));
+      await tester.tap(find.text('Oku ve anla'));
+      await _advance(tester);
+    }
+
+    Future<void> tapWord(WidgetTester tester, String word) async {
+      await tester.tapOnText(find.textRange.ofSubstring(word).first);
+      await _advance(tester);
+    }
+
+    testWidgets('sözlükçedeki kelime havuza eklenir', (tester) async {
+      await openStory(tester);
+      await tapWord(tester, 'key');
+
+      expect(find.text('anahtar'), findsWidgets);
+      expect(find.text('“Ali lost his key in the park.”'), findsOneWidget);
+
+      await tester.tap(find.text('Kelime havuzuna ekle'));
+      await _advance(tester);
+
+      expect(find.text('Kelime havuzunda'), findsOneWidget);
+      final cards = await db.select(db.flashcards).get();
+      expect(cards, hasLength(1));
+      expect(cards.single.word, 'key');
+      expect(cards.single.meaning, 'anahtar');
+      expect(cards.single.source, 'story');
+      expect(cards.single.exampleSentence, 'Ali lost his key in the park.');
+    });
+
+    testWidgets('önbellekteki çeviri sözlük biçimiyle gösterilir', (
+      tester,
+    ) async {
+      await repository.addFlashcards([
+        (word: 'lose', meaning: 'kaybetmek', example: ''),
+      ], source: 'new_word');
+      await openStory(tester);
+      await tapWord(tester, 'lost');
+
+      expect(find.text('kaybetmek'), findsOneWidget);
+      expect(find.text('fiil'), findsOneWidget);
+      expect(find.text('Sözlük biçimi: lose'), findsOneWidget);
+      // Kart zaten destede.
+      expect(find.text('Kelime havuzunda'), findsOneWidget);
+    });
+
+    testWidgets('anahtar yoksa hata ve tekrar dene gösterilir', (
+      tester,
+    ) async {
+      await openStory(tester);
+      await tapWord(tester, 'sad');
+
+      expect(find.textContaining('GEMINI_API_KEY'), findsOneWidget);
+      expect(find.text('Tekrar dene'), findsOneWidget);
+      final button = tester.widget<FilledButton>(
+        find.ancestor(
+          of: find.text('Kelime havuzuna ekle'),
+          matching: find.byWidgetPredicate((w) => w is FilledButton),
+        ),
+      );
+      expect(button.onPressed, isNull);
+    });
   });
 
   testWidgets('haftalık rapor: yüksek skorla seviye yükseltilir', (

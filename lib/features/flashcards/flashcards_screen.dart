@@ -199,7 +199,6 @@ class _CardFace extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final fromMistake = card.source == 'mistake';
 
     return Container(
       width: double.infinity,
@@ -234,11 +233,16 @@ class _CardFace extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Chip(
-            avatar: Icon(
-              fromMistake ? Icons.replay : Icons.auto_awesome,
-              size: 16,
-            ),
-            label: Text(fromMistake ? 'Hata defterinden' : 'Yeni kelime'),
+            avatar: Icon(switch (card.source) {
+              'mistake' => Icons.replay,
+              'story' => Icons.auto_stories,
+              _ => Icons.auto_awesome,
+            }, size: 16),
+            label: Text(switch (card.source) {
+              'mistake' => 'Hata defterinden',
+              'story' => 'Hikayeden',
+              _ => 'Yeni kelime',
+            }),
             visualDensity: VisualDensity.compact,
           ),
           const Spacer(),

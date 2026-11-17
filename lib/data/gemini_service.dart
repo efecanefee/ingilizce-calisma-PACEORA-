@@ -10,6 +10,7 @@ import 'lesson_models.dart';
 import 'repository.dart';
 import 'review_models.dart';
 import 'story_models.dart';
+import 'word_lookup.dart';
 
 /// Haftalık plan üretiminin sonucu.
 ///
@@ -301,6 +302,39 @@ class GeminiService {
     return (story: story, offline: false);
   }
 
+  /// Hikayede dokunulan kelimenin cümledeki anlamını Türkçe verir.
+  ///
+  /// Hata fırlatmaz; ulaşılamazsa `meaning` null, `error` dolu döner.
+  Future<({WordMeaning? meaning, String? error})> translateWord({
+    required String word,
+    required String sentence,
+    required String level,
+  }) async {
+    final response = await _post(
+      prompt:
+          '''
+Türkçe konuşan $level seviyesinde bir İngilizce öğrencisi okurken bir kelimeye dokundu.
+
+Kelime: $word
+Geçtiği cümle: $sentence
+
+Üret:
+- word: kelimenin sözlük biçimi (çekimsiz: "went" → "go", "children" → "child"). Cümlede bir kalıbın (phrasal verb, deyim) parçasıysa kalıbın tamamını yaz ("give up").
+- meaning: bu cümledeki anlamıyla kısa TÜRKÇE karşılık (1-4 kelime; gerekirse virgülle en fazla iki seçenek)
+- partOfSpeech: Türkçe sözcük türü (isim, fiil, sıfat, zarf, edat, bağlaç, zamir, kalıp)
+''',
+      schema: _wordSchema,
+      timeout: const Duration(seconds: 20),
+      temperature: 0.2,
+    );
+    if (response.body == null) return (meaning: null, error: response.error);
+    final meaning = parseWordMeaningResponse(response.body!);
+    if (meaning == null) {
+      return (meaning: null, error: 'Çeviri okunamadı — tekrar dene');
+    }
+    return (meaning: meaning, error: null);
+  }
+
   /// Haftanın istatistiklerinden Türkçe değerlendirme yorumu üretir.
   ///
   /// Seviye önerisi burada verilmez; [recommendLevelDelta] cihazda hesaplar ve
@@ -448,6 +482,16 @@ Verilerde olmayan bir şey uydurma. Veri azsa bunu nazikçe belirt.
       },
     },
     'required': ['title', 'paragraphs', 'glossary', 'questions'],
+  };
+
+  static const Map<String, dynamic> _wordSchema = {
+    'type': 'OBJECT',
+    'properties': {
+      'word': {'type': 'STRING'},
+      'meaning': {'type': 'STRING'},
+      'partOfSpeech': {'type': 'STRING'},
+    },
+    'required': ['word', 'meaning', 'partOfSpeech'],
   };
 
   static const Map<String, dynamic> _reportSchema = {
