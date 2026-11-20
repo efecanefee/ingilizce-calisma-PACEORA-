@@ -223,10 +223,20 @@ flutter build apk --release --dart-define-from-file=env.json
 ## Testler
 
 ```bash
-flutter test
+flutter test                                   # birim + widget testleri
+flutter test --tags golden                     # ekran görüntüsü testleri (Linux)
+flutter test --tags golden --update-goldens    # görüntüleri yenile
+flutter test integration_test -d <cihaz>       # uçtan uca, temiz kurulumda
 ```
 
-108 test. Kapsam: Gemini yanıt ayrıştırma ve yedek plana düşme, ders JSON'unun
+275+ test, tamamı geçer. Ekran görüntüsü testleri Linux'ta üretildiği için
+diğer sistemlerde atlanır; uçtan uca test GitHub Actions'ta "Entegrasyon testi"
+iş akışıyla Android emülatöründe elle çalıştırılır. Ek kapsam: erişilebilirlik
+yönergeleri (etiket, 48 dp dokunma alanı, WCAG kontrastı), vurgu renkleri
+kontrastı, yedekleme/geri yükleme, veritabanı şeması, gizlilik (adın Gemini'ye
+gitmemesi), hazır ders havuzu, saat sabitlenerek haftanın her günü.
+
+Kapsam: Gemini yanıt ayrıştırma ve yedek plana düşme, ders JSON'unun
 bozuk öğelere dayanıklı okunması, çeviri puanlaması (noktalama, büyük/küçük harf,
 kısaltmalar), hata defteri kuralları, repository (streak, plan yenilerken
 ilerlemenin korunması, ders önbelleği), SM-2 aralık hesabı, flash kart destesi,
