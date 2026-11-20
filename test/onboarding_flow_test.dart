@@ -2,6 +2,7 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:paceora/app/answer_option.dart';
 import 'package:paceora/app/constants.dart';
 import 'package:paceora/app/logo.dart';
 import 'package:paceora/data/database.dart';
@@ -62,10 +63,16 @@ void main() {
     await tester.tap(find.text('4 soruluk kontrolü çöz'));
     await tester.pump();
     for (final q in LevelPreview.of(DifficultyLevel.b2).questions) {
-      final chip = find.widgetWithText(ActionChip, q.options[q.answer]);
+      final chip = find.widgetWithText(AnswerOption, q.options[q.answer]);
       await tester.ensureVisible(chip);
       await tester.tap(chip);
       await tester.pump();
+      // Doğru cevap yeşil gösterilir, kısa süre sonra sıradaki soru gelir.
+      expect(
+        tester.widget<AnswerOption>(chip).state,
+        AnswerState.correct,
+      );
+      await tester.pump(const Duration(seconds: 1));
     }
     expect(find.text('4 sorudan 4 doğru'), findsOneWidget);
     await tester.ensureVisible(find.text('B2 (zor) seviyesine geç'));

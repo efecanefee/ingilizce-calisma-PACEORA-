@@ -12,6 +12,7 @@ import 'app/error_reporting.dart';
 import 'app/mascot.dart';
 import 'app/motion.dart';
 import 'app/router.dart';
+import 'app/sounds.dart';
 import 'app/theme.dart';
 import 'data/providers.dart';
 import 'data/reminder_service.dart';
@@ -29,6 +30,7 @@ Future<void> main() async {
   });
   final prefs = await SharedPreferences.getInstance();
   installErrorHandlers(ErrorLog(prefs));
+  Sounds.useDevicePlayer();
   final onboardingDone = prefs.getBool(AppConstants.prefOnboardingDone) ?? false;
   final reminders = await LocalReminderService.create();
   const storage = FlutterSecureStorage();
@@ -88,8 +90,10 @@ class _PaceoraAppState extends ConsumerState<PaceoraApp>
 
   @override
   Widget build(BuildContext context) {
-    // Titreşim tercihi uygulama genelindeki Haptics bayrağını günceller.
-    ref.watch(hapticsProvider);
+    // Titreşim ve ses tercihleri uygulama genelindeki bayrakları günceller.
+    ref
+      ..watch(hapticsProvider)
+      ..watch(soundsProvider);
 
     final accent = ref.watch(accentProvider);
     // Hatırlatma metni seriye göre; bugün çalışıldıysa bugünkü atlanır.

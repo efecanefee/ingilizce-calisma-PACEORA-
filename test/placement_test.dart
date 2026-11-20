@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:paceora/app/answer_option.dart';
 import 'package:paceora/app/constants.dart';
 import 'package:paceora/data/level_check.dart';
 import 'package:paceora/data/placement.dart';
@@ -81,7 +82,16 @@ void main() {
       final q = questions[i];
       final pick = i < 7 ? q.answer : (q.answer + 1) % q.options.length;
       await tester.tap(find.text(q.options[pick]).last);
-      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump();
+      // Seçilen cevap renklenir: doğruysa yeşil, yanlışsa kırmızı.
+      final picked = tester.widget<AnswerOption>(
+        find.widgetWithText(AnswerOption, q.options[pick]),
+      );
+      expect(
+        picked.state,
+        i < 7 ? AnswerState.correct : AnswerState.wrong,
+      );
+      await tester.pump(const Duration(seconds: 1));
     }
     await tester.pump(const Duration(milliseconds: 400));
 
@@ -102,7 +112,7 @@ void main() {
     await pumpTest(tester);
     final q = drawPlacementQuestions(Random(7)).first;
     await tester.tap(find.text(q.options[0]).last);
-    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(const Duration(seconds: 1));
 
     final navigator = tester.state<NavigatorState>(find.byType(Navigator));
     await navigator.maybePop();

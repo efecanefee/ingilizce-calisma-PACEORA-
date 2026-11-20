@@ -3,9 +3,11 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/answer_option.dart';
 import '../../app/constants.dart';
 import '../../app/mascot.dart';
 import '../../app/motion.dart';
+import '../../app/sounds.dart';
 import '../../app/theme.dart';
 import '../../data/placement.dart';
 import '../../data/providers.dart';
@@ -34,6 +36,13 @@ class PlacementTestScreen extends ConsumerStatefulWidget {
 
 class _PlacementTestScreenState extends ConsumerState<PlacementTestScreen> {
   final _answers = <int>[];
+
+  /// Seçildi, renkli geri bildirim gösteriliyor; kısa süre sonra sıradaki
+  /// soruya geçilir.
+  int? _picked;
+
+  /// Doğru/yanlış renklerinin ekranda kalma süresi.
+  static const feedbackDelay = Duration(milliseconds: 900);
 
   /// Her açılışta havuzdan yeni sorular, seçenekler karışık.
   late final _questions = drawPlacementQuestions(widget.random);
@@ -69,8 +78,16 @@ class _PlacementTestScreenState extends ConsumerState<PlacementTestScreen> {
   }
 
   Future<void> _choose(int option) async {
+    if (_picked != null) return;
     Haptics.tap();
-    setState(() => _answers.add(option));
+    Sounds.answer(correct: _questions[_index].isCorrect(option));
+    setState(() => _picked = option);
+    await Future<void>.delayed(feedbackDelay);
+    if (!mounted) return;
+    setState(() {
+      _answers.add(option);
+      _picked = null;
+    });
     if (_done) {
       await PlacementRecord.save(
         ref.read(sharedPreferencesProvider),
@@ -80,7 +97,7 @@ class _PlacementTestScreenState extends ConsumerState<PlacementTestScreen> {
   }
 
   void _undo() {
-    if (_answers.isEmpty) return;
+    if (_answers.isEmpty || _picked != null) return;
     setState(_answers.removeLast);
   }
 
@@ -121,6 +138,7 @@ class _PlacementTestScreenState extends ConsumerState<PlacementTestScreen> {
                   index: _index,
                   total: _questions.length,
                   question: _questions[_index],
+                  picked: _picked,
                   onChoose: _choose,
                 ),
         ),
@@ -135,12 +153,16 @@ class _QuestionView extends StatelessWidget {
     required this.index,
     required this.total,
     required this.question,
+    required this.picked,
     required this.onChoose,
   });
 
   final int index;
   final int total;
   final PlacementQuestion question;
+
+  /// Seçilen cevap; null ise henüz seçilmedi.
+  final int? picked;
   final ValueChanged<int> onChoose;
 
   @override
@@ -177,13 +199,14 @@ class _QuestionView extends StatelessWidget {
         for (var i = 0; i < question.options.length; i++)
           Padding(
             padding: const EdgeInsets.only(bottom: 10),
-            child: OutlinedButton(
-              onPressed: () => onChoose(i),
-              style: OutlinedButton.styleFrom(
-                alignment: Alignment.centerLeft,
-                padding: const EdgeInsets.symmetric(horizontal: 18),
+            child: AnswerOption(
+              label: question.options[i],
+              state: answerStateFor(
+                option: i,
+                correct: question.answer,
+                picked: picked,
               ),
-              child: Text(question.options[i]),
+              onPressed: picked == null ? () => onChoose(i) : null,
             ),
           ),
       ],

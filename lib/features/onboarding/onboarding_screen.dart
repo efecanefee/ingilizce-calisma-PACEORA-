@@ -3,10 +3,12 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/answer_option.dart';
 import '../../app/constants.dart';
 import '../../app/logo.dart';
 import '../../app/mascot.dart';
 import '../../app/motion.dart';
+import '../../app/sounds.dart';
 import '../../data/level_check.dart';
 import '../../data/placement.dart';
 import '../../data/providers.dart';
@@ -363,6 +365,23 @@ class _LevelCheckStepState extends State<_LevelCheckStep> {
   final _answers = <int>[];
   bool _started = false;
 
+  /// Seçildi, renkli geri bildirim gösteriliyor.
+  int? _picked;
+
+  Future<void> _choose(int option) async {
+    if (_picked != null) return;
+    Haptics.tap();
+    final question = _preview.questions[_answers.length];
+    Sounds.answer(correct: question.isCorrect(option));
+    setState(() => _picked = option);
+    await Future<void>.delayed(const Duration(milliseconds: 900));
+    if (!mounted) return;
+    setState(() {
+      _answers.add(option);
+      _picked = null;
+    });
+  }
+
   LevelPreview get _preview => LevelPreview.of(widget.level);
 
   int get _correct => [
@@ -467,12 +486,15 @@ class _LevelCheckStepState extends State<_LevelCheckStep> {
                 runSpacing: 8,
                 children: [
                   for (var i = 0; i < q.options.length; i++)
-                    ActionChip(
-                      label: Text(q.options[i]),
-                      onPressed: () {
-                        Haptics.tap();
-                        setState(() => _answers.add(i));
-                      },
+                    AnswerOption(
+                      label: q.options[i],
+                      expand: false,
+                      state: answerStateFor(
+                        option: i,
+                        correct: q.answer,
+                        picked: _picked,
+                      ),
+                      onPressed: _picked == null ? () => _choose(i) : null,
                     ),
                 ],
               ),

@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/error_view.dart';
 import '../../app/motion.dart';
+import '../../app/sounds.dart';
 import '../../app/theme.dart';
 import '../../data/match_game.dart';
 import '../../data/providers.dart';
@@ -155,6 +156,7 @@ class _MatchGameState extends ConsumerState<_MatchGame> {
     switch (outcome) {
       case MatchOutcome.correct:
         Haptics.success();
+        Sounds.correct();
         setState(() {});
         Future<void>.delayed(const Duration(milliseconds: 220), () {
           if (!mounted || _phase != _Phase.playing) return;
@@ -162,6 +164,7 @@ class _MatchGameState extends ConsumerState<_MatchGame> {
         });
       case MatchOutcome.wrong:
         Haptics.tap();
+        Sounds.wrong();
         final cells = {cell, ?selectedBefore};
         setState(() {
           _wrong.addAll(cells);

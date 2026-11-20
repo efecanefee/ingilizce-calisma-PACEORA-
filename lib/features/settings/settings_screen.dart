@@ -716,6 +716,7 @@ class _AppearanceGroup extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final mode = ref.watch(themeModeProvider);
     final haptics = ref.watch(hapticsProvider);
+    final sounds = ref.watch(soundsProvider);
 
     return _SettingsGroup(
       title: 'GÖRÜNÜM VE HİS',
@@ -798,6 +799,16 @@ class _AppearanceGroup extends ConsumerWidget {
           trailing: Switch(
             value: haptics,
             onChanged: (v) => ref.read(hapticsProvider.notifier).set(v),
+          ),
+        ),
+        _SettingsTile(
+          icon: Icons.volume_up_rounded,
+          color: AppColors.mint,
+          title: 'Ses efektleri',
+          subtitle: 'Doğru ve yanlış cevapta kısa ses',
+          trailing: Switch(
+            value: sounds,
+            onChanged: (v) => ref.read(soundsProvider.notifier).set(v),
           ),
         ),
       ],

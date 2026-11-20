@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../app/motion.dart';
+import '../../app/sounds.dart';
 import '../../app/theme.dart';
 import '../../data/lesson_models.dart';
 
@@ -111,7 +112,7 @@ class ChoiceQuestionCard extends StatelessWidget {
               _OptionTile(
                 label: option,
                 state: _stateFor(option),
-                onTap: _answered ? null : () => onSelected(option),
+                onTap: _answered ? null : () => _select(option),
               ),
             if (_answered &&
                 explanation != null &&
@@ -123,6 +124,11 @@ class ChoiceQuestionCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void _select(String option) {
+    Sounds.answer(correct: option.toLowerCase() == answer.toLowerCase());
+    onSelected(option);
   }
 
   _OptionState _stateFor(String option) {
@@ -338,6 +344,7 @@ class _TranslateQuestionCardState extends State<TranslateQuestionCard> {
 
   void _submit(String value) {
     if (value.trim().isEmpty) return;
+    Sounds.answer(correct: widget.item.isCorrect(value));
     widget.onSubmit(value);
   }
 }

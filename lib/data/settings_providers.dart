@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../app/constants.dart';
 import '../app/motion.dart';
+import '../app/sounds.dart';
 import '../app/theme.dart';
 import 'providers.dart';
 import 'reminder_service.dart';
@@ -131,6 +132,30 @@ class HapticsNotifier extends Notifier<bool> {
     Haptics.tap();
   }
 }
+
+/// Doğru/yanlış cevap sesleri açık mı.
+class SoundsNotifier extends Notifier<bool> {
+  static const key = 'sound_effects_enabled';
+
+  @override
+  bool build() {
+    final enabled = ref.watch(sharedPreferencesProvider).getBool(key) ?? true;
+    Sounds.enabled = enabled;
+    return enabled;
+  }
+
+  Future<void> set(bool enabled) async {
+    await ref.read(sharedPreferencesProvider).setBool(key, enabled);
+    Sounds.enabled = enabled;
+    state = enabled;
+    // Açılınca nasıl duyulduğunu hemen göster.
+    if (enabled) Sounds.correct();
+  }
+}
+
+final soundsProvider = NotifierProvider<SoundsNotifier, bool>(
+  SoundsNotifier.new,
+);
 
 final hapticsProvider =
     NotifierProvider<HapticsNotifier, bool>(HapticsNotifier.new);
