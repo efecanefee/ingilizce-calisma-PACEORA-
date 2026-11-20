@@ -435,6 +435,10 @@ class _ResultViewState extends ConsumerState<_ResultView> {
     // XP ders başına bir kez verilir; zaten bitmiş ders tekrar açıldıysa
     // "+XP" gösterilmez.
     final earnsXp = !(ref.watch(todayLessonProvider).value?.completed ?? false);
+    // Ara ton açık zeminde soluk kalıyor; açık temada koyu tonu kullan.
+    final xpTone = theme.brightness == Brightness.dark
+        ? AppColors.accentDim
+        : AppColors.accentDark;
 
     final (color, message) = switch (score) {
       >= 85 => (AppColors.success, 'Harika gidiyorsun!'),
@@ -495,13 +499,13 @@ class _ResultViewState extends ConsumerState<_ResultView> {
                       decoration: BoxDecoration(
                         color: AppColors.accent.withValues(alpha: 0.18),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: AppColors.accentDim),
+                        border: Border.all(color: xpTone),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(Icons.bolt_rounded,
-                              size: 20, color: AppColors.accentDim),
+                              size: 20, color: xpTone),
                           const SizedBox(width: 6),
                           CountUpText(
                             value: lessonXp(state.scorePercent),

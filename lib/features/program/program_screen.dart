@@ -159,7 +159,11 @@ class _WeekHeader extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: isDark
               ? [AppColors.graphite700, AppColors.accentDark]
-              : [AppColors.accentDark, Color.lerp(AppColors.accentDark, AppColors.accentDim, 0.5)!],
+              : [
+                  AppColors.accentDark,
+                  // Beyaz yazı açık zeminde de okunsun diye koyuya kayar.
+                  Color.lerp(AppColors.accentDark, AppColors.graphite900, 0.35)!,
+                ],
         ),
       ),
       child: Column(
