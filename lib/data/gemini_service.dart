@@ -199,16 +199,14 @@ class GeminiService {
   ///
   /// Hiçbir koşulda hata fırlatmaz — başarısızlıkta [fallbackWeeklyPlan]
   /// döner, böylece onboarding akışı kilitlenmez.
-  // Gizlilik: `name` parametreleri geriye uyumluluk için duruyor; kullanıcının
-  // adı Gemini'ye (Google) gönderilmez, istemlerde yalnızca seviye ve konu yer
-  // alır.
+  // Gizlilik: kullanıcının adı Gemini'ye (Google) gönderilmez; servisin ad
+  // diye bir girdisi yoktur, istemlerde yalnızca seviye ve konu yer alır.
   Future<WeeklyPlanResult> generateWeeklyPlan({
-    required String name,
     required String level,
     required int dailyMinutes,
   }) async {
     final response = await _post(
-      prompt: _planPrompt(name: name, level: level, dailyMinutes: dailyMinutes),
+      prompt: _planPrompt(level: level, dailyMinutes: dailyMinutes),
       schema: _planSchema,
       timeout: const Duration(seconds: 60),
     );
@@ -237,7 +235,6 @@ class GeminiService {
   /// [reviewItems] daha önce yanlış yapılıp henüz çözülmemiş kelime/kalıplardır;
   /// modele verilerek dersin bir kısmının bunların tekrarına ayrılması sağlanır.
   Future<DailyLessonResult> generateDailyLesson({
-    required String name,
     required String level,
     required int dailyMinutes,
     required String grammarTopic,
@@ -246,7 +243,6 @@ class GeminiService {
   }) async {
     final response = await _post(
       prompt: _lessonPrompt(
-        name: name,
         level: level,
         dailyMinutes: dailyMinutes,
         grammarTopic: grammarTopic,
@@ -274,7 +270,6 @@ class GeminiService {
   /// Hiçbir koşulda hata fırlatmaz: üretilemezse yerleşik yedek hikaye döner
   /// ve `offline` true olur, böylece çevrimdışıyken de okuma yapılabilir.
   Future<({DailyStory story, bool offline})> generateDailyStory({
-    required String name,
     required String level,
     required int dailyMinutes,
     required String grammarTopic,
@@ -284,7 +279,6 @@ class GeminiService {
   }) async {
     final response = await _post(
       prompt: _storyPrompt(
-        name: name,
         level: level,
         dailyMinutes: dailyMinutes,
         grammarTopic: grammarTopic,
@@ -315,7 +309,6 @@ class GeminiService {
   Future<({RoleplayTurn? turn, String? error})> roleplayTurn({
     required RoleplayScenario scenario,
     required String level,
-    required String name,
     required List<ChatMessage> history,
   }) async {
     final transcript = [
@@ -390,14 +383,12 @@ Geçtiği cümle: $sentence
   /// Seviye önerisi burada verilmez; [recommendLevelDelta] cihazda hesaplar ve
   /// modele yalnızca bilgi olarak geçilir. Ulaşılamazsa yerel şablon kullanılır.
   Future<({ReportCommentary commentary, bool offline})> generateWeeklyReport({
-    required String name,
     required String level,
     required WeeklyStats stats,
     required int levelDelta,
   }) async {
     final response = await _post(
       prompt: _reportPrompt(
-        name: name,
         level: level,
         stats: stats,
         levelDelta: levelDelta,
@@ -417,7 +408,6 @@ Geçtiği cümle: $sentence
   }
 
   String _storyPrompt({
-    required String name,
     required String level,
     required int dailyMinutes,
     required String grammarTopic,
@@ -461,7 +451,6 @@ Kurallar:
   }
 
   String _reportPrompt({
-    required String name,
     required String level,
     required WeeklyStats stats,
     required int levelDelta,
@@ -678,7 +667,6 @@ Verilerde olmayan bir şey uydurma. Veri azsa bunu nazikçe belirt.
   };
 
   String _planPrompt({
-    required String name,
     required String level,
     required int dailyMinutes,
   }) {
@@ -701,7 +689,6 @@ Kurallar:
   }
 
   String _lessonPrompt({
-    required String name,
     required String level,
     required int dailyMinutes,
     required String grammarTopic,

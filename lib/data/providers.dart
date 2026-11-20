@@ -134,7 +134,6 @@ class WeekPlanNotifier extends AsyncNotifier<WeekPlan> {
 
   Future<WeeklyPlanResult> _generate(UserProfile profile) async {
     final result = await ref.read(geminiServiceProvider).generateWeeklyPlan(
-          name: profile.name,
           level: profile.level,
           dailyMinutes: profile.dailyMinutes,
         );
@@ -254,7 +253,6 @@ class LessonNotifier extends AsyncNotifier<LessonState> {
     }
 
     final result = await ref.read(geminiServiceProvider).generateDailyLesson(
-          name: profile.name,
           level: profile.level,
           dailyMinutes: profile.dailyMinutes,
           grammarTopic: today.grammarTopic,
@@ -687,7 +685,6 @@ class RoleplayNotifier extends Notifier<RoleplayState> {
         .roleplayTurn(
           scenario: state.scenario,
           level: profile?.level ?? 'B1',
-          name: profile?.name ?? 'Student',
           history: state.messages,
         );
     if (!ref.mounted) return;
@@ -782,7 +779,6 @@ class StoryNotifier extends AsyncNotifier<StoryState> {
           ];
 
     final result = await ref.read(geminiServiceProvider).generateDailyStory(
-          name: profile.name,
           level: profile.level,
           dailyMinutes: profile.dailyMinutes,
           grammarTopic: today?.grammarTopic ?? 'Mixed tenses',
@@ -983,7 +979,6 @@ class WeeklyReportsNotifier extends AsyncNotifier<List<WeeklyReport>> {
     final delta = recommendLevelDelta(stats);
 
     final result = await ref.read(geminiServiceProvider).generateWeeklyReport(
-          name: profile.name,
           level: profile.level,
           stats: stats,
           levelDelta: delta,

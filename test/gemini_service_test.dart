@@ -106,7 +106,6 @@ void main() {
           reason: 'test ortamında GEMINI_API_KEY tanımlı olmamalı');
 
       final result = await service.generateWeeklyPlan(
-        name: 'Efecan',
         level: 'B2',
         dailyMinutes: 20,
       );
