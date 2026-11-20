@@ -20,6 +20,8 @@ import 'data/streak_freeze.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Düzen dikey telefon ekranına göre: yatayda içerik sığmıyor.
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   // Uygulamayla gelen Inter yazı tipinin lisansı "Açık kaynak lisansları"nda.
   LicenseRegistry.addLicense(() async* {
     final license = await rootBundle.loadString('assets/fonts/OFL.txt');
