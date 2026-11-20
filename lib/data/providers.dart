@@ -18,6 +18,7 @@ import 'rewards.dart';
 import 'srs.dart';
 import 'settings_providers.dart';
 import 'story_models.dart';
+import 'wardrobe.dart';
 import 'word_lookup.dart';
 
 /// main() içinde gerçek örnekle override edilir.
@@ -529,6 +530,34 @@ Future<bool> buyFreeze(WidgetRef ref) async {
   );
   if (ok) ref.invalidate(freezeProvider);
   return ok;
+}
+
+/// Pace'in formaları; satın alma ve giydirmede geçersiz kılınır.
+final wardrobeProvider = Provider<WardrobeState>(
+  (ref) => WardrobeState.read(ref.read(sharedPreferencesProvider)),
+);
+
+/// Bir forma satın alıp giydirir; harcanabilir XP yetmezse false.
+Future<bool> buyKit(WidgetRef ref, PaceKit kit) async {
+  final game = await ref.read(gameProvider.future);
+  final ok = await WardrobeState.buy(
+    ref.read(sharedPreferencesProvider),
+    kit,
+    totalXp: game.level.xp,
+  );
+  if (ok) {
+    ref.invalidate(wardrobeProvider);
+    // Bakiye seri dondurma sayacıyla ortak.
+    ref.invalidate(freezeProvider);
+  }
+  return ok;
+}
+
+/// Sahip olunan formayı giydirir.
+Future<void> equipKit(WidgetRef ref, PaceKit kit) async {
+  if (await WardrobeState.equip(ref.read(sharedPreferencesProvider), kit)) {
+    ref.invalidate(wardrobeProvider);
+  }
 }
 
 // --- Rol yapma sohbeti -------------------------------------------------------

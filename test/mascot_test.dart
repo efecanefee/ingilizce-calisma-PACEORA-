@@ -8,7 +8,9 @@ import 'package:paceora/app/mascot.dart';
 void main() {
   test('her pozun ve rozetin görseli depoda var', () {
     for (final mood in PaceMood.values) {
-      expect(File(mood.asset).existsSync(), isTrue, reason: mood.asset);
+      for (final asset in [mood.asset, mood.kitMask, mood.trimMask]) {
+        expect(File(asset).existsSync(), isTrue, reason: asset);
+      }
     }
     expect(File(MascotAssets.badge).existsSync(), isTrue);
   });

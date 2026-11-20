@@ -255,7 +255,7 @@ class _HeroPace extends ConsumerWidget {
       StreakStatus.protected => PaceMood.surprised,
       _ => PaceMood.run,
     };
-    return PaceMascot(mood: mood, size: 80);
+    return EquippedPace(mood: mood, size: 80);
   }
 }
 

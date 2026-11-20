@@ -6,12 +6,14 @@ import 'package:go_router/go_router.dart';
 import '../../app/avatar.dart';
 import '../../app/badge_medal.dart';
 import '../../app/constants.dart';
+import '../../app/mascot.dart';
 import '../../app/motion.dart';
 import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../data/profile_style.dart';
 import '../../data/providers.dart';
 import '../../data/rewards.dart';
+import '../wardrobe/wardrobe_sheet.dart';
 
 /// Profil: avatar, oyuncu seviyesi, rozet vitrini ve özet istatistikler.
 class ProfileScreen extends ConsumerWidget {
@@ -151,6 +153,8 @@ class _ProfileBody extends ConsumerWidget {
             ),
           ),
         ),
+        const SizedBox(height: 12),
+        item(const _WardrobeCard()),
       ],
     );
   }
@@ -248,6 +252,51 @@ class _Header extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// Pace'in dolabına giriş: giyili formayla Pace ve dolap düğmesi.
+class _WardrobeCard extends ConsumerWidget {
+  const _WardrobeCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final kit = ref.watch(wardrobeProvider).equipped;
+    return Card(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () => showWardrobeSheet(context),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 16, 8),
+          child: Row(
+            children: [
+              const EquippedPace(size: 76, animate: false),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Pace'in dolabı",
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Forma: ${kit.label}',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.checkroom_rounded),
+            ],
+          ),
+        ),
       ),
     );
   }
