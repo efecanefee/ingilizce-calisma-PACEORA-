@@ -24,6 +24,12 @@ saklanır:
 Uygulamayı silmek ya da **Ayarlar > Verileri sıfırla** bu verileri cihazdan
 kaldırır.
 
+## Yedek dosyası
+
+**Ayarlar > Verileri dışa aktar** tüm ilerlemeni (adın dahil) bir JSON
+dosyasına yazar ve seçtiğin yere paylaşır. Dosya şifrelenmez; nereye kaydettiğin
+senin kontrolündedir. API anahtarın yedeğe girmez.
+
 ## Google Gemini'ye gönderilenler
 
 Haftalık program, günlük ders, günün hikayesi, haftalık rapor yorumu, kelime

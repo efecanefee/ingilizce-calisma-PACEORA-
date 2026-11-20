@@ -47,6 +47,8 @@ dilbilgisi konusu ve bir kelime teması olur; pazar günü haftanın tekrarına 
 - **İlerlemen korunur** — programı yenilediğinde çalıştığın günlerin durumu
   silinmez, dolayısıyla serin de bozulmaz. Yeni haftaya geçtiğinde program
   kendiliğinden üretilir.
+- **Yedekleme** — Ayarlar'dan tüm ilerlemeyi tek bir JSON dosyasına dışa aktar,
+  yeni telefonda geri yükle (hesap gerekmez).
 - **Tamamen yerel veri** — her şey cihazdaki SQLite'ta (drift). Hesap yok,
   sunucu yok; Gemini'ye yalnızca içerik üretirken istek gider.
 - **8 kademeli seviye** — A2, B1-, B1, B1+, B2-, B2, B2+, C1 (B1 ve B2'de

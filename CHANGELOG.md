@@ -22,6 +22,10 @@
   konusunu açar.
 - **Seri hedefleri:** Seri rozetinde dönen alev çerçevesi ve hedef barı;
   3, 7, 14, 30, 50, 100, 200, 365 güne ulaşınca kutlama.
+- **Yedekleme:** Ayarlar > Verilerim'den tüm ilerlemeyi dosyaya aktarma ve
+  yedekten geri yükleme.
+- **Hazır dersler:** Gemini'ye ulaşılamadığında 12 konuluk yerleşik ders
+  havuzundan çalışma.
 - **Süre seçenekleri:** 5, 10, 15, 20, 30, 45 ve 60 dakika, açıklamalarıyla.
 
 ### Değişti
