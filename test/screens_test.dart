@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paceora/data/database.dart';
+import 'package:paceora/data/placement.dart';
 import 'package:paceora/data/providers.dart';
 import 'package:paceora/data/repository.dart';
 import 'package:paceora/data/review_models.dart';
@@ -82,10 +83,28 @@ void main() {
     expect(find.text('Derse başla'), findsOneWidget);
   });
 
-  testWidgets('profil kaydı sonrası snackbardan program yenilemek çökmez', (
+  testWidgets('seviye testi çözülmeden ayarlardan seviye seçilemez', (
     tester,
   ) async {
     await pumpApp(tester);
+
+    await tester.tap(find.text('Ayarlar'));
+    await _advance(tester);
+    await tester.tap(find.byTooltip('Profili düzenle'));
+    await _advance(tester);
+
+    final chip = tester.widget<ChoiceChip>(
+      find.widgetWithText(ChoiceChip, 'B2'),
+    );
+    expect(chip.onSelected, isNull);
+    expect(find.text('Testi çöz'), findsOneWidget);
+  });
+
+  testWidgets('profil kaydı sonrası snackbardan program yenilemek çökmez', (
+    tester,
+  ) async {
+    // Seviye testi daha önce çözülmüş: seviye seçimi açık.
+    await pumpApp(tester, {PlacementRecord.levelKey: 'B1'});
 
     await tester.tap(find.text('Ayarlar'));
     await _advance(tester);

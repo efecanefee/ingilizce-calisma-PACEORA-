@@ -9,10 +9,12 @@ import '../../app/motion.dart';
 import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../data/gemini_service.dart';
+import '../../data/placement.dart';
 import '../../data/profile_style.dart';
 import '../../data/providers.dart';
 import '../../data/rewards.dart';
 import '../../data/settings_providers.dart';
+import '../placement/placement_screen.dart';
 
 /// Ayarlar: profil kartı ve gruplanmış tercihler.
 class SettingsScreen extends ConsumerWidget {
@@ -353,6 +355,19 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
   late int _minutes = widget.user.dailyMinutes;
   bool _saving = false;
 
+  /// Seviye testi daha önce çözüldü mü; çözülmediyse seviye kilitli.
+  late bool _tested =
+      PlacementRecord.read(ref.read(sharedPreferencesProvider)) != null;
+
+  Future<void> _takeTest() async {
+    final level = await openPlacementTest(context);
+    if (level == null || !mounted) return;
+    setState(() {
+      _tested = true;
+      _level = level;
+    });
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -427,8 +442,30 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
               ChoiceChip(
                 label: Text(level.label),
                 selected: level == _level,
-                onSelected: (_) => setState(() => _level = level),
+                // Seviye testi çözülmeden seviye elle değiştirilemez.
+                onSelected: _tested
+                    ? (_) => setState(() => _level = level)
+                    : null,
               ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                _tested
+                    ? 'Seviye testi sonucun: '
+                          '${PlacementRecord.read(ref.read(sharedPreferencesProvider))?.label}'
+                    : 'Seviyeni değiştirmek için önce kısa seviye testini çöz.',
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
+            TextButton.icon(
+              onPressed: _saving ? null : _takeTest,
+              icon: const Icon(Icons.quiz_rounded, size: 18),
+              label: Text(_tested ? 'Tekrar çöz' : 'Testi çöz'),
+            ),
           ],
         ),
         const SizedBox(height: 20),
@@ -1075,6 +1112,8 @@ class _DataGroupState extends ConsumerState<_DataGroup> {
             key.startsWith('roleplay_') ||
             key.startsWith('streak_') ||
             key.startsWith('profile_') ||
+            key.startsWith('wardrobe_') ||
+            key == PlacementRecord.levelKey ||
             key == levelUpsKey ||
             key == 'seen_player_level' ||
             key == 'seen_badges') {
@@ -1084,6 +1123,7 @@ class _DataGroupState extends ConsumerState<_DataGroup> {
 
       // Bellekteki durum da sıfırlanmalı; aksi halde silinen profil ekranda kalır.
       ref.invalidate(profileProvider);
+      ref.invalidate(wardrobeProvider);
       ref.invalidate(weekPlanProvider);
       ref.invalidate(todayLessonProvider);
       ref.invalidate(flashcardSummaryProvider);
