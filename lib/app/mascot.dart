@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/providers.dart';
 import '../data/wardrobe.dart';
+import 'motion.dart';
 
 /// Pace'in pozları. Her biri şeffaf zeminli ayrı bir görsel.
 enum PaceMood {
@@ -136,7 +137,7 @@ class PaceMascot extends StatelessWidget {
 
     if (animate && !MediaQuery.disableAnimationsOf(context)) {
       mascot = mascot
-          .animate(onPlay: (c) => c.repeat(reverse: true))
+          .animate(onPlay: Motion.loop(reverse: true))
           .scaleXY(
             begin: 1,
             end: 1.03,

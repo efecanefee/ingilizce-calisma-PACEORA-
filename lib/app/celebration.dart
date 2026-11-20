@@ -26,9 +26,11 @@ class ConfettiBurst extends StatefulWidget {
 
 class _ConfettiBurstState extends State<ConfettiBurst>
     with SingleTickerProviderStateMixin {
+  // Hareket azaltılmışsa konfeti hiç uçmaz (sona atlanır).
   late final _controller = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 2600),
+    value: Motion.reduced ? 1 : 0,
   )..forward();
 
   late final _pieces = _generate();

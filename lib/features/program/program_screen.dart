@@ -324,7 +324,7 @@ class _TimelineRow extends StatelessWidget {
     );
     if (isToday) {
       dot = dot
-          .animate(onPlay: (c) => c.repeat(reverse: true))
+          .animate(onPlay: Motion.loop(reverse: true))
           .scaleXY(
             begin: 1,
             end: 1.12,

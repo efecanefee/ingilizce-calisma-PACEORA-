@@ -137,7 +137,7 @@ class BadgeMedal extends StatelessWidget {
     );
     return earned
         ? medal
-              .animate(onPlay: (c) => c.repeat())
+              .animate(onPlay: Motion.loop())
               .shimmer(
                 delay: 3.seconds,
                 duration: 1.seconds,

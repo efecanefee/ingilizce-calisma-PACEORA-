@@ -254,7 +254,7 @@ class _ProfileHeader extends ConsumerWidget {
                       ),
                     ),
                   )
-                  .animate(onPlay: (c) => c.repeat(reverse: true))
+                  .animate(onPlay: Motion.loop(reverse: true))
                   .boxShadow(
                     begin: const BoxShadow(
                       color: Colors.transparent,
@@ -1344,7 +1344,7 @@ class _AboutGroup extends StatelessWidget {
         ),
         const SizedBox(height: 28),
         const PaceoraMark(size: 44)
-            .animate(onPlay: (c) => c.repeat(reverse: true))
+            .animate(onPlay: Motion.loop(reverse: true))
             .moveY(
               begin: -3,
               end: 3,

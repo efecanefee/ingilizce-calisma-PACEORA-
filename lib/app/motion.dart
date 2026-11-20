@@ -15,6 +15,15 @@ abstract class Motion {
 
   /// Liste öğeleri arasındaki gecikme (sırayla belirme).
   static const stagger = Duration(milliseconds: 60);
+
+  /// Sistemde "animasyonları azalt" açık mı. Uygulama kökü her çizimde
+  /// MediaQuery'den günceller.
+  static bool reduced = false;
+
+  /// Döngüdeki süs animasyonları için `onPlay`: hareket azaltılmışsa
+  /// animasyon başlangıç karesinde durur, değilse döner.
+  static AnimateCallback loop({bool reverse = false}) =>
+      (c) => reduced ? c.stop() : c.repeat(reverse: reverse);
 }
 
 /// Dokunsal geri bildirim; Ayarlar'dan kapatılabilir.
@@ -55,7 +64,10 @@ CustomTransitionPage<void> motionPage(GoRouterState state, Widget child) {
 
 extension EntranceAnimation on Widget {
   /// Listede [index]. sıradaki öğe için yukarı kayarak belirme.
-  Widget entrance(int index) => animate(delay: Motion.stagger * index)
+  /// Hareket azaltılmışsa öğe doğrudan görünür.
+  Widget entrance(int index) => Motion.reduced
+      ? this
+      : animate(delay: Motion.stagger * index)
       .fadeIn(duration: Motion.medium, curve: Motion.curve)
       .slideY(
         begin: 0.12,
@@ -160,7 +172,7 @@ class PulsingFlame extends StatelessWidget {
     if (!active) return Opacity(opacity: 0.35, child: flame);
     if (MediaQuery.disableAnimationsOf(context)) return flame;
     return flame
-        .animate(onPlay: (c) => c.repeat(reverse: true))
+        .animate(onPlay: Motion.loop(reverse: true))
         .scaleXY(
           begin: 0.9,
           end: 1.12,

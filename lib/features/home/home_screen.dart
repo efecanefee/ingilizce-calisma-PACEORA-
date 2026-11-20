@@ -216,7 +216,18 @@ class _HeroCardState extends State<_HeroCard>
   late final _controller = AnimationController(
     vsync: this,
     duration: const Duration(seconds: 6),
-  )..repeat(reverse: true);
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // "Animasyonları azalt" açıksa gradyan durur.
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _controller.stop();
+    } else if (!_controller.isAnimating) {
+      _controller.repeat(reverse: true);
+    }
+  }
 
   @override
   void dispose() {
@@ -271,7 +282,7 @@ class _HeroCardState extends State<_HeroCard>
                       size: 140,
                       color: context.pace.accent.withValues(alpha: 0.08),
                     )
-                    .animate(onPlay: (c) => c.repeat(reverse: true))
+                    .animate(onPlay: Motion.loop(reverse: true))
                     .rotate(begin: -0.03, end: 0.03, duration: 3.seconds),
           ),
           Padding(
@@ -625,7 +636,7 @@ class _StreakGlowState extends State<_StreakGlow>
 
     if (still) return glowing;
     return glowing
-        .animate(onPlay: (c) => c.repeat())
+        .animate(onPlay: Motion.loop())
         .shimmer(
           delay: 2.seconds,
           duration: 1200.ms,
@@ -954,7 +965,7 @@ class _XpBar extends StatelessWidget {
                         ),
                       ),
                     )
-                    .animate(onPlay: (c) => c.repeat())
+                    .animate(onPlay: Motion.loop())
                     .shimmer(
                       delay: 2.seconds,
                       duration: 1200.ms,
@@ -1131,7 +1142,7 @@ class _GoalTaskRow extends ConsumerWidget {
 
     return isNext
         ? row
-              .animate(onPlay: (c) => c.repeat(reverse: true))
+              .animate(onPlay: Motion.loop(reverse: true))
               .scaleXY(
                 begin: 1,
                 end: 1.015,
@@ -1190,7 +1201,7 @@ class _GoalRing extends StatelessWidget {
 
     return complete
         ? ring
-              .animate(onPlay: (c) => c.repeat(reverse: true))
+              .animate(onPlay: Motion.loop(reverse: true))
               .scaleXY(begin: 1, end: 1.08, duration: 900.ms)
         : ring;
   }
@@ -1651,7 +1662,7 @@ class _PracticeTile extends StatelessWidget {
                           ),
                         ),
                       )
-                      .animate(onPlay: (c) => c.repeat(reverse: true))
+                      .animate(onPlay: Motion.loop(reverse: true))
                       .scaleXY(begin: 1, end: 1.12, duration: 800.ms),
               ],
             ),
@@ -1828,7 +1839,7 @@ class _TodayCard extends StatelessWidget {
                     label: Text(inProgress ? 'Derse devam et' : 'Bugünü çalış'),
                   )
                   // Ara ara geçen parıltı asıl eyleme dikkat çeker.
-                  .animate(onPlay: (c) => c.repeat())
+                  .animate(onPlay: Motion.loop())
                   .shimmer(
                     delay: 2500.ms,
                     duration: 1200.ms,

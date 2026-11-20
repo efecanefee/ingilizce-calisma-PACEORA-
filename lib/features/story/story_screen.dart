@@ -47,7 +47,7 @@ class _LoadingView extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(Icons.auto_stories, size: 48, color: theme.colorScheme.primary)
-              .animate(onPlay: (c) => c.repeat(reverse: true))
+              .animate(onPlay: Motion.loop(reverse: true))
               .moveY(
                 begin: -4,
                 end: 4,

@@ -398,7 +398,7 @@ class _LevelSuggestion extends ConsumerWidget {
                           color: color,
                           size: 28,
                         )
-                        .animate(onPlay: (c) => c.repeat(reverse: true))
+                        .animate(onPlay: Motion.loop(reverse: true))
                         .moveX(begin: -3, end: 3, duration: 700.ms),
               ),
               _LevelChip(code: to.code, muted: false),

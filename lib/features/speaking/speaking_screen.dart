@@ -362,7 +362,7 @@ class _MicButton extends StatelessWidget {
     );
     if (listening) {
       button = button
-          .animate(onPlay: (c) => c.repeat(reverse: true))
+          .animate(onPlay: Motion.loop(reverse: true))
           .scale(
             begin: const Offset(1, 1),
             end: const Offset(1.08, 1.08),
