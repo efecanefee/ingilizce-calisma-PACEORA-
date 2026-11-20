@@ -1,0 +1,31 @@
+name: Kontrol
+
+# Pull request'lerde ve elle tetiklendiğinde analiz + testleri çalıştırır.
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  kontrol:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.7
+          channel: stable
+          cache: true
+
+      - name: Bağımlılıklar
+        run: flutter pub get
+
+      - name: Drift kod üretimi
+        run: dart run build_runner build
+
+      - name: Analiz
+        run: flutter analyze --no-fatal-infos
+
+      - name: Testler
+        run: flutter test
