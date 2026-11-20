@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app/celebration.dart';
 import 'app/constants.dart';
+import 'app/mascot.dart';
 import 'app/router.dart';
 import 'app/theme.dart';
 import 'data/providers.dart';
@@ -85,7 +86,8 @@ class _PaceoraAppState extends ConsumerState<PaceoraApp>
       themeMode: ref.watch(themeModeProvider),
       routerConfig: _router,
       // Seviye/rozet kutlaması her ekranın üstünde gösterilebilsin.
-      builder: (context, child) => CelebrationHost(child: child!),
+      builder: (context, child) =>
+          CelebrationHost(child: MascotPrecache(child: child!)),
       // Saat seçici, iletişim kutuları vb. sistem metinleri Türkçe olsun.
       locale: const Locale('tr'),
       supportedLocales: const [Locale('tr')],

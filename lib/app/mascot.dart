@@ -8,20 +8,23 @@ import '../data/wardrobe.dart';
 /// Pace'in pozları. Her biri şeffaf zeminli ayrı bir görsel.
 enum PaceMood {
   /// Koşarken başparmak kaldırıyor: varsayılan, "hadi başlayalım".
-  run('pace_run'),
+  run('pace_run', 'Pace koşuyor'),
 
   /// Elinde alevle zıplıyor: seri, ders bitişi, kutlama.
-  cheer('pace_cheer'),
+  cheer('pace_cheer', 'Pace kutlama yapıyor'),
 
   /// Kulaklık ve defterle çalışıyor: ders, seviye testi.
-  study('pace_study'),
+  study('pace_study', 'Pace ders çalışıyor'),
 
   /// Şaşırmış: seri tehlikede, hata, boş durumlar.
-  surprised('pace_surprised');
+  surprised('pace_surprised', 'Pace şaşırmış');
 
-  const PaceMood(this.file);
+  const PaceMood(this.file, this.label);
 
   final String file;
+
+  /// Ekran okuyucunun söyleyeceği açıklama.
+  final String label;
 
   String get asset => '${MascotAssets.dir}/$file.png';
 
@@ -37,6 +40,41 @@ abstract class MascotAssets {
 
   /// Lime halka içinde Pace: logo amblemi.
   static const badge = '$dir/pace_badge.png';
+
+  /// Açılışta önbelleğe alınacak görseller; ilk gösterimde "pat" diye
+  /// belirmesinler.
+  static List<String> get all => [
+    badge,
+    for (final m in PaceMood.values) ...[m.asset, m.kitMask, m.trimMask],
+  ];
+}
+
+/// Pace görsellerini uygulama açılırken önbelleğe alır. Çözünürlük
+/// (1x/2x/3x) cihaza göre seçildiği için MediaQuery altında çalışmalı.
+class MascotPrecache extends StatefulWidget {
+  const MascotPrecache({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  State<MascotPrecache> createState() => _MascotPrecacheState();
+}
+
+class _MascotPrecacheState extends State<MascotPrecache> {
+  var _done = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_done) return;
+    _done = true;
+    for (final asset in MascotAssets.all) {
+      precacheImage(AssetImage(asset), context).ignore();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
 
 /// Paceora maskotu Pace (çita).
@@ -47,7 +85,7 @@ class PaceMascot extends StatelessWidget {
     this.kit = PaceKit.classic,
     this.size = 120,
     this.animate = true,
-    this.semanticLabel = 'Pace',
+    this.semanticLabel,
   });
 
   final PaceMood mood;
@@ -58,9 +96,12 @@ class PaceMascot extends StatelessWidget {
   /// Görselin yüksekliği; genişlik pozun oranına göre ayarlanır.
   final double size;
 
-  /// Hafif nefes alma animasyonu.
+  /// Hafif nefes alma animasyonu. Sistemde "animasyonları azalt" açıksa
+  /// her durumda kapalıdır.
   final bool animate;
-  final String semanticLabel;
+
+  /// Boşsa pozun açıklaması kullanılır.
+  final String? semanticLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -93,7 +134,7 @@ class PaceMascot extends StatelessWidget {
             ],
           );
 
-    if (animate) {
+    if (animate && !MediaQuery.disableAnimationsOf(context)) {
       mascot = mascot
           .animate(onPlay: (c) => c.repeat(reverse: true))
           .scaleXY(
@@ -105,7 +146,11 @@ class PaceMascot extends StatelessWidget {
           );
     }
 
-    return Semantics(label: semanticLabel, image: true, child: mascot);
+    return Semantics(
+      label: semanticLabel ?? mood.label,
+      image: true,
+      child: mascot,
+    );
   }
 }
 

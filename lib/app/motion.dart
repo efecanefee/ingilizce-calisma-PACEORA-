@@ -158,6 +158,7 @@ class PulsingFlame extends StatelessWidget {
   Widget build(BuildContext context) {
     final flame = Text('🔥', style: TextStyle(fontSize: size));
     if (!active) return Opacity(opacity: 0.35, child: flame);
+    if (MediaQuery.disableAnimationsOf(context)) return flame;
     return flame
         .animate(onPlay: (c) => c.repeat(reverse: true))
         .scaleXY(

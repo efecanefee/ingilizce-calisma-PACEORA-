@@ -440,6 +440,9 @@ class _StreakGlowState extends State<_StreakGlow>
 
   @override
   Widget build(BuildContext context) {
+    // "Animasyonları azalt" açıksa çerçeve durur, parıltı kapanır.
+    final still = MediaQuery.disableAnimationsOf(context);
+    if (still && _controller.isAnimating) _controller.stop();
     if (!widget.active) {
       return Container(
         decoration: BoxDecoration(
@@ -487,6 +490,7 @@ class _StreakGlowState extends State<_StreakGlow>
       },
     );
 
+    if (still) return glowing;
     return glowing
         .animate(onPlay: (c) => c.repeat())
         .shimmer(
@@ -1133,6 +1137,7 @@ class _WeekStrip extends StatelessWidget {
             child:
                 _DayTile(
                       initial: _initials[i],
+                      dayName: AppConstants.weekdayNames[i],
                       date: DateTime(
                         monday.year,
                         monday.month,
@@ -1163,6 +1168,7 @@ class _WeekStrip extends StatelessWidget {
 class _DayTile extends StatelessWidget {
   const _DayTile({
     required this.initial,
+    required this.dayName,
     required this.date,
     required this.done,
     required this.today,
@@ -1172,6 +1178,7 @@ class _DayTile extends StatelessWidget {
   });
 
   final String initial;
+  final String dayName;
   final int date;
   final bool done;
   final bool today;
@@ -1209,7 +1216,10 @@ class _DayTile extends StatelessWidget {
 
     return Semantics(
       button: onTap != null,
-      label: '$initial $date',
+      label:
+          '$dayName $date, '
+          '${done ? 'tamamlandı' : today ? 'bugün' : past ? 'kaçırıldı' : 'yakında'}',
+      excludeSemantics: true,
       child: PressableScale(
         onTap: onTap,
         borderRadius: BorderRadius.circular(14),
