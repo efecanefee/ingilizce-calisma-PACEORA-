@@ -80,6 +80,7 @@ extension PaceColorsContext on BuildContext {
 /// Uygulamanın yazı tipleri (pubspec.yaml > fonts).
 abstract class AppFonts {
   static const inter = 'Inter';
+  static const emoji = 'Noto Color Emoji';
 }
 
 /// Paceora renk paleti: Graphite ve sabit marka/durum renkleri. Vurgu
@@ -174,9 +175,12 @@ ThemeData _base(Brightness brightness, AppAccent accent) {
 
   // Inter uygulamanın içinde gelir (assets/fonts); çalışma sırasında
   // internetten indirilmez, çevrimdışı ilk açılışta da aynı görünür.
-  final textTheme = ThemeData(
-    brightness: brightness,
-  ).textTheme.apply(fontFamily: AppFonts.inter);
+  // Emoji için açık yedek: Android'deki sistem emoji ailesi; ekran görüntüsü
+  // üretiminde de aynı aileyle çizilir. Bulunamazsa sistem kendi seçer.
+  final textTheme = ThemeData(brightness: brightness).textTheme.apply(
+    fontFamily: AppFonts.inter,
+    fontFamilyFallback: const [AppFonts.emoji],
+  );
 
   return ThemeData(
     useMaterial3: true,
