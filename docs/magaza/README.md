@@ -8,7 +8,7 @@ Google Play ve App Store'a yükleme için hazır metinler ve görseller.
 | `liste-en.md` | İngilizce mağaza sayfası |
 | `play-veri-guvenligi.md` | Play Console "Veri güvenliği" formunun cevapları |
 | `derecelendirme.md` | Kategori, içerik derecelendirmesi anketi cevapları, iletişim bilgileri |
-| `ekranlar/` | Ekran görüntüleri (`play_*` 1080×1920, `ios_*` 1290×2796) |
+| `ekranlar/` | Ekran görüntüleri (`play_*` 1080×1920, `ios_*` 1290×2796; uygulama yalnız iPhone, iPad görüntüsü gerekmez) |
 
 ## Ekran görüntülerini yeniden üretmek
 
