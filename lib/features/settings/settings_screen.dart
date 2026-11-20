@@ -471,16 +471,22 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
         const SizedBox(height: 20),
         Text('Günlük çalışma süresi', style: theme.textTheme.labelLarge),
         const SizedBox(height: 10),
-        Wrap(
-          spacing: 10,
-          children: [
-            for (final minutes in AppConstants.dailyMinuteOptions)
-              ChoiceChip(
-                label: Text('$minutes dk'),
-                selected: minutes == _minutes,
-                onSelected: (_) => setState(() => _minutes = minutes),
-              ),
-          ],
+        // Seçenekler çoğaldı; form uzamasın diye tek satırda kaydırılır.
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (final minutes in AppConstants.dailyMinuteOptions)
+                Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: ChoiceChip(
+                    label: Text('$minutes dk'),
+                    selected: minutes == _minutes,
+                    onSelected: (_) => setState(() => _minutes = minutes),
+                  ),
+                ),
+            ],
+          ),
         ),
         const SizedBox(height: 24),
         FilledButton(

@@ -21,7 +21,10 @@ abstract class AppConstants {
       'https://generativelanguage.googleapis.com/v1beta/models';
 
   /// Günlük çalışma süresi seçenekleri (dakika)
-  static const dailyMinuteOptions = [10, 15, 20];
+  static const dailyMinuteOptions = [5, 10, 15, 20, 30, 45, 60];
+
+  /// Onboarding'de önceden seçili gelen süre.
+  static const defaultDailyMinutes = 15;
 
   /// Onboarding tamamlandı bayrağı (SharedPreferences anahtarı).
   static const prefOnboardingDone = 'onboarding_done';

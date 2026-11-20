@@ -28,7 +28,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   int _step = 0;
   DifficultyLevel _level = DifficultyLevel.b1;
-  int _dailyMinutes = AppConstants.dailyMinuteOptions[1];
+  int _dailyMinutes = AppConstants.defaultDailyMinutes;
   bool _submitting = false;
 
   @override
