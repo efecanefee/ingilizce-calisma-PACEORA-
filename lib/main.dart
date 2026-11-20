@@ -74,9 +74,7 @@ class _PaceoraAppState extends ConsumerState<PaceoraApp>
     // Titreşim tercihi uygulama genelindeki Haptics bayrağını günceller.
     ref.watch(hapticsProvider);
 
-    // Vurgu rengi: tema ve doğrudan AppColors okuyan widget'lar için.
     final accent = ref.watch(accentProvider);
-    AppColors.current = accent;
 
     return MaterialApp.router(
       title: AppConstants.appName,

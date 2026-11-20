@@ -85,7 +85,7 @@ class _ProgressBody extends StatelessWidget {
               label: 'Öğrenilen kart',
               value: data.cardsMature,
               suffix: '/${data.cardsTotal}',
-              color: AppColors.accentDim,
+              color: context.pace.accentDim,
             ),
           ].indexed.map((e) => e.$2.entrance(e.$1)).toList(),
         ),
@@ -185,7 +185,7 @@ class _LevelCard extends StatelessWidget {
           colors: [
             AppColors.graphite900,
             AppColors.graphite700,
-            AppColors.accentDark,
+            context.pace.accentDark,
           ],
         ),
       ),
@@ -207,7 +207,7 @@ class _LevelCard extends StatelessWidget {
                       value: v,
                       strokeWidth: 6,
                       strokeCap: StrokeCap.round,
-                      color: AppColors.accent,
+                      color: context.pace.accent,
                       backgroundColor: Colors.white.withValues(alpha: 0.12),
                     ),
                   ),
@@ -218,7 +218,7 @@ class _LevelCard extends StatelessWidget {
                     Text(
                       'LV',
                       style: theme.textTheme.labelSmall?.copyWith(
-                        color: AppColors.accent,
+                        color: context.pace.accent,
                       ),
                     ),
                     Text(
@@ -250,7 +250,7 @@ class _LevelCard extends StatelessWidget {
                   value: level.xp,
                   suffix: ' XP toplam',
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: AppColors.accent,
+                    color: context.pace.accent,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -496,7 +496,7 @@ class _StreakCalendar extends StatelessWidget {
       mondayOf(today).month,
       mondayOf(today).day - 7 * (_weeks - 1),
     );
-    final lit = isDark ? AppColors.accent : AppColors.accentDark;
+    final lit = isDark ? context.pace.accent : context.pace.accentDark;
 
     return Column(
       children: [
@@ -664,8 +664,8 @@ class _WeeklyScoreChart extends StatelessWidget {
                               begin: Alignment.bottomCenter,
                               end: Alignment.topCenter,
                               colors: isDark
-                                  ? [AppColors.accentDark, AppColors.accent]
-                                  : [AppColors.accentDim, AppColors.accentDark],
+                                  ? [context.pace.accentDark, context.pace.accent]
+                                  : [context.pace.accentDim, context.pace.accentDark],
                             ),
                       color: week.average == null
                           ? theme.colorScheme.surfaceContainerHighest

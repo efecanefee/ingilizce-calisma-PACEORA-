@@ -220,7 +220,7 @@ class _Header extends StatelessWidget {
             children: [
               _Pill(
                 text: 'Lv ${level.level} · ${level.title}',
-                color: AppColors.accent,
+                color: context.pace.accent,
                 dark: true,
               ),
               _Pill(

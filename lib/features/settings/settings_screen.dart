@@ -217,7 +217,7 @@ class _ProfileHeader extends ConsumerWidget {
           colors: [
             AppColors.graphite900,
             AppColors.graphite700,
-            AppColors.accentDark,
+            context.pace.accentDark,
           ],
         ),
       ),
@@ -232,7 +232,7 @@ class _ProfileHeader extends ConsumerWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: LinearGradient(
-                        colors: [AppColors.accent, AppColors.accentDim],
+                        colors: [context.pace.accent, context.pace.accentDim],
                       ),
                     ),
                     child: Text(
@@ -250,7 +250,7 @@ class _ProfileHeader extends ConsumerWidget {
                       blurRadius: 0,
                     ),
                     end: BoxShadow(
-                      color: AppColors.accent.withValues(alpha: 0.5),
+                      color: context.pace.accent.withValues(alpha: 0.5),
                       blurRadius: 18,
                     ),
                     borderRadius: BorderRadius.circular(32),
@@ -273,7 +273,7 @@ class _ProfileHeader extends ConsumerWidget {
                       '${DifficultyLevel.fromCode(user.level).code} · '
                       '${game == null ? '' : 'Lv ${game.level.level} ${game.level.title}'}',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: AppColors.accent,
+                        color: context.pace.accent,
                       ),
                     ),
                   ],
@@ -714,13 +714,13 @@ class _AppearanceGroup extends ConsumerWidget {
                     width: 36,
                     height: 36,
                     decoration: BoxDecoration(
-                      color: AppColors.accentDim.withValues(alpha: 0.16),
+                      color: context.pace.accentDim.withValues(alpha: 0.16),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
                       Icons.palette_rounded,
                       size: 20,
-                      color: AppColors.accentDim,
+                      color: context.pace.accentDim,
                     ),
                   ),
                   const SizedBox(width: 16),

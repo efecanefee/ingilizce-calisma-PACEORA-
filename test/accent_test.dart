@@ -40,4 +40,52 @@ void main() {
       );
     }
   });
+
+  test('her vurguda düğme yazısı okunabilir (WCAG AA, 4.5:1)', () {
+    double ratio(Color a, Color b) {
+      final la = a.computeLuminance();
+      final lb = b.computeLuminance();
+      final hi = la > lb ? la : lb;
+      final lo = la > lb ? lb : la;
+      return (hi + 0.05) / (lo + 0.05);
+    }
+
+    for (final accent in AppAccent.values) {
+      final dark = colorSchemeFor(Brightness.dark, accent);
+      final light = colorSchemeFor(Brightness.light, accent);
+      expect(
+        ratio(dark.primary, dark.onPrimary),
+        greaterThanOrEqualTo(4.5),
+        reason: '${accent.name} koyu',
+      );
+      expect(
+        ratio(light.primary, light.onPrimary),
+        greaterThanOrEqualTo(4.5),
+        reason: '${accent.name} açık',
+      );
+      // Açık zeminde vurgulu metin (accentDark) arka plana karşı.
+      expect(
+        ratio(accent.dark, light.surface),
+        greaterThanOrEqualTo(4.5),
+        reason: '${accent.name} açık metin',
+      );
+    }
+  });
+
+  testWidgets('tema uzantısı seçili vurguyu taşır', (tester) async {
+    late PaceColors colors;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildTheme(Brightness.dark, AppAccent.rose),
+        home: Builder(
+          builder: (context) {
+            colors = context.pace;
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
+    expect(colors.accent, AppAccent.rose.spark);
+    expect(colors.accentDark, AppAccent.rose.dark);
+  });
 }

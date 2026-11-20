@@ -179,11 +179,11 @@ class _WeekHeader extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: isDark
-              ? [AppColors.graphite700, AppColors.accentDark]
+              ? [AppColors.graphite700, context.pace.accentDark]
               : [
-                  AppColors.accentDark,
+                  context.pace.accentDark,
                   // Beyaz yazı açık zeminde de okunsun diye koyuya kayar.
-                  Color.lerp(AppColors.accentDark, AppColors.graphite900, 0.35)!,
+                  Color.lerp(context.pace.accentDark, AppColors.graphite900, 0.35)!,
                 ],
         ),
       ),
@@ -242,7 +242,7 @@ class _WeekHeader extends StatelessWidget {
               builder: (context, v, _) => LinearProgressIndicator(
                 value: v,
                 minHeight: 10,
-                color: AppColors.accent,
+                color: context.pace.accent,
                 backgroundColor: Colors.white.withValues(alpha: 0.2),
               ),
             ),
@@ -282,7 +282,7 @@ class _TimelineRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final accent = isDark ? AppColors.accent : AppColors.accentDark;
+    final accent = isDark ? context.pace.accent : context.pace.accentDark;
 
     final (icon, color, label) = switch (state) {
       _DayState.done => (Icons.check_rounded, AppColors.success, 'Tamamlandı'),

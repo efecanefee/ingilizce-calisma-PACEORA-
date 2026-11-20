@@ -437,8 +437,8 @@ class _ResultViewState extends ConsumerState<_ResultView> {
     final earnsXp = !(ref.watch(todayLessonProvider).value?.completed ?? false);
     // Ara ton açık zeminde soluk kalıyor; açık temada koyu tonu kullan.
     final xpTone = theme.brightness == Brightness.dark
-        ? AppColors.accentDim
-        : AppColors.accentDark;
+        ? context.pace.accentDim
+        : context.pace.accentDark;
 
     final (color, message) = switch (score) {
       >= 85 => (AppColors.success, 'Harika gidiyorsun!'),
@@ -497,7 +497,7 @@ class _ResultViewState extends ConsumerState<_ResultView> {
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.accent.withValues(alpha: 0.18),
+                        color: context.pace.accent.withValues(alpha: 0.18),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: xpTone),
                       ),

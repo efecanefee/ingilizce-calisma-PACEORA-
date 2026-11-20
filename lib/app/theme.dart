@@ -25,16 +25,62 @@ enum AppAccent {
   );
 }
 
-/// Paceora renk paleti: seçilebilir vurgu + Graphite
+/// Seçili vurgunun üç tonu; temaya uzantı olarak eklenir.
+///
+/// Widget'lar `context.pace.accent` ile okur. Tema değişince Theme'e bağlı
+/// her widget yeniden çizildiği için renk her ekranda anında güncellenir.
+@immutable
+class PaceColors extends ThemeExtension<PaceColors> {
+  const PaceColors({
+    required this.accent,
+    required this.accentDim,
+    required this.accentDark,
+  });
+
+  PaceColors.of(AppAccent a)
+    : accent = a.spark,
+      accentDim = a.dim,
+      accentDark = a.dark;
+
+  static final fallback = PaceColors.of(AppAccent.lime);
+
+  /// Koyu zeminde parlayan ana ton.
+  final Color accent;
+
+  /// Ara ton.
+  final Color accentDim;
+
+  /// Açık zeminde okunabilen koyu ton.
+  final Color accentDark;
+
+  @override
+  PaceColors copyWith({Color? accent, Color? accentDim, Color? accentDark}) =>
+      PaceColors(
+        accent: accent ?? this.accent,
+        accentDim: accentDim ?? this.accentDim,
+        accentDark: accentDark ?? this.accentDark,
+      );
+
+  @override
+  PaceColors lerp(PaceColors? other, double t) {
+    if (other == null) return this;
+    return PaceColors(
+      accent: Color.lerp(accent, other.accent, t)!,
+      accentDim: Color.lerp(accentDim, other.accentDim, t)!,
+      accentDark: Color.lerp(accentDark, other.accentDark, t)!,
+    );
+  }
+}
+
+extension PaceColorsContext on BuildContext {
+  /// Etkin temanın vurgu tonları.
+  PaceColors get pace =>
+      Theme.of(this).extension<PaceColors>() ?? PaceColors.fallback;
+}
+
+/// Paceora renk paleti: Graphite ve sabit marka/durum renkleri. Vurgu
+/// renkleri için [PaceColors] kullanılır.
 abstract class AppColors {
-  /// Etkin vurgu. Uygulama kökü tema kurulurken günceller; widget'lar
-  /// [accent], [accentDim], [accentDark] üzerinden okur.
-  static AppAccent current = AppAccent.lime;
-
-  static Color get accent => current.spark;
-  static Color get accentDim => current.dim;
-  static Color get accentDark => current.dark;
-
   // Marka renkleri: logo ve maskot her temada lime kalır.
   static const brandLime = Color(0xFFC6F432);
   static const brandLimeDark = Color(0xFF5A7414);
@@ -108,6 +154,7 @@ ThemeData _base(Brightness brightness, AppAccent accent) {
 
   return ThemeData(
     useMaterial3: true,
+    extensions: [PaceColors.of(accent)],
     brightness: brightness,
     colorScheme: colorScheme,
     scaffoldBackgroundColor:

@@ -218,8 +218,8 @@ class _CardFace extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: isDark
-                    ? [AppColors.accentDark, AppColors.graphite800]
-                    : [AppColors.accent, AppColors.accentDim],
+                    ? [context.pace.accentDark, AppColors.graphite800]
+                    : [context.pace.accent, context.pace.accentDim],
               ),
         border: Border.all(color: theme.colorScheme.outlineVariant),
         boxShadow: [
