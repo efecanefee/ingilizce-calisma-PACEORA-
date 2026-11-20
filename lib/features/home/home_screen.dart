@@ -302,18 +302,23 @@ class _StreakChip extends ConsumerWidget {
       label: 'Seri koruma',
       child: GestureDetector(
         onTap: () => showFreezeSheet(context),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: protected
-                  ? const Color(0xFF7DD3FC)
-                  : Colors.white.withValues(alpha: 0.15),
+        child: _StreakGlow(
+          // Seri yanarken çerçeve döner ve rozet parlar; koptuysa sakin kalır.
+          active: streak > 0 && !protected,
+          protected: protected,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(14, 9, 14, 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _streakRow(theme, streak, protected, owned),
+                if (streak > 0) ...[
+                  const SizedBox(height: 6),
+                  _MilestoneBar(streak: streak, protected: protected),
+                ],
+              ],
             ),
           ),
-          child: _streakRow(theme, streak, protected, owned),
         ),
       ),
     );
@@ -358,6 +363,215 @@ class _StreakChip extends ConsumerWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// Seri hedefleri: bar bir sonrakine doğru dolar.
+const streakMilestones = [3, 7, 14, 30, 50, 100, 200, 365];
+
+/// [streak] için önceki ve sıradaki hedef; son hedef aşıldıysa her 100 günde
+/// bir yeni hedef.
+({int from, int to}) streakMilestone(int streak) {
+  var from = 0;
+  for (final m in streakMilestones) {
+    if (streak < m) return (from: from, to: m);
+    from = m;
+  }
+  final to = (streak ~/ 100 + 1) * 100;
+  return (from: to - 100, to: to);
+}
+
+/// Seri rozetinin zemini: yanan seride dönen sıcak renkli çerçeve, nefes
+/// alan ışıltı ve ara ara üstünden geçen parıltı.
+class _StreakGlow extends StatefulWidget {
+  const _StreakGlow({
+    required this.active,
+    required this.protected,
+    required this.child,
+  });
+
+  final bool active;
+  final bool protected;
+  final Widget child;
+
+  @override
+  State<_StreakGlow> createState() => _StreakGlowState();
+}
+
+class _StreakGlowState extends State<_StreakGlow>
+    with SingleTickerProviderStateMixin {
+  static const _radius = 16.0;
+  static const _fire = [
+    Color(0xFFFF9F1C),
+    Color(0xFFFFD166),
+    Color(0xFFFF4D4D),
+    Color(0xFFFF9F1C),
+  ];
+
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    // Seri sönükken de oluşturulur; dispose'da tembel oluşturma hata verir.
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    );
+    if (widget.active) _controller.repeat();
+  }
+
+  @override
+  void didUpdateWidget(_StreakGlow old) {
+    super.didUpdateWidget(old);
+    if (widget.active && !_controller.isAnimating) {
+      _controller.repeat();
+    } else if (!widget.active && _controller.isAnimating) {
+      _controller.stop();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!widget.active) {
+      return Container(
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(_radius),
+          border: Border.all(
+            color: widget.protected
+                ? const Color(0xFF7DD3FC)
+                : Colors.white.withValues(alpha: 0.15),
+          ),
+        ),
+        child: widget.child,
+      );
+    }
+
+    final glowing = AnimatedBuilder(
+      animation: _controller,
+      child: widget.child,
+      builder: (context, child) {
+        final t = _controller.value;
+        // Işıltı bir turda iki kez nefes alır.
+        final breath = 0.5 + 0.5 * sin(t * 4 * pi);
+        return CustomPaint(
+          foregroundPainter: _RotatingBorderPainter(
+            turn: t,
+            colors: _fire,
+            radius: _radius,
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFFFF9F1C).withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(_radius),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(
+                    0xFFFF9F1C,
+                  ).withValues(alpha: 0.18 + 0.22 * breath),
+                  blurRadius: 10 + 8 * breath,
+                ),
+              ],
+            ),
+            child: child,
+          ),
+        );
+      },
+    );
+
+    return glowing
+        .animate(onPlay: (c) => c.repeat())
+        .shimmer(
+          delay: 2.seconds,
+          duration: 1200.ms,
+          color: const Color(0xFFFFE8B0).withValues(alpha: 0.35),
+        );
+  }
+}
+
+class _RotatingBorderPainter extends CustomPainter {
+  _RotatingBorderPainter({
+    required this.turn,
+    required this.colors,
+    required this.radius,
+  });
+
+  final double turn;
+  final List<Color> colors;
+  final double radius;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.8
+      ..shader = SweepGradient(
+        colors: colors,
+        transform: GradientRotation(turn * 2 * pi),
+      ).createShader(rect);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(rect.deflate(0.9), Radius.circular(radius)),
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_RotatingBorderPainter old) => old.turn != turn;
+}
+
+/// Sıradaki seri hedefine doğru dolan ince bar.
+class _MilestoneBar extends StatelessWidget {
+  const _MilestoneBar({required this.streak, required this.protected});
+
+  final int streak;
+  final bool protected;
+
+  @override
+  Widget build(BuildContext context) {
+    final m = streakMilestone(streak);
+    final progress = (streak - m.from) / (m.to - m.from);
+    final colors = protected
+        ? const [Color(0xFF7DD3FC), Color(0xFFBAE6FD)]
+        : const [Color(0xFFFF4D4D), Color(0xFFFFD166)];
+
+    return Semantics(
+      label: 'Sıradaki hedef ${m.to} gün',
+      child: SizedBox(
+        width: 72,
+        height: 5,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(3),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              ColoredBox(color: Colors.white.withValues(alpha: 0.15)),
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0, end: progress),
+                duration: Motion.slow,
+                curve: Motion.curve,
+                builder: (context, v, _) => FractionallySizedBox(
+                  alignment: Alignment.centerLeft,
+                  widthFactor: v.clamp(0.0, 1.0),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(colors: colors),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
