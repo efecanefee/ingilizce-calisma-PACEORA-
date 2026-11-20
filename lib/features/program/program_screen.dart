@@ -62,6 +62,27 @@ class ProgramScreen extends ConsumerWidget {
 /// Bir günün takvimdeki konumu.
 enum _DayState { done, today, missed, upcoming }
 
+/// Bir plan gününün ayrıntı sayfasını açar. Ana ekrandaki hafta
+/// kutucukları da bunu kullanır.
+void showPlanDayDetails(BuildContext context, WeeklyPlanDay day) {
+  final todayIndex = DateTime.now().weekday - DateTime.monday;
+  final monday = mondayOf(DateTime.now());
+  final state = day.status == 'completed'
+      ? _DayState.done
+      : day.dayIndex == todayIndex
+      ? _DayState.today
+      : day.dayIndex < todayIndex
+      ? _DayState.missed
+      : _DayState.upcoming;
+  final date = DateTime(monday.year, monday.month, monday.day + day.dayIndex);
+  Haptics.tap();
+  showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    builder: (_) => _DayDetails(day: day, date: date, state: state),
+  );
+}
+
 class _Timeline extends StatelessWidget {
   const _Timeline({required this.week});
 

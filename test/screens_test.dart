@@ -83,6 +83,25 @@ void main() {
     expect(find.text('Derse başla'), findsOneWidget);
   });
 
+  testWidgets('ana ekrandaki gün kutucuğu o günün konusunu açar', (
+    tester,
+  ) async {
+    await pumpApp(tester);
+
+    final today = DateTime.now().weekday - DateTime.monday;
+    const initials = ['Pt', 'Sa', 'Ça', 'Pe', 'Cu', 'Ct', 'Pz'];
+    await tester.scrollUntilVisible(
+      find.text(initials[today]),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(find.text(initials[today]));
+    await _advance(tester);
+
+    expect(find.text('Dilbilgisi'), findsOneWidget);
+    expect(find.text('Derse başla'), findsOneWidget);
+  });
+
   testWidgets('seviye testi çözülmeden ayarlardan seviye seçilemez', (
     tester,
   ) async {

@@ -15,7 +15,9 @@ import '../../data/database.dart';
 import '../../data/profile_style.dart';
 import '../../data/providers.dart';
 import '../../data/rewards.dart';
+import '../../data/repository.dart' show mondayOf;
 import '../../data/streak_freeze.dart';
+import '../program/program_screen.dart';
 
 /// Ana ekran ("Bugün" sekmesi): karşılama, bugünün dersi, günlük hedef,
 /// haftanın özeti ve pratik alanları.
@@ -903,93 +905,133 @@ class _WeekStrip extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final accent = isDark ? AppColors.accent : AppColors.accentDark;
-    final todayIndex = DateTime.now().weekday - DateTime.monday;
-    final status = {for (final d in week.days) d.dayIndex: d.status};
+    final now = DateTime.now();
+    final todayIndex = now.weekday - DateTime.monday;
+    final monday = mondayOf(now);
+    final byIndex = {for (final d in week.days) d.dayIndex: d};
 
-    return PressableScale(
-      onTap: () => context.go('/program'),
-      child: Ink(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainer,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: theme.colorScheme.outlineVariant),
-        ),
-        child: Row(
-          children: [
-            for (var i = 0; i < 7; i++)
-              Expanded(
-                child: Column(
-                  children: [
-                    Text(
-                      _initials[i],
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        fontWeight: i == todayIndex ? FontWeight.w800 : null,
-                        color: i == todayIndex ? accent : null,
-                      ),
+    // Her gün ayrı bir kutucuk: dokununca o günün konusu açılır.
+    return Row(
+      children: [
+        for (var i = 0; i < 7; i++) ...[
+          if (i > 0) const SizedBox(width: 6),
+          Expanded(
+            child:
+                _DayTile(
+                      initial: _initials[i],
+                      date: DateTime(
+                        monday.year,
+                        monday.month,
+                        monday.day + i,
+                      ).day,
+                      done: byIndex[i]?.status == 'completed',
+                      today: i == todayIndex,
+                      past: i < todayIndex,
+                      accent: accent,
+                      onTap: byIndex[i] == null
+                          ? null
+                          : () => showPlanDayDetails(context, byIndex[i]!),
+                    )
+                    .animate(delay: (60 * i).ms)
+                    .scale(
+                      begin: const Offset(0.6, 0.6),
+                      duration: Motion.medium,
+                      curve: Curves.easeOutBack,
                     ),
-                    const SizedBox(height: 6),
-                    _DayDot(
-                          done: status[i] == 'completed',
-                          today: i == todayIndex,
-                          past: i < todayIndex,
-                          accent: accent,
-                        )
-                        .animate(delay: (60 * i).ms)
-                        .scale(
-                          begin: const Offset(0.3, 0.3),
-                          duration: Motion.medium,
-                          curve: Curves.easeOutBack,
-                        ),
-                  ],
-                ),
-              ),
-          ],
-        ),
-      ),
+          ),
+        ],
+      ],
     );
   }
 }
 
-class _DayDot extends StatelessWidget {
-  const _DayDot({
+/// Haftanın bir günü: gün kısaltması, tarih ve durum işareti.
+class _DayTile extends StatelessWidget {
+  const _DayTile({
+    required this.initial,
+    required this.date,
     required this.done,
     required this.today,
     required this.past,
     required this.accent,
+    required this.onTap,
   });
 
+  final String initial;
+  final int date;
   final bool done;
   final bool today;
   final bool past;
   final Color accent;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
-      width: 30,
-      height: 30,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: done
-            ? AppColors.success
-            : today
-            ? accent.withValues(alpha: 0.15)
-            : theme.colorScheme.surfaceContainerHighest.withValues(
-                alpha: past ? 0.9 : 0.4,
+    final muted = theme.colorScheme.onSurface.withValues(alpha: 0.55);
+
+    final Color fill;
+    final Color fg;
+    if (done) {
+      fill = AppColors.success.withValues(alpha: 0.16);
+      fg = theme.brightness == Brightness.dark
+          ? AppColors.success
+          : AppColors.successDark;
+    } else if (today) {
+      fill = accent.withValues(alpha: 0.14);
+      fg = accent;
+    } else {
+      fill = theme.colorScheme.surfaceContainer;
+      fg = past ? muted : theme.colorScheme.onSurface;
+    }
+
+    final icon = done
+        ? Icons.check_rounded
+        : today
+        ? Icons.play_arrow_rounded
+        : past
+        ? Icons.remove_rounded
+        : Icons.circle_outlined;
+
+    return Semantics(
+      button: onTap != null,
+      label: '$initial $date',
+      child: PressableScale(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Ink(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: fill,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: today ? accent : theme.colorScheme.outlineVariant,
+              width: today ? 2 : 1,
+            ),
+          ),
+          child: Column(
+            children: [
+              Text(
+                initial,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: today ? accent : muted,
+                  fontWeight: today ? FontWeight.w800 : null,
+                ),
               ),
-        border: today ? Border.all(color: accent, width: 2) : null,
+              const SizedBox(height: 2),
+              Text(
+                '$date',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: fg,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Icon(icon, size: 14, color: fg),
+            ],
+          ),
+        ),
       ),
-      child: done
-          ? const Icon(Icons.check_rounded, size: 18, color: Colors.white)
-          : past
-          ? Icon(
-              Icons.remove_rounded,
-              size: 16,
-              color: theme.colorScheme.outline,
-            )
-          : null,
     );
   }
 }
