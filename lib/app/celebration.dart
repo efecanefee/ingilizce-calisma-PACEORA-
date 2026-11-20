@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/providers.dart';
+import '../data/review_request.dart';
 import '../data/rewards.dart';
 import '../data/streak_freeze.dart';
 import 'mascot.dart';
@@ -151,6 +152,7 @@ class Celebration {
     required this.color,
     this.chip,
     this.art,
+    this.onDismissed,
   });
 
   final String title;
@@ -163,6 +165,9 @@ class Celebration {
 
   /// İkon dairesi yerine gösterilecek görsel (ör. Pace).
   final Widget? art;
+
+  /// Kutlama kapatıldıktan sonra çalışır (ör. puanlama isteği).
+  final VoidCallback? onDismissed;
 }
 
 /// Uygulamanın en üstünde durur; yeni oyuncu seviyesi ya da rozet
@@ -257,6 +262,7 @@ class _CelebrationHostState extends ConsumerState<CelebrationHost> {
     if (reached <= seen) return;
     prefs.setInt(seenStreakMilestoneKey, reached);
     final next = streakMilestone(streak).to;
+    final askReview = shouldRequestReview(prefs, reached);
     _enqueue(
       Celebration(
         title: '$reached günlük seri!',
@@ -265,15 +271,24 @@ class _CelebrationHostState extends ConsumerState<CelebrationHost> {
         color: AppColors.fire,
         chip: 'Seri hedefi',
         art: const EquippedPace(mood: PaceMood.cheer, size: 130),
+        // Kullanıcı seriyle sevinirken, kutlama kapanınca bir kez sorulur.
+        onDismissed: askReview
+            ? () {
+                prefs.setBool(reviewRequestedKey, true);
+                ref.read(reviewRequesterProvider)();
+              }
+            : null,
       ),
     );
   }
 
   void _dismiss() {
+    final done = _queue.first;
     setState(() {
       _queue.removeAt(0);
       _shown++;
     });
+    done.onDismissed?.call();
   }
 
   @override

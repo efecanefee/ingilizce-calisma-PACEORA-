@@ -3,12 +3,14 @@ import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paceora/data/database.dart';
 import 'package:paceora/data/placement.dart';
 import 'package:paceora/data/providers.dart';
 import 'package:paceora/data/repository.dart';
 import 'package:paceora/data/review_models.dart';
+import 'package:paceora/data/review_request.dart';
 import 'package:paceora/data/rewards.dart';
 import 'package:paceora/data/streak_freeze.dart';
 import 'package:paceora/data/wardrobe.dart';
@@ -44,6 +46,7 @@ void main() {
   Future<SharedPreferences> pumpApp(
     WidgetTester tester, [
     Map<String, Object> prefs = const {},
+    List<Override> overrides = const [],
   ]) async {
     SharedPreferences.setMockInitialValues(prefs);
     final instance = await SharedPreferences.getInstance();
@@ -52,6 +55,7 @@ void main() {
         overrides: [
           sharedPreferencesProvider.overrideWithValue(instance),
           databaseProvider.overrideWithValue(db),
+          ...overrides,
         ],
         child: const PaceoraApp(onboardingDone: true),
       ),
@@ -156,7 +160,9 @@ void main() {
     expect(wardrobe.equipped, PaceKit.crimson);
   });
 
-  testWidgets('seri yeni hedefe ulaşınca kutlanır', (tester) async {
+  testWidgets('seri yeni hedefe ulaşınca kutlanır, kapanınca bir kez puanlama '
+      'istenir', (tester) async {
+    var reviewRequests = 0;
     await db.update(db.userProfiles).write(
       UserProfilesCompanion(
         streak: const Value(6),
@@ -169,7 +175,9 @@ void main() {
       'seen_player_level': 99,
       'seen_badges': [for (final b in badges) b.id],
       seenStreakMilestoneKey: 3,
-    });
+    }, [
+      reviewRequesterProvider.overrideWithValue(() async => reviewRequests++),
+    ]);
     expect(find.text('7 günlük seri!'), findsNothing);
 
     // Bugünü tamamla (dersi bitirmekle aynı yol).
@@ -183,6 +191,13 @@ void main() {
     await _advance(tester);
 
     expect(find.text('7 günlük seri!'), findsOneWidget);
+    expect(reviewRequests, 0);
+
+    await tester.tap(find.text('Harika!'));
+    await _advance(tester);
+    expect(reviewRequests, 1);
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getBool(reviewRequestedKey), isTrue);
   });
 
   testWidgets('anahtar yokken ana ekranda kapatılabilen anahtar kartı', (
