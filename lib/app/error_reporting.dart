@@ -7,6 +7,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'theme.dart';
+
 /// Beklenmeyen hataların cihazdaki kaydı.
 ///
 /// Sunucu yok: hatalar yalnızca bu telefonda, son [capacity] kayıt olarak
@@ -121,7 +123,7 @@ class FriendlyErrorBox extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline_rounded, color: Color(0xFFF87171)),
+            Icon(Icons.error_outline_rounded, color: AppColors.error),
             SizedBox(width: 8),
             Flexible(
               child: Text(

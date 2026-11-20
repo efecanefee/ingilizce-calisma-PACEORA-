@@ -491,7 +491,7 @@ class _StreakChip extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (protected)
-          const Icon(Icons.ac_unit_rounded, color: Color(0xFF7DD3FC))
+          const Icon(Icons.ac_unit_rounded, color: AppColors.ice)
         else
           PulsingFlame(active: streak > 0),
         const SizedBox(width: 6),
@@ -521,7 +521,7 @@ class _StreakChip extends ConsumerWidget {
             child: Icon(
               Icons.ac_unit_rounded,
               size: 14,
-              color: Color(0xFF7DD3FC),
+              color: AppColors.ice,
             ),
           ),
       ],
@@ -550,10 +550,10 @@ class _StreakGlowState extends State<_StreakGlow>
     with SingleTickerProviderStateMixin {
   static const _radius = 16.0;
   static const _fire = [
-    Color(0xFFFF9F1C),
-    Color(0xFFFFD166),
-    Color(0xFFFF4D4D),
-    Color(0xFFFF9F1C),
+    AppColors.fire,
+    AppColors.fireLight,
+    AppColors.fireRed,
+    AppColors.fire,
   ];
 
   late final AnimationController _controller;
@@ -597,7 +597,7 @@ class _StreakGlowState extends State<_StreakGlow>
           borderRadius: BorderRadius.circular(_radius),
           border: Border.all(
             color: widget.protected
-                ? const Color(0xFF7DD3FC)
+                ? AppColors.ice
                 : Colors.white.withValues(alpha: 0.15),
           ),
         ),
@@ -620,7 +620,7 @@ class _StreakGlowState extends State<_StreakGlow>
           ),
           child: Container(
             decoration: BoxDecoration(
-              color: const Color(0xFFFF9F1C).withValues(alpha: 0.12),
+              color: AppColors.fire.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(_radius),
               boxShadow: [
                 BoxShadow(
@@ -643,7 +643,7 @@ class _StreakGlowState extends State<_StreakGlow>
         .shimmer(
           delay: 2.seconds,
           duration: 1200.ms,
-          color: const Color(0xFFFFE8B0).withValues(alpha: 0.35),
+          color: AppColors.fireGlow.withValues(alpha: 0.35),
         );
   }
 }
@@ -691,8 +691,8 @@ class _MilestoneBar extends StatelessWidget {
     final m = streakMilestone(streak);
     final progress = (streak - m.from) / (m.to - m.from);
     final colors = protected
-        ? const [Color(0xFF7DD3FC), Color(0xFFBAE6FD)]
-        : const [Color(0xFFFF4D4D), Color(0xFFFFD166)];
+        ? const [AppColors.ice, AppColors.iceLight]
+        : const [AppColors.fireRed, AppColors.fireLight];
 
     return Semantics(
       label: 'Sıradaki hedef ${m.to} gün',
@@ -759,7 +759,7 @@ class _FreezeSheetState extends ConsumerState<_FreezeSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    const ice = Color(0xFF7DD3FC);
+    const ice = AppColors.ice;
     final freeze = ref.watch(freezeProvider);
     final display = ref.watch(streakDisplayProvider);
     final xp = ref.watch(gameProvider).value?.level.xp ?? 0;
@@ -1497,7 +1497,7 @@ class _PracticeGrid extends ConsumerWidget {
         for (final (i, banner) in [
           _FeatureBanner(
             icon: Icons.forum_rounded,
-            color: const Color(0xFF38BDF8),
+            color: AppColors.iceDeep,
             title: 'AI ile sohbet',
             subtitle: roleplay.completed > 0
                 ? '${roleplay.completed} sohbet · ${roleplay.goalScenarios.length}'
@@ -1813,7 +1813,7 @@ class _TodayCard extends StatelessWidget {
             if (done) ...[
               Row(
                 children: [
-                  const Icon(Icons.check_circle, color: Color(0xFF4ADE80))
+                  const Icon(Icons.check_circle, color: AppColors.success)
                       .animate()
                       .scale(duration: Motion.slow, curve: Curves.elasticOut),
                   const SizedBox(width: 10),

@@ -556,7 +556,7 @@ class _StreakCalendar extends StatelessWidget {
                                 ? const Icon(
                                     Icons.ac_unit_rounded,
                                     size: 14,
-                                    color: Color(0xFF0EA5E9),
+                                    color: AppColors.iceDark,
                                     semanticLabel: 'Korunan gün',
                                   )
                                 : Text(

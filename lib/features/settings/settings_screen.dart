@@ -595,7 +595,7 @@ class _StudyGroup extends ConsumerWidget {
         ),
         _SettingsTile(
           icon: Icons.timer_rounded,
-          color: const Color(0xFF60A5FA),
+          color: AppColors.blue,
           title: 'Günlük süre',
           subtitle: 'Günde ${user.dailyMinutes} dakika',
           onTap: editProfile,
@@ -633,7 +633,7 @@ class _StudyGroup extends ConsumerWidget {
         ),
         _SettingsTile(
           icon: Icons.autorenew_rounded,
-          color: const Color(0xFFA78BFA),
+          color: AppColors.violet,
           title: 'Haftalık programı yenile',
           subtitle: 'Seviyene göre yeni konular üretir; ilerlemen korunur',
           onTap: () => _regenerate(context, ref),
@@ -789,7 +789,7 @@ class _AppearanceGroup extends ConsumerWidget {
         ),
         _SettingsTile(
           icon: Icons.vibration_rounded,
-          color: const Color(0xFFF472B6),
+          color: AppColors.pink,
           title: 'Titreşim',
           subtitle: 'Dokunuşlarda hafif titreşim',
           trailing: Switch(
@@ -817,7 +817,7 @@ class _AiGroup extends ConsumerWidget {
       children: [
         _SettingsTile(
           icon: Icons.auto_awesome_rounded,
-          color: const Color(0xFF8E75B2),
+          color: AppColors.gemini,
           title: 'Gemini API anahtarı',
           subtitle: hasCustomKey
               ? 'Kendi anahtarın kullanılıyor'
@@ -843,7 +843,7 @@ class _AiGroup extends ConsumerWidget {
         ),
         _SettingsTile(
           icon: Icons.network_check_rounded,
-          color: const Color(0xFF60A5FA),
+          color: AppColors.blue,
           title: 'Bağlantıyı test et',
           subtitle: 'Anahtar, model ve yanıt süresini kontrol eder',
           onTap: () =>
@@ -1267,21 +1267,21 @@ class _DataGroupState extends ConsumerState<_DataGroup> {
         ),
         _SettingsTile(
           icon: Icons.assessment_rounded,
-          color: const Color(0xFF34D399),
+          color: AppColors.mint,
           title: 'Haftalık rapor',
           subtitle: 'Değerlendirme ve seviye önerisi',
           onTap: () => context.push('/review'),
         ),
         _SettingsTile(
           icon: Icons.upload_file_rounded,
-          color: const Color(0xFF60A5FA),
+          color: AppColors.blue,
           title: 'Verileri dışa aktar',
           subtitle: 'Tüm ilerlemeni bir dosyaya yedekle',
           onTap: _busy ? null : _export,
         ),
         _SettingsTile(
           icon: Icons.restore_rounded,
-          color: const Color(0xFFA78BFA),
+          color: AppColors.violet,
           title: 'Yedekten geri yükle',
           subtitle: 'Başka cihazdan aldığın yedeği yükle',
           onTap: _busy ? null : _restore,
@@ -1314,7 +1314,7 @@ class _AboutGroup extends StatelessWidget {
           children: [
             const _SettingsTile(
               icon: Icons.info_rounded,
-              color: Color(0xFF60A5FA),
+              color: AppColors.blue,
               title: 'Sürüm',
               trailing: Text(AppConstants.appVersion),
             ),

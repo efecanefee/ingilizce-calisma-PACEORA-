@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/celebration.dart';
 import '../../app/mascot.dart';
 import '../../app/motion.dart';
+import '../../app/theme.dart';
 import '../../data/providers.dart';
 import '../../data/wardrobe.dart';
 
@@ -71,7 +72,7 @@ class _WardrobeSheetState extends ConsumerState<WardrobeSheet> {
         title: 'Yeni forma: ${kit.label}',
         subtitle: 'Pace artık ${kit.label} formasını giyiyor.',
         icon: Icons.checkroom_rounded,
-        color: kit.trim ?? const Color(0xFFC6F432),
+        color: kit.trim ?? AppColors.brandLime,
         chip: '-${kit.price} XP',
         art: PaceMascot(mood: PaceMood.cheer, kit: kit, size: 130),
       ),
@@ -184,7 +185,7 @@ class _KitChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     const graphite = Color(0xFF2B2F35);
-    const lime = Color(0xFFC6F432);
+    const lime = AppColors.brandLime;
 
     return Semantics(
       button: true,

@@ -99,6 +99,26 @@ abstract class AppColors {
   static const graphite100 = Color(0xFFE8EAED);
   static const graphite50 = Color(0xFFF7F8F9);
 
+  // Seri ve ödül renkleri
+  static const fire = Color(0xFFFF9F1C);
+  static const fireLight = Color(0xFFFFD166);
+  static const fireRed = Color(0xFFFF4D4D);
+  static const fireGlow = Color(0xFFFFE8B0);
+  static const ice = Color(0xFF7DD3FC);
+  static const iceLight = Color(0xFFBAE6FD);
+  static const iceDeep = Color(0xFF38BDF8);
+  static const iceDark = Color(0xFF0EA5E9);
+
+  // Kategori renkleri (ayar satırları, pratik kutucukları vb.)
+  static const blue = Color(0xFF60A5FA);
+  static const pink = Color(0xFFF472B6);
+  static const violet = Color(0xFFA78BFA);
+  static const mint = Color(0xFF34D399);
+  static const gemini = Color(0xFF8E75B2);
+
+  /// Kutlama gibi katmanların arkasındaki karartma.
+  static const scrim = Color(0xB3000000);
+
   // Durum renkleri
   static const success = Color(0xFF4ADE80);
   static const successDark = Color(0xFF166534);

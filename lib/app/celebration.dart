@@ -41,8 +41,8 @@ class _ConfettiBurstState extends State<ConfettiBurst>
       context.pace.accent,
       AppColors.success,
       AppColors.warning,
-      Color(0xFF60A5FA),
-      Color(0xFFF472B6),
+      AppColors.blue,
+      AppColors.pink,
       Colors.white,
     ];
     return List.generate(widget.particles, (_) {
@@ -262,7 +262,7 @@ class _CelebrationHostState extends ConsumerState<CelebrationHost> {
         title: '$reached günlük seri!',
         subtitle: 'Harika gidiyorsun. Sıradaki hedef: $next gün.',
         icon: Icons.local_fire_department_rounded,
-        color: const Color(0xFFFF9F1C),
+        color: AppColors.fire,
         chip: 'Seri hedefi',
         art: const EquippedPace(mood: PaceMood.cheer, size: 130),
       ),
@@ -330,7 +330,7 @@ class _CelebrationView extends StatelessWidget {
               label: 'Kutlamayı kapat',
               child: GestureDetector(
                 onTap: onDismiss,
-                child: const ColoredBox(color: Color(0xB3000000)),
+                child: const ColoredBox(color: AppColors.scrim),
               ),
             ).animate().fadeIn(duration: Motion.medium),
           ),
