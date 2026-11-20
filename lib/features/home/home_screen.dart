@@ -154,16 +154,16 @@ class _HeroCardState extends State<_HeroCard>
             gradient: LinearGradient(
               begin: Alignment(-1 + t, -1),
               end: Alignment(1, 1 - t),
-              colors: const [
+              colors: [
                 AppColors.graphite900,
                 AppColors.graphite700,
-                AppColors.limeDark,
+                AppColors.accentDark,
               ],
               stops: [0, 0.55 + 0.15 * t, 1],
             ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.limeDark.withValues(alpha: 0.25 + 0.15 * t),
+                color: AppColors.accentDark.withValues(alpha: 0.25 + 0.15 * t),
                 blurRadius: 24,
                 offset: const Offset(0, 10),
               ),
@@ -182,7 +182,7 @@ class _HeroCardState extends State<_HeroCard>
                 Icon(
                       Icons.bolt_rounded,
                       size: 140,
-                      color: AppColors.limeSpark.withValues(alpha: 0.08),
+                      color: AppColors.accent.withValues(alpha: 0.08),
                     )
                     .animate(onPlay: (c) => c.repeat(reverse: true))
                     .rotate(begin: -0.03, end: 0.03, duration: 3.seconds),
@@ -543,7 +543,7 @@ class _XpBar extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.limeSpark,
+                color: AppColors.accent,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
@@ -571,7 +571,7 @@ class _XpBar extends StatelessWidget {
               value: level.xp,
               suffix: ' XP',
               style: theme.textTheme.labelLarge?.copyWith(
-                color: AppColors.limeSpark,
+                color: AppColors.accent,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -594,9 +594,9 @@ class _XpBar extends StatelessWidget {
                       widthFactor: v.clamp(0.02, 1.0),
                       child: Container(
                         height: 10,
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [AppColors.limeDim, AppColors.limeSpark],
+                            colors: [AppColors.accentDim, AppColors.accent],
                           ),
                         ),
                       ),
@@ -802,7 +802,7 @@ class _GoalRing extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final color = complete
         ? AppColors.success
-        : (isDark ? AppColors.limeSpark : AppColors.limeDark);
+        : (isDark ? AppColors.accent : AppColors.accentDark);
 
     final ring = TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: progress),
@@ -902,7 +902,7 @@ class _WeekStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final accent = isDark ? AppColors.limeSpark : AppColors.limeDark;
+    final accent = isDark ? AppColors.accent : AppColors.accentDark;
     final todayIndex = DateTime.now().weekday - DateTime.monday;
     final status = {for (final d in week.days) d.dayIndex: d.status};
 
@@ -1227,7 +1227,7 @@ class _PracticeTile extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: (isDark ? AppColors.limeSpark : AppColors.limeDark)
+                    color: (isDark ? AppColors.accent : AppColors.accentDark)
                         .withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),

@@ -209,13 +209,13 @@ class _ProfileHeader extends ConsumerWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(26),
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
             AppColors.graphite900,
             AppColors.graphite700,
-            AppColors.limeDark,
+            AppColors.accentDark,
           ],
         ),
       ),
@@ -227,10 +227,10 @@ class _ProfileHeader extends ConsumerWidget {
                     width: 64,
                     height: 64,
                     alignment: Alignment.center,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: LinearGradient(
-                        colors: [AppColors.limeSpark, AppColors.limeDim],
+                        colors: [AppColors.accent, AppColors.accentDim],
                       ),
                     ),
                     child: Text(
@@ -248,7 +248,7 @@ class _ProfileHeader extends ConsumerWidget {
                       blurRadius: 0,
                     ),
                     end: BoxShadow(
-                      color: AppColors.limeSpark.withValues(alpha: 0.5),
+                      color: AppColors.accent.withValues(alpha: 0.5),
                       blurRadius: 18,
                     ),
                     borderRadius: BorderRadius.circular(32),
@@ -271,7 +271,7 @@ class _ProfileHeader extends ConsumerWidget {
                       '${DifficultyLevel.fromCode(user.level).code} · '
                       '${game == null ? '' : 'Lv ${game.level.level} ${game.level.title}'}',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: AppColors.limeSpark,
+                        color: AppColors.accent,
                       ),
                     ),
                   ],
@@ -588,6 +588,67 @@ class _StudyGroup extends ConsumerWidget {
 
 // --- Görünüm ve his ----------------------------------------------------------
 
+/// Vurgu rengi seçici: her seçenek için renk yuvarlağı, seçili olan tikli.
+class _AccentPicker extends ConsumerWidget {
+  const _AccentPicker();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selected = ref.watch(accentProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      children: [
+        for (final accent in AppAccent.values)
+          Semantics(
+            button: true,
+            selected: accent == selected,
+            label: '${accent.label} vurgu rengi',
+            child: Tooltip(
+              message: accent.label,
+              child: GestureDetector(
+                onTap: () {
+                  Haptics.tap();
+                  ref.read(accentProvider.notifier).save(accent);
+                },
+                child: AnimatedContainer(
+                  duration: Motion.fast,
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: isDark
+                          ? [accent.spark, accent.dim]
+                          : [accent.dim, accent.dark],
+                    ),
+                    border: Border.all(
+                      color: accent == selected
+                          ? Theme.of(context).colorScheme.onSurface
+                          : Colors.transparent,
+                      width: 2.5,
+                    ),
+                  ),
+                  child: accent == selected
+                      ? Icon(
+                          Icons.check_rounded,
+                          size: 20,
+                          color: isDark ? AppColors.graphite900 : Colors.white,
+                        )
+                      : null,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
 class _AppearanceGroup extends ConsumerWidget {
   const _AppearanceGroup();
 
@@ -610,13 +671,13 @@ class _AppearanceGroup extends ConsumerWidget {
                     width: 36,
                     height: 36,
                     decoration: BoxDecoration(
-                      color: AppColors.limeDim.withValues(alpha: 0.16),
+                      color: AppColors.accentDim.withValues(alpha: 0.16),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.palette_rounded,
                       size: 20,
-                      color: AppColors.limeDim,
+                      color: AppColors.accentDim,
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -657,6 +718,15 @@ class _AppearanceGroup extends ConsumerWidget {
                   },
                 ),
               ),
+              const SizedBox(height: 16),
+              Text(
+                'Vurgu rengi',
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 10),
+              const _AccentPicker(),
             ],
           ),
         ),

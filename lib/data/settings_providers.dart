@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../app/constants.dart';
 import '../app/motion.dart';
+import '../app/theme.dart';
 import 'providers.dart';
 
 /// Kullanıcının Ayarlar'dan girdiği Gemini anahtarı.
@@ -56,6 +57,24 @@ class ThemeModeNotifier extends Notifier<ThemeMode> {
 
 final themeModeProvider =
     NotifierProvider<ThemeModeNotifier, ThemeMode>(ThemeModeNotifier.new);
+
+/// Arayüz vurgu rengi. Varsayılan marka rengi lime.
+class AccentNotifier extends Notifier<AppAccent> {
+  @override
+  AppAccent build() => AppAccent.fromName(
+    ref.watch(sharedPreferencesProvider).getString(AppConstants.prefAccent),
+  );
+
+  Future<void> save(AppAccent accent) async {
+    await ref
+        .read(sharedPreferencesProvider)
+        .setString(AppConstants.prefAccent, accent.name);
+    state = accent;
+  }
+}
+
+final accentProvider =
+    NotifierProvider<AccentNotifier, AppAccent>(AccentNotifier.new);
 
 /// Dokunsal geri bildirim (titreşim) açık mı.
 class HapticsNotifier extends Notifier<bool> {

@@ -216,7 +216,7 @@ class _Header extends StatelessWidget {
             children: [
               _Pill(
                 text: 'Lv ${level.level} · ${level.title}',
-                color: AppColors.limeSpark,
+                color: AppColors.accent,
                 dark: true,
               ),
               _Pill(

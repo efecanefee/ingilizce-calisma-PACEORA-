@@ -493,15 +493,15 @@ class _ResultViewState extends ConsumerState<_ResultView> {
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.limeSpark.withValues(alpha: 0.18),
+                        color: AppColors.accent.withValues(alpha: 0.18),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: AppColors.limeDim),
+                        border: Border.all(color: AppColors.accentDim),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.bolt_rounded,
-                              size: 20, color: AppColors.limeDim),
+                          Icon(Icons.bolt_rounded,
+                              size: 20, color: AppColors.accentDim),
                           const SizedBox(width: 6),
                           CountUpText(
                             value: lessonXp(state.scorePercent),

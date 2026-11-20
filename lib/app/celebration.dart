@@ -33,8 +33,8 @@ class _ConfettiBurstState extends State<ConfettiBurst>
 
   List<_Piece> _generate() {
     final random = Random(widget.seed);
-    const colors = [
-      AppColors.limeSpark,
+    final colors = [
+      AppColors.accent,
       AppColors.success,
       AppColors.warning,
       Color(0xFF60A5FA),
@@ -201,7 +201,7 @@ class _CelebrationHostState extends ConsumerState<CelebrationHost> {
           title: 'Seviye atladın!',
           subtitle: 'Artık "${game.level.title}" unvanını taşıyorsun.',
           icon: Icons.military_tech_rounded,
-          color: AppColors.limeSpark,
+          color: AppColors.accent,
           chip: 'Seviye ${game.level.level}',
         ),
       );

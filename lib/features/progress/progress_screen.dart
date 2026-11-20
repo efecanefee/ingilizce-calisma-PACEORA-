@@ -85,7 +85,7 @@ class _ProgressBody extends StatelessWidget {
               label: 'Öğrenilen kart',
               value: data.cardsMature,
               suffix: '/${data.cardsTotal}',
-              color: AppColors.limeDim,
+              color: AppColors.accentDim,
             ),
           ].indexed.map((e) => e.$2.entrance(e.$1)).toList(),
         ),
@@ -179,13 +179,13 @@ class _LevelCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
             AppColors.graphite900,
             AppColors.graphite700,
-            AppColors.limeDark,
+            AppColors.accentDark,
           ],
         ),
       ),
@@ -207,7 +207,7 @@ class _LevelCard extends StatelessWidget {
                       value: v,
                       strokeWidth: 6,
                       strokeCap: StrokeCap.round,
-                      color: AppColors.limeSpark,
+                      color: AppColors.accent,
                       backgroundColor: Colors.white.withValues(alpha: 0.12),
                     ),
                   ),
@@ -218,7 +218,7 @@ class _LevelCard extends StatelessWidget {
                     Text(
                       'LV',
                       style: theme.textTheme.labelSmall?.copyWith(
-                        color: AppColors.limeSpark,
+                        color: AppColors.accent,
                       ),
                     ),
                     Text(
@@ -250,7 +250,7 @@ class _LevelCard extends StatelessWidget {
                   value: level.xp,
                   suffix: ' XP toplam',
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: AppColors.limeSpark,
+                    color: AppColors.accent,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -496,7 +496,7 @@ class _StreakCalendar extends StatelessWidget {
       mondayOf(today).month,
       mondayOf(today).day - 7 * (_weeks - 1),
     );
-    final lit = isDark ? AppColors.limeSpark : AppColors.limeDark;
+    final lit = isDark ? AppColors.accent : AppColors.accentDark;
 
     return Column(
       children: [
@@ -664,8 +664,8 @@ class _WeeklyScoreChart extends StatelessWidget {
                               begin: Alignment.bottomCenter,
                               end: Alignment.topCenter,
                               colors: isDark
-                                  ? [AppColors.limeDark, AppColors.limeSpark]
-                                  : [AppColors.limeDim, AppColors.limeDark],
+                                  ? [AppColors.accentDark, AppColors.accent]
+                                  : [AppColors.accentDim, AppColors.accentDark],
                             ),
                       color: week.average == null
                           ? theme.colorScheme.surfaceContainerHighest

@@ -32,6 +32,7 @@ abstract class AppConstants {
 
   /// Tema tercihi: system | light | dark
   static const prefThemeMode = 'theme_mode';
+  static const prefAccent = 'accent_color';
 
   /// Günlük hatırlatma açık mı ve hangi saatte (dakika cinsinden, 0-1439).
   static const prefReminderEnabled = 'reminder_enabled';

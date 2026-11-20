@@ -47,7 +47,7 @@ class _WordmarkText extends StatelessWidget {
             text: 'PACE',
             // Açık zeminde parlak lime okunmuyor; koyu tonu kullan.
             style: TextStyle(
-              color: isDark ? AppColors.limeSpark : AppColors.limeDark,
+              color: isDark ? AppColors.brandLime : AppColors.brandLimeDark,
             ),
           ),
           TextSpan(
