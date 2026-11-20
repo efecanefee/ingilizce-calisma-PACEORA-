@@ -9,8 +9,9 @@ import 'package:speech_to_text/speech_to_text.dart';
 /// Cihaz servislerine bağlıdır; testlerde [speechServiceProvider] sahte bir
 /// uygulamayla değiştirilir.
 abstract class SpeechService {
-  /// İngilizce metni sesli okur; okuma bitince tamamlanır.
-  Future<void> speak(String text, {bool slow = false});
+  /// İngilizce metni sesli okur; okuma bitince tamamlanır. Cihazda İngilizce
+  /// ses yoksa ya da ses motoru çalışmazsa false döner.
+  Future<bool> speak(String text, {bool slow = false});
 
   Future<void> stopSpeaking();
 
@@ -31,23 +32,31 @@ abstract class SpeechService {
 class DeviceSpeechService implements SpeechService {
   final _tts = FlutterTts();
   final _stt = SpeechToText();
-  bool _ttsReady = false;
 
-  Future<void> _prepareTts() async {
-    if (_ttsReady) return;
+  /// İngilizce ses hazır mı; ilk okumada bir kez sorulur.
+  bool? _ttsReady;
+
+  Future<bool> _prepareTts() async {
+    final ready = _ttsReady;
+    if (ready != null) return ready;
+    // Ses paketi yüklü değilse motor sessizce hiçbir şey okumaz.
+    final available = await _tts.isLanguageAvailable('en-US');
+    if (available == false) return _ttsReady = false;
     await _tts.setLanguage('en-US');
     await _tts.awaitSpeakCompletion(true);
-    _ttsReady = true;
+    return _ttsReady = true;
   }
 
   @override
-  Future<void> speak(String text, {bool slow = false}) async {
+  Future<bool> speak(String text, {bool slow = false}) async {
     try {
-      await _prepareTts();
+      if (!await _prepareTts()) return false;
       await _tts.setSpeechRate(slow ? 0.3 : 0.48);
       await _tts.speak(text);
+      return true;
     } catch (_) {
-      // Ses motoru yoksa sessizce geçilir; okuma isteğe bağlı bir yardım.
+      // Ses motoru yoksa okuma isteğe bağlı bir yardım; çağıran bilgilendirir.
+      return false;
     }
   }
 

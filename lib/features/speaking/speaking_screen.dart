@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/error_view.dart';
 import '../../app/motion.dart';
+import '../../app/speak_button.dart';
 import '../../app/theme.dart';
 import '../../data/pronunciation.dart';
 import '../../data/providers.dart';
@@ -95,7 +96,7 @@ class _SessionState extends ConsumerState<_Session> {
   }
 
   Future<void> _play({bool slow = false}) =>
-      _speech.speak(_sentence, slow: slow);
+      speakWithNotice(context, _speech, _sentence, slow: slow);
 
   Future<void> _listen() async {
     if (_stage == _Stage.listening) {

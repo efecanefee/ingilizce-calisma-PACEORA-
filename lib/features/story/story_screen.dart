@@ -201,7 +201,7 @@ class _ListenStoryButtonState extends ConsumerState<_ListenStoryButton> {
       return;
     }
     setState(() => _playing = true);
-    await _speech.speak(widget.text);
+    await speakWithNotice(context, _speech, widget.text);
     if (mounted) setState(() => _playing = false);
   }
 

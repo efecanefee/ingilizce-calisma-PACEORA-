@@ -4,6 +4,7 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:paceora/app/speak_button.dart';
 import 'package:paceora/data/database.dart';
 import 'package:paceora/data/pronunciation.dart';
 import 'package:paceora/data/providers.dart';
@@ -22,9 +23,14 @@ class FakeSpeech implements SpeechService {
   /// Sıradaki dinlemede "duyulacak" metin; null ise hiç ses gelmez.
   String? nextHeard;
 
+  /// Cihazda İngilizce ses var mı.
+  bool canSpeak = true;
+
   @override
-  Future<void> speak(String text, {bool slow = false}) async =>
-      spoken.add(text);
+  Future<bool> speak(String text, {bool slow = false}) async {
+    spoken.add(text);
+    return canSpeak;
+  }
 
   @override
   Future<void> stopSpeaking() async {}
@@ -225,6 +231,29 @@ void main() {
       await _advance(tester);
       expect(find.text('1/1 cümle başarılı'), findsOneWidget);
       expect(find.text('+$xpPerGoodSentence XP'), findsOneWidget);
+    });
+
+    testWidgets('İngilizce ses yoksa bir kez nasıl yükleneceği anlatılır', (
+      tester,
+    ) async {
+      resetMissingVoiceNotice();
+      speech.canSpeak = false;
+      await openPractice(tester, 'Konuşma');
+
+      await tester.tap(find.text('Dinle'));
+      await tester.pump();
+      expect(find.textContaining('İngilizce ses yok'), findsOneWidget);
+
+      // Mesaj kaybolduktan sonra ikinci dokunuşta tekrar çıkmaz.
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(seconds: 1));
+      }
+      await _advance(tester);
+      expect(find.textContaining('İngilizce ses yok'), findsNothing);
+      await tester.tap(find.text('Dinle'));
+      await tester.pump();
+      expect(find.textContaining('İngilizce ses yok'), findsNothing);
+      expect(speech.spoken, [sentence, sentence]);
     });
 
     testWidgets('konuşma: ses gelmezse uyarı, tanıma yoksa hata', (
