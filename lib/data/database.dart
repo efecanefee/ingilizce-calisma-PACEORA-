@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:drift_flutter/drift_flutter.dart';
 
 part 'database.g.dart';
@@ -132,8 +133,30 @@ class AppDatabase extends _$AppDatabase {
 
   AppDatabase.forTesting(super.e);
 
+  /// Şema sürümü. Bir tabloya sütun/tablo eklerken:
+  /// 1. Bu sayıyı bir artır.
+  /// 2. [migration] içindeki `onUpgrade`'e `from < yeniSürüm` adımını ekle.
+  /// 3. `test/database_migration_test.dart`'a eski sürümden göç testi ekle.
+  /// Adım atlanırsa güncelleme alan kullanıcıların uygulaması açılışta çöker.
   @override
   int get schemaVersion => 1;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (m) => m.createAll(),
+    onUpgrade: (m, from, to) async {
+      // Sürüm adımları buraya, sırayla eklenir. Örnek:
+      // if (from < 2) await m.addColumn(lessons, lessons.yeniSutun);
+    },
+    beforeOpen: (details) async {
+      if (details.hadUpgrade) {
+        debugPrint(
+          'Veritabanı ${details.versionBefore} → ${details.versionNow} '
+          'sürümüne güncellendi',
+        );
+      }
+    },
+  );
 
   static QueryExecutor _openConnection() {
     return driftDatabase(
