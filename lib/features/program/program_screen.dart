@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/constants.dart';
+import '../../app/error_view.dart';
 import '../../app/motion.dart';
 import '../../app/theme.dart';
 import '../../data/database.dart';
@@ -49,7 +50,10 @@ class ProgramScreen extends ConsumerWidget {
         ],
       ),
       body: switch (plan) {
-        AsyncError(:final error) => Center(child: Text('$error')),
+        AsyncError(:final error) => ErrorView(
+          error: error,
+          onRetry: () => ref.invalidate(weekPlanProvider),
+        ),
         AsyncData(:final value) when value.days.isEmpty => const Center(
           child: Text('Bu hafta için program yok. Yenile düğmesine dokun.'),
         ),

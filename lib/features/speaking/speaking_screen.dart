@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/error_view.dart';
 import '../../app/motion.dart';
 import '../../app/theme.dart';
 import '../../data/pronunciation.dart';
@@ -34,7 +35,10 @@ class SpeakingScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text(mode.title)),
       body: switch (sentences) {
-        AsyncError(:final error) => Center(child: Text('$error')),
+        AsyncError(:final error) => ErrorView(
+          error: error,
+          onRetry: () => ref.invalidate(practiceSentencesProvider),
+        ),
         AsyncData(:final value) => _Session(mode: mode, sentences: value),
         _ => const Center(child: CircularProgressIndicator()),
       },

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/error_view.dart';
 import '../../app/motion.dart';
 import '../../app/speak_button.dart';
 import '../../app/theme.dart';
@@ -23,11 +24,9 @@ class StoryScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Günün hikayesi')),
       body: switch (story) {
-        AsyncError(:final error) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Text('$error', textAlign: TextAlign.center),
-          ),
+        AsyncError(:final error) => ErrorView(
+          error: error,
+          onRetry: () => ref.invalidate(storyProvider),
         ),
         AsyncData(:final value) => _StoryBody(state: value),
         _ => const _LoadingView(),

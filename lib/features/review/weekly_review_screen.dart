@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/constants.dart';
+import '../../app/error_view.dart';
 import '../../app/motion.dart';
 import '../../app/theme.dart';
 import '../../data/providers.dart';
@@ -52,7 +53,10 @@ class _WeeklyReviewScreenState extends ConsumerState<WeeklyReviewScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Haftalık rapor')),
       body: switch (reports) {
-        AsyncError(:final error) => Center(child: Text('$error')),
+        AsyncError(:final error) => ErrorView(
+          error: error,
+          onRetry: () => ref.invalidate(weeklyReportsProvider),
+        ),
         AsyncData(:final value) => ListView(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
           children: [

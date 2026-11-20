@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/avatar.dart';
 import '../../app/constants.dart';
+import '../../app/error_view.dart';
 import '../../app/logo.dart';
 import '../../app/mascot.dart';
 import '../../app/motion.dart';
@@ -37,7 +38,12 @@ class HomeScreen extends ConsumerWidget {
       appBar: AppBar(title: const PaceoraWordmark(markSize: 28)),
       body: switch ((profile, plan)) {
         (AsyncError(:final error), _) ||
-        (_, AsyncError(:final error)) => _ErrorView(message: '$error'),
+        (_, AsyncError(:final error)) => ErrorView(
+          error: error,
+          onRetry: () => ref
+            ..invalidate(profileProvider)
+            ..invalidate(weekPlanProvider),
+        ),
         (AsyncData(value: null), _) => const _NoProfileView(),
         (AsyncData(value: final user?), AsyncData(value: final week)) =>
           _HomeBody(user: user, week: week),
@@ -1917,33 +1923,6 @@ class _NoProfileView extends StatelessWidget {
               onPressed: () => context.go('/onboarding'),
               child: const Text('Kuruluma başla'),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ErrorView extends StatelessWidget {
-  const _ErrorView({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: 40,
-              color: Theme.of(context).colorScheme.error,
-            ),
-            const SizedBox(height: 16),
-            Text(message, textAlign: TextAlign.center),
           ],
         ),
       ),

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/error_view.dart';
 import '../../app/motion.dart';
 import '../../app/speak_button.dart';
 import '../../app/theme.dart';
@@ -39,7 +40,10 @@ class FlashcardsScreen extends ConsumerWidget {
         ],
       ),
       body: switch (session) {
-        AsyncError(:final error) => Center(child: Text('$error')),
+        AsyncError(:final error) => ErrorView(
+          error: error,
+          onRetry: () => ref.invalidate(flashcardSessionProvider),
+        ),
         AsyncData(:final value) when value.isDone => _DoneView(
           reviewed: value.reviewed,
           total: summary?.total ?? 0,

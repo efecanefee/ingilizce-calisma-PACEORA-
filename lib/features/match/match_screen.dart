@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/error_view.dart';
 import '../../app/motion.dart';
 import '../../app/theme.dart';
 import '../../data/match_game.dart';
@@ -20,7 +21,10 @@ class MatchScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Kelime Rallisi')),
       body: switch (deck) {
-        AsyncError(:final error) => Center(child: Text('$error')),
+        AsyncError(:final error) => ErrorView(
+          error: error,
+          onRetry: () => ref.invalidate(matchDeckProvider),
+        ),
         AsyncData(:final value) when value.length < matchMinPairs =>
           _NotEnoughCards(count: value.length),
         AsyncData(:final value) => _MatchGame(deck: value),

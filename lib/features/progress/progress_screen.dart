@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/badge_medal.dart';
+import '../../app/error_view.dart';
 import '../../app/motion.dart';
 import '../../app/theme.dart';
 import '../../data/providers.dart';
@@ -23,7 +24,10 @@ class ProgressScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('İlerlemem')),
       body: switch (progress) {
-        AsyncError(:final error) => Center(child: Text('$error')),
+        AsyncError(:final error) => ErrorView(
+          error: error,
+          onRetry: () => ref.invalidate(progressProvider),
+        ),
         AsyncData(:final value) => _ProgressBody(data: value, game: game),
         _ => const Center(child: CircularProgressIndicator()),
       },
