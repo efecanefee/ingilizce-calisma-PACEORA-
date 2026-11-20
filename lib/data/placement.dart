@@ -1,6 +1,9 @@
+import 'dart:math';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../app/constants.dart';
+import 'level_check.dart';
 
 /// Kısa seviye testi: B1-'den B2+'ya kademe başına iki soru.
 ///
@@ -25,6 +28,37 @@ class PlacementQuestion {
   final DifficultyLevel level;
 
   bool isCorrect(int choice) => choice == answer;
+
+  /// Seçenekleri karıştırır; doğru cevap yeni sırasına taşınır. Böylece
+  /// test tekrarlandığında cevap konumu ezberlenemez.
+  PlacementQuestion shuffled(Random random) {
+    final order = List.generate(options.length, (i) => i)..shuffle(random);
+    return PlacementQuestion(
+      prompt: prompt,
+      options: [for (final i in order) options[i]],
+      answer: order.indexOf(answer),
+      level: level,
+    );
+  }
+
+  String get correctOption => options[answer];
+}
+
+/// Kademe başına soru havuzu: seviye testinin kendi soruları ve seviye
+/// önizlemesindeki kontrol soruları (kademe başına 6 soru).
+List<PlacementQuestion> placementPool(DifficultyLevel level) => [
+  ...placementQuestions.where((q) => q.level == level),
+  ...LevelPreview.of(level).questions,
+];
+
+/// Her test için kademe başına havuzdan 2 soru çeker (kolaydan zora),
+/// seçenekleri karıştırır.
+List<PlacementQuestion> drawPlacementQuestions([Random? random]) {
+  final r = random ?? Random();
+  return [
+    for (final level in DifficultyLevel.values)
+      ...(placementPool(level)..shuffle(r)).take(2).map((q) => q.shuffled(r)),
+  ];
 }
 
 const placementQuestions = <PlacementQuestion>[
