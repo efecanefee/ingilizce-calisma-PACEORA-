@@ -251,7 +251,8 @@ class GeminiService {
       ),
       schema: _lessonSchema,
       // Ders plandan çok daha büyük bir yanıt; daha uzun süre tanınıyor.
-      timeout: const Duration(seconds: 90),
+      // 30 dakika ve üstündeki büyük dersler için süre ölçeklenir.
+      timeout: lessonTimeout(dailyMinutes),
       temperature: 0.9,
     );
 
@@ -422,7 +423,9 @@ Geçtiği cümle: $sentence
     final length = switch (dailyMinutes) {
       <= 10 => '120-170',
       <= 15 => '170-230',
-      _ => '230-300',
+      <= 20 => '230-300',
+      <= 30 => '300-380',
+      _ => '380-450',
     };
     final words = targetWords.isEmpty
         ? ''
@@ -935,3 +938,13 @@ const _fallbackB2 = <PlanDaySpec>[
     vocabTheme: 'Hafta boyunca öğrenilen kelimeler',
   ),
 ];
+
+/// Günlük ders isteği için zaman aşımı: 20 dakikaya kadar 90 sn, daha
+/// büyük derslerde soru sayısıyla orantılı olarak en fazla 150 sn.
+Duration lessonTimeout(int dailyMinutes) {
+  final total = LessonSize.forMinutes(dailyMinutes).total;
+  const base = 26; // 20 dakikalık dersin toplamı (10+6+4+6)
+  if (total <= base) return const Duration(seconds: 90);
+  final seconds = (90 * total / base).round().clamp(90, 150);
+  return Duration(seconds: seconds);
+}
