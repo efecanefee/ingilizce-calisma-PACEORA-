@@ -51,7 +51,17 @@ dilbilgisi konusu ve bir kelime teması olur; pazar günü haftanın tekrarına 
   sunucu yok; Gemini'ye yalnızca içerik üretirken istek gider.
 - **6 kademeli seviye** — B1-, B1, B1+, B2-, B2, B2+ (adaptif zorluk için ara
   kademeler).
-- **Açık/koyu tema** — "Lime Spark + Graphite" paleti, Ayarlar'dan seçilebilir.
+- **Açık/koyu tema ve vurgu rengi** — "Lime Spark + Graphite" paleti; Ayarlar'dan
+  açık/koyu mod ve 6 vurgu rengi (Lime, Okyanus, Gökyüzü, Gün batımı, Lavanta,
+  Gül) seçilebilir. Tüm vurgular WCAG AA kontrast testinden geçer.
+- **Maskot Pace** — çita Pace koşar, kutlar, ders çalışır ya da şaşırır; ana
+  ekranda serinin durumuna göre poz değiştirir. Dokununca dolabı açılır.
+- **Pace'in dolabı** — harcanabilir XP ile 6 forma; çizim aynı kalır, forma
+  renkleri değişir. Bakiye seri dondurma haklarıyla ortaktır.
+- **Seviye testi ve önizleme** — onboarding'de 12 soruluk kısa test (her
+  seferinde havuzdan karışık sorular, sonunda yanlışların incelemesi) ya da
+  elle seçim; seçilen seviyenin odak konuları ve 4 soruluk kontrol. Ayarlar'dan
+  seviye, test çözülmeden değiştirilemez.
 - **SM-2 flash kartlar** — dersi bitirince o günün kelimeleri ve yanlış yaptığın
   ifadeler desteye girer. Kart çevrilir, "Tekrar / Zor / İyi / Kolay" ile
   notlanır; her düğmenin altında kartın ne zaman yeniden geleceği yazar.
@@ -72,10 +82,14 @@ dilbilgisi konusu ve bir kelime teması olur; pazar günü haftanın tekrarına 
 - **Bugünkü hedef ve yönlendirme** — ders, hikaye ve kart tekrarından oluşan
   günlük hedef halkası; "sıradaki" adım işaretlenir ve tek dokunuşla açılır.
 - **Program sekmesi** — haftanın zaman çizelgesi: tamamlanan, kaçırılan,
-  bugünkü ve yaklaşan günler; güne dokununca ayrıntılar.
+  bugünkü ve yaklaşan günler; güne dokununca ayrıntılar. Ana ekrandaki "Bu
+  hafta" kutucukları da aynı ayrıntıyı açar.
+- **Seri hedefleri** — seri rozetinde dönen alev çerçevesi ve 3, 7, 14, 30…
+  güne doğru dolan bar; hedefe ulaşınca kutlama.
 - **Animasyonlu arayüz** — alt gezinme çubuğu, hareketli gradyanlı karşılama
   kartı, sayfa geçişleri, sırayla beliren kartlar, dönen flash kart, sayarak
   artan skorlar ve XP, "nefes alan" seri alevi, titreşimli dokunuşlar.
+  Sistemde "animasyonları azalt" açıksa Pace ve seri animasyonları durur.
 
 ## Ekranlar
 
@@ -266,13 +280,17 @@ devam edebiliyor.
 - [x] Günün hikayesi + okuduğunu anlama testi
 - [x] Haftalık değerlendirme raporu ve adaptif seviye ayarı (B1- ↔ B2+)
 - [x] Animasyonlu arayüz ve Türkçe sistem metinleri
+- [x] Maskot Pace, forma dolabı ve seri hedefi kutlamaları
+- [x] Seviye testi, seviye önizlemesi ve vurgu rengi seçimi
 
 ## Logo
 
-Uygulama içi görseller `assets/images/` altında; platform ikonları
-(`web/icons`, `android/.../mipmap-*`, `ios/.../AppIcon.appiconset`) ve Android
-açılış ekranı görselleri (`android/.../drawable-*/launch_logo.png`) aynı
-kaynaktan üretildi. Logo yenilenirse bu üretilmiş dosyaların da
+Logo, lime halka içindeki Pace rozetidir (`assets/mascot/pace_badge.png`).
+Maskot pozları ve forma maskeleri `assets/mascot/` altında 1x/2x/3x
+çözünürlükte durur. Platform ikonları (`web/icons`, `android/.../mipmap-*`,
+Android 8+ uyarlanabilir ikon `mipmap-anydpi-v26`, `ios/.../AppIcon.appiconset`)
+ve açılış ekranı görselleri (`drawable-*/launch_logo.png`, Android 12+
+`drawable-xxhdpi/splash_icon.png`) aynı rozetten üretildi. Logo yenilenirse bu üretilmiş dosyaların da
 güncellenmesi gerekir.
 
 Palet: `#C6F432` (Lime Spark) · `#15171A` (Graphite 900)

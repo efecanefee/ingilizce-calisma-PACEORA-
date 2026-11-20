@@ -3,7 +3,7 @@ abstract class AppConstants {
   static const appName = 'Paceora';
 
   /// pubspec.yaml'daki sürümle aynı tutulur.
-  static const appVersion = '1.1.0';
+  static const appVersion = '1.2.0';
 
   /// Gemini API anahtarı derleme zamanında verilir:
   /// flutter run --dart-define=GEMINI_API_KEY=xxxx
