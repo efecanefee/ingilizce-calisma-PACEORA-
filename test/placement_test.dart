@@ -112,4 +112,38 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(PlacementTestScreen), findsOneWidget);
   });
+
+  testWidgets('test sekme gezgininin değil kök gezginin üstünde açılır', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final innerKey = GlobalKey<NavigatorState>();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+        child: MaterialApp(
+          home: Scaffold(
+            // Sekmeli kabuk gibi: içerik iç gezginde, alt menü dışarıda.
+            body: Navigator(
+              key: innerKey,
+              onGenerateRoute: (_) => MaterialPageRoute(
+                builder: (context) => TextButton(
+                  onPressed: () => openPlacementTest(context),
+                  child: const Text('Testi çöz'),
+                ),
+              ),
+            ),
+            bottomNavigationBar: const SizedBox(height: 80),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Testi çöz'));
+    await tester.pumpAndSettle();
+
+    final opened = tester.element(find.byType(PlacementTestScreen));
+    expect(Navigator.of(opened), isNot(innerKey.currentState));
+    expect(innerKey.currentState!.canPop(), isFalse);
+  });
 }

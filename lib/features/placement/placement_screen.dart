@@ -11,8 +11,10 @@ import '../../data/placement.dart';
 import '../../data/providers.dart';
 
 /// Kısa seviye testini açar; bitirilirse bulunan seviyeyi döndürür.
+/// Kök gezgin kullanılır: test alt menünün üstünde tam ekran açılır, test
+/// ortasında sekme değiştirilemez.
 Future<DifficultyLevel?> openPlacementTest(BuildContext context) {
-  return Navigator.of(context).push<DifficultyLevel>(
+  return Navigator.of(context, rootNavigator: true).push<DifficultyLevel>(
     MaterialPageRoute(builder: (_) => const PlacementTestScreen()),
   );
 }
