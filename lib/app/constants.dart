@@ -5,6 +5,9 @@ abstract class AppConstants {
   /// pubspec.yaml'daki sürümle aynı tutulur.
   static const appVersion = '1.2.0';
 
+  /// Ayarlar > Geri bildirim gönder'in alıcısı.
+  static const supportEmail = 'paceora.app@gmail.com';
+
   /// Gemini API anahtarı derleme zamanında verilir:
   /// flutter run --dart-define=GEMINI_API_KEY=xxxx
   static const geminiApiKey = String.fromEnvironment('GEMINI_API_KEY');

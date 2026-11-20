@@ -62,6 +62,12 @@ Uygulamada beklenmeyen bir hata olursa kısa bir açıklaması (son 20 hata)
 yalnızca cihazında tutulur. Kendiliğinden hiçbir yere gönderilmez; istersen
 **Ayarlar > Hata kaydı**'ndan paylaşabilir ya da temizleyebilirsin.
 
+## Geri bildirim
+
+**Ayarlar > Geri bildirim gönder** telefonundaki e-posta uygulamasını açar;
+e-postayı sen gönderirsin. Gövdede uygulama sürümü ve platform (Android/iOS)
+hazır gelir. Hata kaydı yalnızca kutucuğu işaretlersen eklenir.
+
 ## Bildirimler
 
 Günlük hatırlatma, telefonunun yerel bildirim sistemiyle kurulur. Bildirim için
