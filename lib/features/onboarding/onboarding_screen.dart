@@ -537,6 +537,33 @@ class _MinutesStep extends StatelessWidget {
       subtitle: 'Kısa ve düzenli çalışmak, uzun ve seyrek çalışmaktan iyidir.',
       child: Column(
         children: [
+          // Ders üretimi öncesi açık bilgilendirme.
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.lock_outline_rounded,
+                  size: 18,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Programın ve derslerin Google Gemini ile hazırlanır. '
+                    'Seviyen ve konular paylaşılır, adın paylaşılmaz. '
+                    'Ayrıntılar: Ayarlar > Gizlilik.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.65,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
           for (final minutes in AppConstants.dailyMinuteOptions)
             Padding(
               padding: const EdgeInsets.only(bottom: 12),

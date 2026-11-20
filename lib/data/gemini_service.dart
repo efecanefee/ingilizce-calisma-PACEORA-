@@ -198,6 +198,9 @@ class GeminiService {
   ///
   /// Hiçbir koşulda hata fırlatmaz — başarısızlıkta [fallbackWeeklyPlan]
   /// döner, böylece onboarding akışı kilitlenmez.
+  // Gizlilik: `name` parametreleri geriye uyumluluk için duruyor; kullanıcının
+  // adı Gemini'ye (Google) gönderilmez, istemlerde yalnızca seviye ve konu yer
+  // alır.
   Future<WeeklyPlanResult> generateWeeklyPlan({
     required String name,
     required String level,
@@ -323,7 +326,7 @@ class GeminiService {
       prompt:
           '''
 You are role-playing as ${scenario.aiRole} in an English speaking practice app.
-The student is $name, a Turkish native speaker at CEFR level $level.
+The student is a Turkish native speaker at CEFR level $level.
 The student's task (in Turkish): "${scenario.task}"
 
 Conversation so far:
@@ -435,7 +438,6 @@ Geçtiği cümle: $sentence
     return '''
 Sen bir İngilizce öğretmenisin. Türkçe konuşan bir öğrenci için kısa bir okuma parçası hazırlıyorsun.
 
-Öğrenci: $name
 CEFR seviyesi: $level
 Tema: $vocabTheme
 Dilbilgisi konusu: $grammarTopic
@@ -472,7 +474,6 @@ Kurallar:
     return '''
 Sen destekleyici bir İngilizce koçusun. Öğrencinin haftalık çalışma verisini değerlendir.
 
-Öğrenci: $name
 CEFR seviyesi: $level
 Çalışılan gün: ${stats.daysCompleted}/7
 Bitirilen ders: ${stats.lessonsCompleted}
@@ -683,7 +684,6 @@ Verilerde olmayan bir şey uydurma. Veri azsa bunu nazikçe belirt.
     return '''
 Sen bir İngilizce öğretmenisin. Türkçe konuşan bir öğrenci için haftalık çalışma programı hazırlıyorsun.
 
-Öğrenci: $name
 CEFR seviyesi: $level
 Günlük çalışma süresi: $dailyMinutes dakika
 
@@ -717,7 +717,6 @@ Kurallar:
     return '''
 Sen bir İngilizce öğretmenisin. Türkçe konuşan bir öğrenci için bugünkü dersi hazırlıyorsun.
 
-Öğrenci: $name
 CEFR seviyesi: $level
 Bugünün dilbilgisi konusu: $grammarTopic
 Bugünün kelime teması: $vocabTheme
