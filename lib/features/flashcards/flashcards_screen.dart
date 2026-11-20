@@ -126,10 +126,14 @@ class _SessionViewState extends ConsumerState<_SessionView> {
                     child: child,
                   ),
                 ),
-                child: GestureDetector(
+                child: Semantics(
                   key: ValueKey('${card.id}-$done'),
-                  onTap: () => setState(() => _flipped = !_flipped),
-                  child: _FlipCard(card: card, flipped: _flipped),
+                  button: true,
+                  hint: _flipped ? 'Ön yüze dön' : 'Anlamını görmek için çevir',
+                  child: GestureDetector(
+                    onTap: () => setState(() => _flipped = !_flipped),
+                    child: _FlipCard(card: card, flipped: _flipped),
+                  ),
                 ),
               ),
             ),

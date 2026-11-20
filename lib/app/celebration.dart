@@ -325,9 +325,13 @@ class _CelebrationView extends StatelessWidget {
       child: Stack(
         children: [
           Positioned.fill(
-            child: GestureDetector(
-              onTap: onDismiss,
-              child: const ColoredBox(color: Color(0xB3000000)),
+            child: Semantics(
+              button: true,
+              label: 'Kutlamayı kapat',
+              child: GestureDetector(
+                onTap: onDismiss,
+                child: const ColoredBox(color: Color(0xB3000000)),
+              ),
             ).animate().fadeIn(duration: Motion.medium),
           ),
           const Positioned.fill(child: ConfettiBurst()),

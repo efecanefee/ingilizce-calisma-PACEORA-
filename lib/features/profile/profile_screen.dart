@@ -194,15 +194,19 @@ class _Header extends StatelessWidget {
       ),
       child: Column(
         children: [
-          GestureDetector(
-            onTap: () => showProfileEditor(context),
-            child: PlayerAvatar.of(style, level: level.level, size: 104)
+          Semantics(
+            button: true,
+            label: 'Profili düzenle',
+            child: GestureDetector(
+              onTap: () => showProfileEditor(context),
+              child: PlayerAvatar.of(style, level: level.level, size: 104)
                 .animate()
                 .scale(
                   begin: const Offset(0.8, 0.8),
                   curve: Curves.elasticOut,
                   duration: Motion.slow,
                 ),
+          ),
           ),
           const SizedBox(height: 14),
           Text(
@@ -375,7 +379,10 @@ class _Showcase extends ConsumerWidget {
                           }
                           _pick(context, ref);
                         },
-                        color: theme.colorScheme.outline,
+                        // outline grisi koyu temada 3:1'in altında kalıyordu.
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.7,
+                        ),
                       ),
               ),
           ],
@@ -687,7 +694,10 @@ class _Choice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return GestureDetector(
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: GestureDetector(
       onTap: () {
         Haptics.tap();
         onTap();
@@ -707,6 +717,7 @@ class _Choice extends StatelessWidget {
         ),
         child: child,
       ),
+    ),
     );
   }
 }

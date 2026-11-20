@@ -465,7 +465,10 @@ class _StreakChip extends ConsumerWidget {
           // Seri yanarken çerçeve döner ve rozet parlar; koptuysa sakin kalır.
           active: streak > 0 && !protected,
           protected: protected,
-          child: Padding(
+          child: Container(
+            // Dokunma alanı en az 48 dp (erişilebilirlik yönergesi).
+            constraints: const BoxConstraints(minHeight: 48),
+            alignment: Alignment.center,
             padding: const EdgeInsets.fromLTRB(14, 9, 14, 8),
             child: Column(
               mainAxisSize: MainAxisSize.min,

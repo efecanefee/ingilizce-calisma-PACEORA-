@@ -383,6 +383,20 @@ class _Tile extends StatelessWidget {
       ),
     );
 
+    // Ekran okuyucu: metin, durum ve dokunma eylemi tek düğüm olarak.
+    tile = Semantics(
+      button: true,
+      selected: state == _TileState.selected,
+      label: switch (state) {
+        _TileState.correct => '$text, doğru',
+        _TileState.wrong => '$text, yanlış',
+        _ => text,
+      },
+      onTap: onTap,
+      excludeSemantics: true,
+      child: tile,
+    );
+
     // Ağaç yapısı hep aynı kalır; yalnızca yanlışta sarsıntı oynar. Yapı
     // değişseydi aşağıdaki giriş animasyonu her yanlışta yeniden oynardı.
     tile = tile

@@ -157,7 +157,7 @@ class _QuestionView extends StatelessWidget {
         Text(
           'Soru ${index + 1}/$total · boşluğa uyanı seç',
           style: theme.textTheme.labelMedium?.copyWith(
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.72),
           ),
         ),
         const SizedBox(height: 16),

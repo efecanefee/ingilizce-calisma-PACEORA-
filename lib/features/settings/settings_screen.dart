@@ -124,7 +124,7 @@ class _SettingsTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return ListTile(
+    final tile = ListTile(
       onTap: onTap == null
           ? null
           : () {
@@ -158,6 +158,9 @@ class _SettingsTile extends StatelessWidget {
                   color: theme.colorScheme.outline,
                 )),
     );
+    // Anahtar (Switch) gibi bir kontrol varsa başlıkla tek düğüm olsun;
+    // ekran okuyucu "Titreşim, açık" diye okur.
+    return trailing == null ? tile : MergeSemantics(child: tile);
   }
 }
 
