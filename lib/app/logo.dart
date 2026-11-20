@@ -181,14 +181,14 @@ class _AnimatedPaceoraLockupState extends State<AnimatedPaceoraLockup>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _LetterByLetterWordmark(fontSize: size * 0.2, reduced: reduced),
+            LetterByLetterWordmark(fontSize: size * 0.2, reduced: reduced),
             SizedBox(height: size * 0.06),
             SizedBox.square(
               dimension: ringSize,
               child: AnimatedBuilder(
                 animation: _spin,
                 builder: (context, child) => CustomPaint(
-                  painter: _HaloPainter(turn: _spin.value, color: lime),
+                  painter: PaceHaloPainter(turn: _spin.value, color: lime),
                   child: child,
                 ),
                 child: Center(child: _badge(size, reduced)),
@@ -240,8 +240,16 @@ class _AnimatedPaceoraLockupState extends State<AnimatedPaceoraLockup>
 
 /// PACEORA harfleri soldan sağa, sırayla yukarı kayarak belirir; sonra
 /// üzerinden bir ışık geçer.
-class _LetterByLetterWordmark extends StatelessWidget {
-  const _LetterByLetterWordmark({required this.fontSize, required this.reduced});
+class LetterByLetterWordmark extends StatelessWidget {
+  const LetterByLetterWordmark({
+    super.key,
+    required this.fontSize,
+    required this.reduced,
+    this.delay = Duration.zero,
+  });
+
+  /// İlk harften önce beklenecek süre.
+  final Duration delay;
 
   final double fontSize;
   final bool reduced;
@@ -278,7 +286,7 @@ class _LetterByLetterWordmark extends StatelessWidget {
     final fitted = FittedBox(child: row);
     if (reduced) return fitted;
     return fitted
-        .animate(delay: 1200.ms)
+        .animate(delay: delay + 1200.ms)
         .shimmer(
           duration: 1400.ms,
           color: AppColors.brandLime.withValues(alpha: 0.9),
@@ -288,7 +296,7 @@ class _LetterByLetterWordmark extends StatelessWidget {
   Widget _letter(Widget letter, int index) => reduced
       ? letter
       : letter
-          .animate(delay: (140 * index).ms)
+          .animate(delay: delay + (140 * index).ms)
           .fadeIn(duration: 500.ms, curve: Curves.easeOut)
           .slideY(begin: 0.6, end: 0, duration: 600.ms, curve: Curves.easeOutBack)
           .blurXY(begin: 6, end: 0, duration: 500.ms);
@@ -296,8 +304,15 @@ class _LetterByLetterWordmark extends StatelessWidget {
 
 /// Rozetin arkasındaki hareketli hale: nefes alan parıltı, dönen yarım
 /// halka ve yörüngedeki üç küçük ışık.
-class _HaloPainter extends CustomPainter {
-  _HaloPainter({required this.turn, required this.color});
+class PaceHaloPainter extends CustomPainter {
+  PaceHaloPainter({
+    required this.turn,
+    required this.color,
+    this.opacity = 1,
+  });
+
+  /// Halenin görünürlüğü (açılışta yavaşça belirmesi için).
+  final double opacity;
 
   /// 0–1 arası tur.
   final double turn;
@@ -305,6 +320,19 @@ class _HaloPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (opacity <= 0) return;
+    final fading = opacity < 1;
+    if (fading) {
+      canvas.saveLayer(
+        Offset.zero & size,
+        Paint()..color = Color.fromRGBO(0, 0, 0, opacity),
+      );
+    }
+    _paintHalo(canvas, size);
+    if (fading) canvas.restore();
+  }
+
+  void _paintHalo(Canvas canvas, Size size) {
     final center = size.center(Offset.zero);
     final radius = size.shortestSide / 2;
     final angle = turn * 2 * math.pi;
@@ -379,6 +407,6 @@ class _HaloPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_HaloPainter old) =>
-      old.turn != turn || old.color != color;
+  bool shouldRepaint(PaceHaloPainter old) =>
+      old.turn != turn || old.color != color || old.opacity != opacity;
 }

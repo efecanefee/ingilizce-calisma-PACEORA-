@@ -13,6 +13,7 @@ import 'app/mascot.dart';
 import 'app/motion.dart';
 import 'app/router.dart';
 import 'app/sounds.dart';
+import 'app/splash.dart';
 import 'app/theme.dart';
 import 'data/providers.dart';
 import 'data/reminder_service.dart';
@@ -49,15 +50,22 @@ Future<void> main() async {
   runApp(
     UncontrolledProviderScope(
       container: container,
-      child: PaceoraApp(onboardingDone: onboardingDone),
+      child: PaceoraApp(onboardingDone: onboardingDone, showSplash: true),
     ),
   );
 }
 
 class PaceoraApp extends ConsumerStatefulWidget {
-  const PaceoraApp({super.key, required this.onboardingDone});
+  const PaceoraApp({
+    super.key,
+    required this.onboardingDone,
+    this.showSplash = false,
+  });
 
   final bool onboardingDone;
+
+  /// Açılış animasyonu; yalnızca gerçek açılışta (main) gösterilir.
+  final bool showSplash;
 
   @override
   ConsumerState<PaceoraApp> createState() => _PaceoraAppState();
@@ -118,7 +126,10 @@ class _PaceoraAppState extends ConsumerState<PaceoraApp>
       // Seviye/rozet kutlaması her ekranın üstünde gösterilebilsin.
       builder: (context, child) {
         Motion.reduced = MediaQuery.disableAnimationsOf(context);
-        return CelebrationHost(child: MascotPrecache(child: child!));
+        return SplashOverlay(
+          enabled: widget.showSplash,
+          child: CelebrationHost(child: MascotPrecache(child: child!)),
+        );
       },
       // Saat seçici, iletişim kutuları vb. sistem metinleri Türkçe olsun.
       locale: const Locale('tr'),
