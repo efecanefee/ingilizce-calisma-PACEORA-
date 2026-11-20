@@ -9,7 +9,7 @@ serini (streak) takip eder. Veriler tamamen cihazında kalır.
 
 ![Flutter](https://img.shields.io/badge/Flutter-3.44-02569B?logo=flutter&logoColor=white)
 ![Dart](https://img.shields.io/badge/Dart-3-0175C2?logo=dart&logoColor=white)
-![Gemini](https://img.shields.io/badge/Gemini-2.0%20Flash-8E75B2?logo=googlegemini&logoColor=white)
+![Gemini](https://img.shields.io/badge/Gemini-Flash-8E75B2?logo=googlegemini&logoColor=white)
 ![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS%20%7C%20Web%20%7C%20Windows-informational)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -26,7 +26,7 @@ dilbilgisi konusu ve bir kelime teması olur; pazar günü haftanın tekrarına 
 
 ## Öne çıkanlar
 
-- **Kişiye özel haftalık program** — Gemini 2.0 Flash, seviyene ve süreni göre
+- **Kişiye özel haftalık program** — Gemini (Flash), seviyene ve süreni göre
   7 günlük konu akışı üretir; konular kolaydan zora ilerler ve tekrar etmez.
 - **Çok adımlı günlük ders** — o günün konusundan kelime kartları → boşluk
   doldurma → Türkçe'den İngilizce'ye çeviri → çoktan seçmeli test üretilir.
