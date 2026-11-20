@@ -7,6 +7,7 @@ import '../app/constants.dart';
 import '../app/motion.dart';
 import '../app/theme.dart';
 import 'providers.dart';
+import 'reminder_service.dart';
 
 /// Anahtarın güvenli kasadaki adı.
 const apiKeyStorageKey = 'gemini_api_key';
@@ -159,7 +160,11 @@ class ReminderNotifier extends Notifier<ReminderSettings> {
     final service = ref.read(reminderServiceProvider);
     if (enabled) {
       if (!await service.requestPermission()) return false;
-      await service.scheduleDaily(state.time);
+      await service.scheduleDaily(
+        state.time,
+        content: _content,
+        skipToday: _skipToday,
+      );
     } else {
       await service.cancel();
     }
@@ -176,7 +181,9 @@ class ReminderNotifier extends Notifier<ReminderSettings> {
           time.hour * 60 + time.minute,
         );
     if (state.enabled) {
-      await ref.read(reminderServiceProvider).scheduleDaily(time);
+      await ref
+          .read(reminderServiceProvider)
+          .scheduleDaily(time, content: _content, skipToday: _skipToday);
     }
     state = ReminderSettings(enabled: state.enabled, time: time);
   }
@@ -184,8 +191,31 @@ class ReminderNotifier extends Notifier<ReminderSettings> {
   /// Açılışta zamanlamayı tazeler (saat dilimi değişmiş olabilir).
   Future<void> resync() async {
     if (state.enabled) {
-      await ref.read(reminderServiceProvider).scheduleDaily(state.time);
+      await ref
+          .read(reminderServiceProvider)
+          .scheduleDaily(state.time, content: _content, skipToday: _skipToday);
     }
+  }
+
+  ReminderContent _content = ReminderContent.fallback;
+  bool _skipToday = false;
+
+  /// Seri değişince bildirim metnini kişiselleştirir; bugün çalışıldıysa
+  /// bugünün hatırlatması atlanır.
+  Future<void> personalize({
+    required int streak,
+    required int nextMilestone,
+    required bool doneToday,
+  }) async {
+    final content = reminderContentFor(streak: streak, next: nextMilestone);
+    if (content.title == _content.title &&
+        content.body == _content.body &&
+        doneToday == _skipToday) {
+      return;
+    }
+    _content = content;
+    _skipToday = doneToday;
+    await resync();
   }
 }
 

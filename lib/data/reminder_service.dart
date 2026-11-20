@@ -5,6 +5,39 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
+/// Hatırlatma bildiriminin metni.
+class ReminderContent {
+  const ReminderContent({required this.title, required this.body});
+
+  static const fallback = ReminderContent(
+    title: 'İngilizce zamanı 🔥',
+    body: 'Bugünkü dersin hazır. Birkaç dakikada serini koru!',
+  );
+
+  final String title;
+  final String body;
+}
+
+/// Seriye göre kişisel hatırlatma metni.
+ReminderContent reminderContentFor({required int streak, required int next}) {
+  if (streak <= 0) {
+    return const ReminderContent(
+      title: 'İngilizce zamanı 🔥',
+      body: 'Yeni bir seri başlatmak için birkaç dakika yeter. Pace hazır!',
+    );
+  }
+  if (next - streak == 1) {
+    return ReminderContent(
+      title: 'Bir gün kaldı: $next günlük seri!',
+      body: 'Bugünkü dersi yaparsan $next günlük hedefe ulaşıyorsun.',
+    );
+  }
+  return ReminderContent(
+    title: 'Serin $streak gün 🔥',
+    body: 'Bugünkü dersin hazır. Seriyi koparma, birkaç dakika yeter!',
+  );
+}
+
 /// Günlük çalışma hatırlatması.
 ///
 /// Arayüz olarak ayrıldı: widget testlerinde ve web'de bildirim eklentisinin
@@ -14,7 +47,14 @@ abstract class ReminderService {
   Future<bool> requestPermission();
 
   /// Her gün [time]'da tekrarlayan hatırlatmayı kurar (öncekini değiştirir).
-  Future<void> scheduleDaily(TimeOfDay time);
+  ///
+  /// [skipToday] true ise (bugün zaten çalışıldıysa) ilk bildirim yarın
+  /// gelir; sonra her gün tekrarlar.
+  Future<void> scheduleDaily(
+    TimeOfDay time, {
+    ReminderContent content = ReminderContent.fallback,
+    bool skipToday = false,
+  });
 
   Future<void> cancel();
 }
@@ -26,7 +66,11 @@ class NoopReminderService implements ReminderService {
   Future<bool> requestPermission() async => true;
 
   @override
-  Future<void> scheduleDaily(TimeOfDay time) async {}
+  Future<void> scheduleDaily(
+    TimeOfDay time, {
+    ReminderContent content = ReminderContent.fallback,
+    bool skipToday = false,
+  }) async {}
 
   @override
   Future<void> cancel() async {}
@@ -115,7 +159,11 @@ class LocalReminderService implements ReminderService {
   }
 
   @override
-  Future<void> scheduleDaily(TimeOfDay time) async {
+  Future<void> scheduleDaily(
+    TimeOfDay time, {
+    ReminderContent content = ReminderContent.fallback,
+    bool skipToday = false,
+  }) async {
     await cancel();
     final android = _plugin
         .resolvePlatformSpecificImplementation<
@@ -125,9 +173,13 @@ class LocalReminderService implements ReminderService {
 
     await _plugin.zonedSchedule(
       id: _notificationId,
-      title: 'İngilizce zamanı 🔥',
-      body: 'Bugünkü dersin hazır. Birkaç dakikada serini koru!',
-      scheduledDate: nextInstanceOf(time, tz.TZDateTime.now(tz.local)),
+      title: content.title,
+      body: content.body,
+      scheduledDate: nextInstanceOf(
+        time,
+        tz.TZDateTime.now(tz.local),
+        skipToday: skipToday,
+      ),
       notificationDetails: const NotificationDetails(
         android: AndroidNotificationDetails(
           _channelId,
@@ -152,8 +204,13 @@ class LocalReminderService implements ReminderService {
   Future<void> cancel() => _plugin.cancel(id: _notificationId);
 }
 
-/// [now]'dan sonraki ilk [time] anı — bugün geçtiyse yarın.
-tz.TZDateTime nextInstanceOf(TimeOfDay time, tz.TZDateTime now) {
+/// [now]'dan sonraki ilk [time] anı — bugün geçtiyse ya da [skipToday]
+/// ise yarın.
+tz.TZDateTime nextInstanceOf(
+  TimeOfDay time,
+  tz.TZDateTime now, {
+  bool skipToday = false,
+}) {
   var scheduled = tz.TZDateTime(
     now.location,
     now.year,
@@ -162,7 +219,7 @@ tz.TZDateTime nextInstanceOf(TimeOfDay time, tz.TZDateTime now) {
     time.hour,
     time.minute,
   );
-  if (!scheduled.isAfter(now)) {
+  if (skipToday || !scheduled.isAfter(now)) {
     scheduled = tz.TZDateTime(
       now.location,
       now.year,

@@ -11,6 +11,7 @@ import 'app/router.dart';
 import 'app/theme.dart';
 import 'data/providers.dart';
 import 'data/reminder_service.dart';
+import 'data/streak_freeze.dart';
 import 'data/settings_providers.dart';
 
 Future<void> main() async {
@@ -79,6 +80,17 @@ class _PaceoraAppState extends ConsumerState<PaceoraApp>
     ref.watch(hapticsProvider);
 
     final accent = ref.watch(accentProvider);
+    // Hatırlatma metni seriye göre; bugün çalışıldıysa bugünkü atlanır.
+    ref.listen(streakDisplayProvider, (_, next) {
+      ref
+          .read(reminderProvider.notifier)
+          .personalize(
+            streak: next.streak,
+            nextMilestone: streakMilestone(next.streak).to,
+            doneToday: next.status == StreakStatus.done,
+          )
+          .ignore();
+    });
 
     return MaterialApp.router(
       title: AppConstants.appName,
