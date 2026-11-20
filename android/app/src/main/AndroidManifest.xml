@@ -7,9 +7,9 @@
          sonra zamanlamanın geri kurulması. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
-    <!-- Hatırlatmanın tam saatinde gelmesi için; verilmezse sistem bir saate
-         kadar geciktirebilir. -->
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+    <!-- Kesin alarm izni (SCHEDULE_EXACT_ALARM) bilerek yok: Google Play bu
+         izni yalnızca alarm ve takvim uygulamalarına veriyor. Günlük
+         hatırlatma "inexact" modda kurulur. -->
     <!-- Konuşma pratiği: söylenen cümle cihazın konuşma tanıma servisine gider. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <application

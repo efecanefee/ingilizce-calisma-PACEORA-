@@ -79,9 +79,10 @@ class NoopReminderService implements ReminderService {
 /// `flutter_local_notifications` ile yerel, sunucusuz hatırlatma.
 ///
 /// Bildirim yerel saat diliminde zamanlanır; yaz saati değişse de aynı
-/// duvar saatinde gelir. Android'de kesin alarm izni varsa tam saatinde,
-/// yoksa "inexact" modda kurulur — o modda sistem bildirimi bir saate kadar
-/// geciktirebildiği için izin, hatırlatma açılırken bir kez istenir.
+/// duvar saatinde gelir. Android'de "inexact" modda kurulur: sistem pili
+/// korumak için bildirimi birkaç dakika kaydırabilir. Kesin alarm izni
+/// (SCHEDULE_EXACT_ALARM) Google Play politikası gereği istenmez; o izin
+/// yalnızca alarm ve takvim uygulamalarına veriliyor.
 class LocalReminderService implements ReminderService {
   LocalReminderService._(this._plugin);
 
@@ -134,14 +135,7 @@ class LocalReminderService implements ReminderService {
           AndroidFlutterLocalNotificationsPlugin
         >();
     if (android != null) {
-      final allowed = await android.requestNotificationsPermission() ?? false;
-      // Android 14+ kesin alarmı varsayılan olarak kapalı başlatır; izin
-      // verilmezse hatırlatma yine kurulur, yalnızca gecikebilir.
-      if (allowed &&
-          !(await android.canScheduleExactNotifications() ?? false)) {
-        await android.requestExactAlarmsPermission();
-      }
-      return allowed;
+      return await android.requestNotificationsPermission() ?? false;
     }
     final ios = _plugin
         .resolvePlatformSpecificImplementation<
@@ -165,11 +159,6 @@ class LocalReminderService implements ReminderService {
     bool skipToday = false,
   }) async {
     await cancel();
-    final android = _plugin
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >();
-    final exact = await android?.canScheduleExactNotifications() ?? false;
 
     await _plugin.zonedSchedule(
       id: _notificationId,
@@ -192,9 +181,7 @@ class LocalReminderService implements ReminderService {
         ),
         iOS: DarwinNotificationDetails(),
       ),
-      androidScheduleMode: exact
-          ? AndroidScheduleMode.exactAllowWhileIdle
-          : AndroidScheduleMode.inexactAllowWhileIdle,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       // Yalnızca saat/dakika eşleşir: her gün tekrarlar.
       matchDateTimeComponents: DateTimeComponents.time,
     );
