@@ -996,15 +996,18 @@ class _ApiKeyFormState extends ConsumerState<_ApiKeyForm> {
     await ref.read(apiKeyProvider.notifier).save(_controller.text);
     if (!mounted) return;
     navigator.pop();
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(
-          _controller.text.trim().isEmpty
-              ? 'Kendi anahtarın silindi; uygulamayla gelen anahtar kullanılacak.'
-              : 'Anahtar kaydedildi.',
+    // Önceki kayıt mesajı hâlâ görünüyorsa sırada beklemesin.
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            _controller.text.trim().isEmpty
+                ? 'Kendi anahtarın silindi; uygulamayla gelen anahtar kullanılacak.'
+                : 'Anahtar kaydedildi.',
+          ),
         ),
-      ),
-    );
+      );
   }
 
   @override
