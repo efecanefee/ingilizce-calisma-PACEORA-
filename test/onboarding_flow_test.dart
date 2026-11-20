@@ -40,7 +40,7 @@ void main() {
 
     // 1. adım: isim — karşılama ekranında tam logo
     expect(find.text('Merhaba! Sana nasıl hitap edelim?'), findsOneWidget);
-    expect(find.byType(PaceoraLockup), findsOneWidget);
+    expect(find.byType(AnimatedPaceoraLockup), findsOneWidget);
     expect(find.byType(PaceoraWordmark), findsNothing);
     await tester.enterText(find.byType(TextField), 'Efecan');
     await tester.pump();

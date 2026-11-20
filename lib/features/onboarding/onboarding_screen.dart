@@ -277,7 +277,7 @@ class _NameStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _StepScaffold(
-      header: const Center(child: PaceoraLockup()),
+      header: const Center(child: AnimatedPaceoraLockup()),
       title: 'Merhaba! Sana nasıl hitap edelim?',
       subtitle: 'Günlük derslerinde ve raporlarında bu ismi kullanacağız.',
       child: TextField(
