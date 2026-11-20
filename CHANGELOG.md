@@ -24,8 +24,8 @@
   3, 7, 14, 30, 50, 100, 200, 365 güne ulaşınca kutlama.
 - **Yedekleme:** Ayarlar > Verilerim'den tüm ilerlemeyi dosyaya aktarma ve
   yedekten geri yükleme.
-- **Hazır dersler:** Gemini'ye ulaşılamadığında 12 konuluk yerleşik ders
-  havuzundan çalışma.
+- **Hazır dersler:** Gemini'ye ulaşılamadığında 24 konuluk yerleşik ders
+  havuzundan çalışma; A2, B1, B2 ve C1 için programdaki konuyla aynı ders.
 - **Süre seçenekleri:** 5, 10, 15, 20, 30, 45 ve 60 dakika, açıklamalarıyla.
 
 ### Değişti

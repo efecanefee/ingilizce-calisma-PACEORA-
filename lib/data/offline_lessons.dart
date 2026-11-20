@@ -7,9 +7,9 @@ import 'lesson_models.dart';
 /// Uygulamanın içinde gelen hazır dersler.
 ///
 /// Gemini anahtarı yoksa, ağ yoksa ya da kota dolduysa kullanıcı günün
-/// dersini yine çalışabilsin diye: B1 ve B2 için yedek haftalık programın
-/// her konusuna bir ders, haftanın tekrar günü için de bunlardan karışık bir
-/// ders.
+/// dersini yine çalışabilsin diye: A2, B1, B2 ve C1 için yedek haftalık
+/// programın her konusuna bir ders, haftanın tekrar günü için de bunlardan
+/// karışık bir ders.
 class OfflineLessonBank {
   OfflineLessonBank(this._entries);
 
@@ -40,6 +40,14 @@ class OfflineLessonBank {
 
   int get length => _entries.length;
 
+  /// Seviye kodunun ders grubu: A2, B1, B2 ya da C1. B1-/B1+ B1'e, B2-/B2+
+  /// B2'ye gider.
+  static String groupOf(String level) {
+    if (level.startsWith('A')) return 'A2';
+    if (level.startsWith('C')) return 'C1';
+    return level.startsWith('B2') ? 'B2' : 'B1';
+  }
+
   /// Günün dersi: konu birebir eşleşirse o, tekrar gününde karışık ders,
   /// aksi hâlde aynı seviye grubundan haftanın gününe göre bir ders.
   DailyLesson? lessonFor({
@@ -47,10 +55,13 @@ class OfflineLessonBank {
     required String grammarTopic,
     required int dayIndex,
   }) {
-    // A2 en yakın B1 grubuna, C1 B2 grubuna düşer.
-    final upper = level.startsWith('B2') || level.startsWith('C');
-    final group = upper ? 'B2' : 'B1';
-    final pool = _entries.where((e) => e.group == group).toList();
+    // Her seviye kendi grubundan; grup boşsa en yakın B grubuna düşer.
+    final group = groupOf(level);
+    var pool = _entries.where((e) => e.group == group).toList();
+    if (pool.isEmpty) {
+      final nearest = group == 'A2' ? 'B1' : (group == 'C1' ? 'B2' : group);
+      pool = _entries.where((e) => e.group == nearest).toList();
+    }
     if (pool.isEmpty) return null;
 
     final topic = grammarTopic.trim().toLowerCase();

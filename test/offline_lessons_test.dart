@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:drift/native.dart';
@@ -18,8 +19,8 @@ void main() {
   );
 
   test('havuzdaki tüm dersler geçerli ve yedek programın her konusu var', () {
-    expect(bank.length, 12);
-    for (final level in ['B1', 'B2']) {
+    expect(bank.length, 24);
+    for (final level in ['A2', 'B1', 'B2', 'C1']) {
       final plan = fallbackWeeklyPlan(level);
       for (var day = 0; day < plan.length; day++) {
         final lesson = bank.lessonFor(
@@ -32,6 +33,40 @@ void main() {
         expect(lesson.questionCount, greaterThanOrEqualTo(8));
       }
     }
+  });
+
+  test('A2 ve C1 programının konusu, açılan dersin konusuyla aynı', () {
+    final json = jsonDecode(File(OfflineLessonBank.asset).readAsStringSync())
+        as Map<String, dynamic>;
+    for (final level in ['A2', 'C1']) {
+      final plan = fallbackWeeklyPlan(level);
+      for (var day = 0; day < 6; day++) {
+        final topic = plan[day].grammarTopic;
+        final entry = (json['lessons'] as List<dynamic>)
+            .cast<Map<String, dynamic>>()
+            .firstWhere((l) => l['level'] == level && l['grammarTopic'] == topic);
+        final lesson = bank.lessonFor(
+          level: level,
+          grammarTopic: topic,
+          dayIndex: day,
+        )!;
+        final content = entry['lesson'] as Map<String, dynamic>;
+        final words = [
+          for (final v in content['vocab'] as List<dynamic>)
+            (v as Map<String, dynamic>)['word'],
+        ];
+        expect(lesson.vocab.map((v) => v.word), words, reason: topic);
+      }
+    }
+  });
+
+  test('seviye kodları doğru ders grubuna gider', () {
+    expect(OfflineLessonBank.groupOf('A2'), 'A2');
+    expect(OfflineLessonBank.groupOf('B1-'), 'B1');
+    expect(OfflineLessonBank.groupOf('B1+'), 'B1');
+    expect(OfflineLessonBank.groupOf('B2-'), 'B2');
+    expect(OfflineLessonBank.groupOf('B2+'), 'B2');
+    expect(OfflineLessonBank.groupOf('C1'), 'C1');
   });
 
   test('Gemini planındaki bilinmeyen konuya haftanın gününe göre ders', () {
