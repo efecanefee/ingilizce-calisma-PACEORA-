@@ -26,6 +26,17 @@ abstract class AppConstants {
   /// Onboarding'de önceden seçili gelen süre.
   static const defaultDailyMinutes = 15;
 
+  /// Süre seçeneklerinin kısa açıklaması.
+  static String dailyMinuteHint(int minutes) => switch (minutes) {
+    <= 5 => 'Hızlı tekrar, yoğun günler için',
+    <= 10 => 'Kısa ve düzenli',
+    <= 15 => 'Dengeli tempo, önerilen',
+    <= 20 => 'Rahat tempo, bol pratik',
+    <= 30 => 'Derinlemesine çalışma',
+    <= 45 => 'Yoğun program',
+    _ => 'Tam gaz, sınav hazırlığı',
+  };
+
   /// Onboarding tamamlandı bayrağı (SharedPreferences anahtarı).
   static const prefOnboardingDone = 'onboarding_done';
 

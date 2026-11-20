@@ -556,7 +556,7 @@ class _MinutesStep extends StatelessWidget {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 20,
-                      vertical: 18,
+                      vertical: 14,
                     ),
                     child: Row(
                       children: [
@@ -569,10 +569,24 @@ class _MinutesStep extends StatelessWidget {
                               : theme.colorScheme.outline,
                         ),
                         const SizedBox(width: 16),
-                        Text(
-                          'Günde $minutes dakika',
-                          style: theme.textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.w600),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Günde $minutes dakika',
+                                style: theme.textTheme.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.w600),
+                              ),
+                              Text(
+                                AppConstants.dailyMinuteHint(minutes),
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurface
+                                      .withValues(alpha: 0.65),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),

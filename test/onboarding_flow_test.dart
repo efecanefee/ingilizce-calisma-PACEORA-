@@ -75,6 +75,7 @@ void main() {
 
     // 3. adım: günlük süre
     expect(find.text('Günde ne kadar vakit ayırabilirsin?'), findsOneWidget);
+    await tester.ensureVisible(find.text('Günde 20 dakika'));
     await tester.tap(find.text('Günde 20 dakika'));
     await tester.pump();
     await tester.tap(find.widgetWithText(FilledButton, 'Programımı oluştur'));
