@@ -1,3 +1,4 @@
+import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -46,7 +47,7 @@ class _WeeklyReviewScreenState extends ConsumerState<WeeklyReviewScreen> {
   @override
   Widget build(BuildContext context) {
     final reports = ref.watch(weeklyReportsProvider);
-    final thisWeek = mondayOf(DateTime.now());
+    final thisWeek = mondayOf(clock.now());
 
     return Scaffold(
       appBar: AppBar(title: const Text('Haftalık rapor')),

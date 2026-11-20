@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:clock/clock.dart';
 import 'package:drift/drift.dart';
 
 import '../app/constants.dart';
@@ -150,7 +151,7 @@ class Repository {
     DateTime? now,
     int freezes = 0,
   }) async {
-    final today = dayOf(now ?? DateTime.now());
+    final today = dayOf(now ?? clock.now());
     var bridged = const <DateTime>[];
     await _db.transaction(() async {
       await (_db.update(_db.weeklyPlanDays)..where((t) => t.id.equals(day.id)))
@@ -239,7 +240,7 @@ class Repository {
     DateTime? now,
   }) async {
     if (outcomes.isEmpty) return;
-    final at = now ?? DateTime.now();
+    final at = now ?? clock.now();
 
     await _db.transaction(() async {
       for (final outcome in outcomes) {
@@ -312,7 +313,7 @@ class Repository {
     DateTime? now,
   }) async {
     if (cards.isEmpty) return 0;
-    final today = dayOf(now ?? DateTime.now());
+    final today = dayOf(now ?? clock.now());
     var added = 0;
 
     await _db.transaction(() async {
@@ -366,7 +367,7 @@ class Repository {
   /// Verilen kartların tekrarını bugüne çeker (ileri tarihliyse).
   Future<void> pullFlashcardsToToday(Iterable<int> ids, {DateTime? now}) async {
     if (ids.isEmpty) return;
-    final today = dayOf(now ?? DateTime.now());
+    final today = dayOf(now ?? clock.now());
     await (_db.update(_db.flashcards)
           ..where((t) => t.id.isIn(ids) & t.dueDate.isBiggerThanValue(today)))
         .write(FlashcardsCompanion(dueDate: Value(today)));
@@ -383,7 +384,7 @@ class Repository {
 
   /// Bugün (veya daha önce) tekrar zamanı gelmiş kartlar, en gecikmiş önce.
   Future<List<Flashcard>> dueFlashcards({DateTime? now, int? limit}) {
-    final today = dayOf(now ?? DateTime.now());
+    final today = dayOf(now ?? clock.now());
     final query = _db.select(_db.flashcards)
       ..where((t) => t.dueDate.isSmallerOrEqualValue(today))
       ..orderBy([
@@ -414,7 +415,7 @@ class Repository {
       intervalDays: card.intervalDays,
       reps: card.reps,
       grade: grade,
-      today: now ?? DateTime.now(),
+      today: now ?? clock.now(),
     );
     await (_db.update(_db.flashcards)..where((t) => t.id.equals(card.id)))
         .write(

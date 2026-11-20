@@ -1,3 +1,4 @@
+import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -490,7 +491,7 @@ class _StreakCalendar extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final today = dayOf(DateTime.now());
+    final today = dayOf(clock.now());
     final firstMonday = DateTime(
       mondayOf(today).year,
       mondayOf(today).month,

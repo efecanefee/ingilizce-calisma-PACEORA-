@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -1129,7 +1130,7 @@ class _WeekStrip extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final accent = isDark ? context.pace.accent : context.pace.accentDark;
-    final now = DateTime.now();
+    final now = clock.now();
     final todayIndex = now.weekday - DateTime.monday;
     final monday = mondayOf(now);
     final byIndex = {for (final d in week.days) d.dayIndex: d};

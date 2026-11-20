@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -316,7 +317,7 @@ class _GradeButtons extends StatelessWidget {
       intervalDays: card.intervalDays,
       reps: card.reps,
       grade: grade,
-      today: DateTime.now(),
+      today: clock.now(),
     );
     return switch (next.intervalDays) {
       1 => 'yarın',

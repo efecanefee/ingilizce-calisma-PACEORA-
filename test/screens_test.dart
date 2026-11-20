@@ -1,3 +1,4 @@
+import 'package:clock/clock.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
@@ -59,31 +60,44 @@ void main() {
     return instance;
   }
 
-  testWidgets('Program sekmesi haftayı ve gün ayrıntısını gösterir', (
-    tester,
-  ) async {
-    await pumpApp(tester);
+  // Haftanın her günü için: test eskiden gerçek tarihe bağlıydı ve cuma ile
+  // sonrasında satır ekranın altında kaldığı için dokunma ıskalıyordu.
+  for (var weekday = 0; weekday < 7; weekday++) {
+    testWidgets(
+      'Program sekmesi haftayı ve gün ayrıntısını gösterir (gün $weekday)',
+      (tester) async {
+        final day = mondayOf(
+          DateTime.now(),
+        ).add(Duration(days: weekday, hours: 10));
+        await withClock(Clock.fixed(day), () async {
+          await pumpApp(tester);
 
-    await tester.tap(find.text('Program'));
-    await _advance(tester);
+          await tester.tap(find.text('Program'));
+          await _advance(tester);
 
-    expect(find.text('Haftalık program'), findsOneWidget);
-    expect(find.text('/ 7 gün tamam'), findsOneWidget);
+          expect(find.text('Haftalık program'), findsOneWidget);
+          expect(find.text('/ 7 gün tamam'), findsOneWidget);
 
-    final today = DateTime.now().weekday - DateTime.monday;
-    await tester.scrollUntilVisible(
-      find.text('Konu $today'),
-      200,
-      scrollable: find.byType(Scrollable).first,
+          final row = find.text('Konu $weekday');
+          await tester.scrollUntilVisible(
+            row,
+            200,
+            scrollable: find.byType(Scrollable).first,
+          );
+          // Satır yarım görünür kalmasın; tamamen ekrana getir.
+          await tester.ensureVisible(row);
+          await _advance(tester);
+          await tester.tap(row);
+          await _advance(tester);
+
+          // Alt sayfa: konu ayrıntısı ve bugünün dersine giden düğme.
+          expect(find.text('Dilbilgisi'), findsOneWidget);
+          expect(find.text('Kelime teması'), findsOneWidget);
+          expect(find.text('Derse başla'), findsOneWidget);
+        });
+      },
     );
-    await tester.tap(find.text('Konu $today'));
-    await _advance(tester);
-
-    // Alt sayfa: konu ayrıntısı ve bugünün dersine giden düğme.
-    expect(find.text('Dilbilgisi'), findsOneWidget);
-    expect(find.text('Kelime teması'), findsOneWidget);
-    expect(find.text('Derse başla'), findsOneWidget);
-  });
+  }
 
   testWidgets('ana ekrandaki gün kutucuğu o günün konusunu açar', (
     tester,

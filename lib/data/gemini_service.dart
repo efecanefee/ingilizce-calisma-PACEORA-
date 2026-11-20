@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:clock/clock.dart';
 import 'package:http/http.dart' as http;
 
 import '../app/constants.dart';
@@ -300,7 +301,7 @@ class GeminiService {
         : parseDailyStoryResponse(response.body!);
     if (story == null) {
       return (
-        story: fallbackStory(level, date ?? DateTime.now()),
+        story: fallbackStory(level, date ?? clock.now()),
         offline: true,
       );
     }

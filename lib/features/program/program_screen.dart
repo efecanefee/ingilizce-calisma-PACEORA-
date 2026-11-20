@@ -1,3 +1,4 @@
+import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -65,8 +66,8 @@ enum _DayState { done, today, missed, upcoming }
 /// Bir plan gününün ayrıntı sayfasını açar. Ana ekrandaki hafta
 /// kutucukları da bunu kullanır.
 void showPlanDayDetails(BuildContext context, WeeklyPlanDay day) {
-  final todayIndex = DateTime.now().weekday - DateTime.monday;
-  final monday = mondayOf(DateTime.now());
+  final todayIndex = clock.now().weekday - DateTime.monday;
+  final monday = mondayOf(clock.now());
   final state = day.status == 'completed'
       ? _DayState.done
       : day.dayIndex == todayIndex
@@ -91,8 +92,8 @@ class _Timeline extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final todayIndex = DateTime.now().weekday - DateTime.monday;
-    final monday = mondayOf(DateTime.now());
+    final todayIndex = clock.now().weekday - DateTime.monday;
+    final monday = mondayOf(clock.now());
     final done = week.days.where((d) => d.status == 'completed').length;
 
     _DayState stateOf(WeeklyPlanDay day) {
@@ -501,7 +502,7 @@ class _DayDetails extends StatelessWidget {
             Text(note, style: theme.textTheme.bodyMedium),
             // Ders ekranı her zaman bugünün dersini açar; geçmiş günler için
             // buton gösterilmez.
-            if (date == dayOf(DateTime.now())) ...[
+            if (date == dayOf(clock.now())) ...[
               const SizedBox(height: 20),
               FilledButton(
                 onPressed: () {
