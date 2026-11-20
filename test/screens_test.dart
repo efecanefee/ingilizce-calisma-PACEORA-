@@ -9,6 +9,7 @@ import 'package:paceora/data/providers.dart';
 import 'package:paceora/data/repository.dart';
 import 'package:paceora/data/review_models.dart';
 import 'package:paceora/data/rewards.dart';
+import 'package:paceora/data/streak_freeze.dart';
 import 'package:paceora/data/wardrobe.dart';
 import 'package:paceora/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -139,6 +140,35 @@ void main() {
     final wardrobe = WardrobeState.read(prefs);
     expect(wardrobe.owns(PaceKit.crimson), isTrue);
     expect(wardrobe.equipped, PaceKit.crimson);
+  });
+
+  testWidgets('seri yeni hedefe ulaşınca kutlanır', (tester) async {
+    await db.update(db.userProfiles).write(
+      UserProfilesCompanion(
+        streak: const Value(6),
+        lastStudyDate: Value(
+          DateTime.now().subtract(const Duration(days: 1)),
+        ),
+      ),
+    );
+    await pumpApp(tester, {
+      'seen_player_level': 99,
+      'seen_badges': [for (final b in badges) b.id],
+      seenStreakMilestoneKey: 3,
+    });
+    expect(find.text('7 günlük seri!'), findsNothing);
+
+    // Bugünü tamamla (dersi bitirmekle aynı yol).
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(PaceoraApp)),
+    );
+    final week = await container.read(weekPlanProvider.future);
+    await tester.runAsync(
+      () => container.read(weekPlanProvider.notifier).completeDay(week.today!),
+    );
+    await _advance(tester);
+
+    expect(find.text('7 günlük seri!'), findsOneWidget);
   });
 
   testWidgets('seviye testi çözülmeden ayarlardan seviye seçilemez', (

@@ -7,6 +7,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/providers.dart';
 import '../data/rewards.dart';
+import '../data/streak_freeze.dart';
+import 'mascot.dart';
 import 'motion.dart';
 import 'theme.dart';
 
@@ -239,6 +241,32 @@ class _CelebrationHostState extends ConsumerState<CelebrationHost> {
 
   void _enqueue(Celebration c) => setState(() => _queue.add(c));
 
+  /// Seri yeni bir hedefe (3, 7, 14… gün) ulaştıysa kutlar. İlk açılışta
+  /// mevcut durum sessizce kaydedilir.
+  void _checkStreak(int streak) {
+    final prefs = _prefs;
+    final reached = reachedStreakMilestone(streak);
+    final seen = prefs.getInt(seenStreakMilestoneKey);
+    if (seen == null || reached < seen) {
+      // Seri koptuysa sayaç da geri alınır; yeniden ulaşılınca kutlanır.
+      prefs.setInt(seenStreakMilestoneKey, reached);
+      return;
+    }
+    if (reached <= seen) return;
+    prefs.setInt(seenStreakMilestoneKey, reached);
+    final next = streakMilestone(streak).to;
+    _enqueue(
+      Celebration(
+        title: '$reached günlük seri!',
+        subtitle: 'Harika gidiyorsun. Sıradaki hedef: $next gün.',
+        icon: Icons.local_fire_department_rounded,
+        color: const Color(0xFFFF9F1C),
+        chip: 'Seri hedefi',
+        art: const EquippedPace(mood: PaceMood.cheer, size: 130),
+      ),
+    );
+  }
+
   void _dismiss() {
     setState(() {
       _queue.removeAt(0);
@@ -250,6 +278,11 @@ class _CelebrationHostState extends ConsumerState<CelebrationHost> {
   Widget build(BuildContext context) {
     ref.listen(gameProvider, (_, next) {
       if (next case AsyncData(:final value)) _check(value);
+    });
+    ref.listen(streakDisplayProvider, (previous, next) {
+      // Profil yüklenmeden gelen 0 değeri hedef sayacını sıfırlamasın.
+      if (ref.read(profileProvider).value == null) return;
+      _checkStreak(next.streak);
     });
     // Profil yoksa (onboarding) ödül de yok; dinlemeyi başlatmak yeterli.
     ref.watch(gameProvider);

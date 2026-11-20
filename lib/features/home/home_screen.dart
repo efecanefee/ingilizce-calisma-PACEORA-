@@ -388,21 +388,6 @@ class _StreakChip extends ConsumerWidget {
   }
 }
 
-/// Seri hedefleri: bar bir sonrakine doğru dolar.
-const streakMilestones = [3, 7, 14, 30, 50, 100, 200, 365];
-
-/// [streak] için önceki ve sıradaki hedef; son hedef aşıldıysa her 100 günde
-/// bir yeni hedef.
-({int from, int to}) streakMilestone(int streak) {
-  var from = 0;
-  for (final m in streakMilestones) {
-    if (streak < m) return (from: from, to: m);
-    from = m;
-  }
-  final to = (streak ~/ 100 + 1) * 100;
-  return (from: to - 100, to: to);
-}
-
 /// Seri rozetinin zemini: yanan seride dönen sıcak renkli çerçeve, nefes
 /// alan ışıltı ve ara ara üstünden geçen parıltı.
 class _StreakGlow extends StatefulWidget {
