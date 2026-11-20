@@ -185,6 +185,29 @@ void main() {
     expect(find.text('7 günlük seri!'), findsOneWidget);
   });
 
+  testWidgets('anahtar yokken ana ekranda kapatılabilen anahtar kartı', (
+    tester,
+  ) async {
+    final prefs = await pumpApp(tester);
+    final hint = find.text('Sana özel dersler için anahtar ekle');
+    await tester.scrollUntilVisible(
+      hint,
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(hint, findsOneWidget);
+
+    final close = find.descendant(
+      of: find.ancestor(of: hint, matching: find.byType(Card)),
+      matching: find.byTooltip('Kapat'),
+    );
+    await tester.ensureVisible(close);
+    await tester.tap(close);
+    await _advance(tester);
+    expect(hint, findsNothing);
+    expect(prefs.getBool('api_key_hint_dismissed'), isTrue);
+  });
+
   testWidgets('seviye testi çözülmeden ayarlardan seviye seçilemez', (
     tester,
   ) async {

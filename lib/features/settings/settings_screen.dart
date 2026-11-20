@@ -160,6 +160,11 @@ class _SettingsTile extends StatelessWidget {
   }
 }
 
+/// Gemini API anahtarı formunu alt sayfada açar (ana ekrandaki karttan da
+/// kullanılır).
+Future<void> showApiKeySheet(BuildContext context) =>
+    _openSheet(context, 'Gemini API anahtarı', const _ApiKeyForm());
+
 Future<void> _openSheet(BuildContext context, String title, Widget child) {
   return showModalBottomSheet<void>(
     context: context,
@@ -830,8 +835,7 @@ class _AiGroup extends ConsumerWidget {
               ),
             ],
           ),
-          onTap: () =>
-              _openSheet(context, 'Gemini API anahtarı', const _ApiKeyForm()),
+          onTap: () => showApiKeySheet(context),
         ),
         _SettingsTile(
           icon: Icons.network_check_rounded,

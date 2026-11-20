@@ -19,6 +19,7 @@ import '../../data/rewards.dart';
 import '../../data/repository.dart' show mondayOf;
 import '../../data/streak_freeze.dart';
 import '../program/program_screen.dart';
+import '../settings/settings_screen.dart' show showApiKeySheet;
 import '../wardrobe/wardrobe_sheet.dart';
 
 /// Ana ekran ("Bugün" sekmesi): karşılama, bugünün dersi, günlük hedef,
@@ -93,6 +94,8 @@ class _HomeBody extends ConsumerWidget {
             ),
           const SizedBox(height: 16),
           item(const _DailyGoalCard()),
+          // Anahtar yoksa kişisel derslerin nasıl açılacağını anlatır.
+          const _ApiKeyHint(),
           const SizedBox(height: 28),
           item(
             Row(
@@ -111,6 +114,85 @@ class _HomeBody extends ConsumerWidget {
           const SizedBox(height: 12),
           item(const _PracticeGrid()),
         ],
+      ),
+    );
+  }
+}
+
+/// Gemini anahtarı yokken (paylaşım sürümü) gösterilen, kapatılabilen kart.
+class _ApiKeyHint extends ConsumerStatefulWidget {
+  const _ApiKeyHint();
+
+  static const dismissedKey = 'api_key_hint_dismissed';
+
+  @override
+  ConsumerState<_ApiKeyHint> createState() => _ApiKeyHintState();
+}
+
+class _ApiKeyHintState extends ConsumerState<_ApiKeyHint> {
+  late bool _dismissed =
+      ref.read(sharedPreferencesProvider).getBool(_ApiKeyHint.dismissedKey) ??
+      false;
+
+  Future<void> _dismiss() async {
+    setState(() => _dismissed = true);
+    await ref
+        .read(sharedPreferencesProvider)
+        .setBool(_ApiKeyHint.dismissedKey, true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hasKey = ref.watch(geminiServiceProvider).hasApiKey;
+    if (hasKey || _dismissed) return const SizedBox.shrink();
+
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.auto_awesome_rounded, color: context.pace.accentDark),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Sana özel dersler için anahtar ekle',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Şu an hazır derslerle çalışıyorsun. Google AI Studio\'dan '
+                      'ücretsiz bir Gemini anahtarı alıp eklersen dersler, '
+                      'hikayeler ve sohbet seviyene göre üretilir.',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 8),
+                    FilledButton.tonal(
+                      onPressed: () => showApiKeySheet(context),
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size(0, 40),
+                      ),
+                      child: const Text('Anahtar ekle'),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                tooltip: 'Kapat',
+                onPressed: _dismiss,
+                icon: const Icon(Icons.close_rounded, size: 20),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

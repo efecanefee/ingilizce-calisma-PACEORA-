@@ -8,6 +8,7 @@ import '../../app/theme.dart';
 import '../../data/lesson_models.dart';
 import '../../data/providers.dart';
 import '../../data/rewards.dart';
+import '../settings/settings_screen.dart' show showApiKeySheet;
 import 'lesson_steps.dart';
 
 /// Günün dersi: kelimeler → boşluk doldurma → çeviri → test → sonuç.
@@ -146,6 +147,14 @@ class _UnavailableViewState extends ConsumerState<_UnavailableView> {
                   : () => ref.read(lessonProvider.notifier).retry(),
               child: const Text('Tekrar dene'),
             ),
+            if (!ref.watch(geminiServiceProvider).hasApiKey) ...[
+              const SizedBox(height: 8),
+              TextButton.icon(
+                onPressed: () => showApiKeySheet(context),
+                icon: const Icon(Icons.key_rounded),
+                label: const Text('Gemini anahtarı ekle'),
+              ),
+            ],
             const SizedBox(height: 8),
             TextButton(
               onPressed: _busy ? null : _markDone,
