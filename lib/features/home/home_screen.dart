@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/avatar.dart';
 import '../../app/constants.dart';
 import '../../app/logo.dart';
+import '../../app/mascot.dart';
 import '../../app/motion.dart';
 import '../../app/theme.dart';
 import '../../data/database.dart';
@@ -201,22 +202,37 @@ class _HeroCardState extends State<_HeroCard>
                   ],
                 ),
                 const SizedBox(height: 14),
-                Text(
-                  'Merhaba, ${user.name}',
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: onHero,
-                  ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Merhaba, ${user.name}',
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: onHero,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Seviye '
+                            '${DifficultyLevel.fromCode(user.level).label} · '
+                            'günde ${user.dailyMinutes} dk',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: onHero.withValues(alpha: 0.75),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const _HeroPace(),
+                  ],
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  'Seviye ${DifficultyLevel.fromCode(user.level).label} · '
-                  'günde ${user.dailyMinutes} dk',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: onHero.withValues(alpha: 0.75),
-                  ),
-                ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
                 if (level != null) _XpBar(level: level),
               ],
             ),
@@ -224,6 +240,22 @@ class _HeroCardState extends State<_HeroCard>
         ],
       ),
     );
+  }
+}
+
+/// Karşılama kartındaki Pace: serinin durumuna göre poz değiştirir.
+class _HeroPace extends ConsumerWidget {
+  const _HeroPace();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final status = ref.watch(streakDisplayProvider).status;
+    final mood = switch (status) {
+      StreakStatus.done => PaceMood.cheer,
+      StreakStatus.protected => PaceMood.surprised,
+      _ => PaceMood.run,
+    };
+    return PaceMascot(mood: mood, size: 80);
   }
 }
 

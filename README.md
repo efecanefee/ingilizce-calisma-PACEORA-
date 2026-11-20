@@ -232,6 +232,7 @@ lib/
     review/     haftalık rapor ve adaptif seviye
     settings/   profil, API anahtarı, hatırlatma, tema, veri sıfırlama
 assets/images/  paceora_mark.png (amblem), paceora_logo.png (tam logo)
+assets/mascot/  pace_*.png (maskot Pace pozları), pace_badge.png (logo rozeti)
 ```
 
 **Teknolojiler:** Flutter · Riverpod (durum yönetimi) · drift + SQLite
