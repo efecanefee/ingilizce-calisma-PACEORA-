@@ -65,6 +65,19 @@ http.Client _stubClient() => MockClient((request) async {
       return http.Response.bytes(utf8.encode(body), 200);
     });
 
+/// "Bugünü çalış" düğmesine basar. Küçük test ekranında düğme karşılama
+/// kartının altında kalabildiği için kaydırmadan doğrudan tetiklenir.
+Future<void> _tapStudy(WidgetTester tester) async {
+  final button = tester.widget<ButtonStyleButton>(
+    find.ancestor(
+      of: find.text('Bugünü çalış'),
+      matching: find.byWidgetPredicate((w) => w is ButtonStyleButton),
+    ),
+  );
+  button.onPressed!();
+  await tester.pump();
+}
+
 void main() {
   testWidgets('ders akışı: sorular çözülür, skor ve streak kaydedilir',
       (tester) async {
@@ -98,7 +111,7 @@ void main() {
     expect(find.text('Merhaba, Efecan'), findsOneWidget);
 
     // Derse gir.
-    await tester.tap(find.text('Bugünü çalış'));
+    await _tapStudy(tester);
     await _advance(tester);
 
     // 1. adım: kelimeler — puanlanmaz, doğrudan devam edilir.
@@ -190,7 +203,7 @@ void main() {
     );
     await _advance(tester);
 
-    await tester.tap(find.text('Bugünü çalış'));
+    await _tapStudy(tester);
     await _advance(tester);
     await tester.tap(find.widgetWithText(FilledButton, 'Devam'));
     await _advance(tester);

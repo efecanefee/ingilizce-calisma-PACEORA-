@@ -188,6 +188,10 @@ void main() {
   testWidgets('anahtar yokken ana ekranda kapatılabilen anahtar kartı', (
     tester,
   ) async {
+    // Kart listenin altında; telefona yakın, uzun bir ekran.
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.5;
+    addTearDown(tester.view.reset);
     final prefs = await pumpApp(tester);
     final hint = find.text('Sana özel dersler için anahtar ekle');
     await tester.scrollUntilVisible(

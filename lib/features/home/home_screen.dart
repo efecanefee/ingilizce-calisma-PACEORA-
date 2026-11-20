@@ -11,6 +11,7 @@ import '../../app/constants.dart';
 import '../../app/logo.dart';
 import '../../app/mascot.dart';
 import '../../app/motion.dart';
+import '../../app/pace_messages.dart';
 import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../data/profile_style.dart';
@@ -311,6 +312,8 @@ class _HeroCardState extends State<_HeroCard>
                               color: onHero.withValues(alpha: 0.75),
                             ),
                           ),
+                          const SizedBox(height: 10),
+                          const _PaceBubble(),
                         ],
                       ),
                     ),
@@ -324,6 +327,47 @@ class _HeroCardState extends State<_HeroCard>
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Pace'in konuşma balonu: güne ve seriye göre kısa bir mesaj. Kuyruğu
+/// sağdaki Pace'i gösterir.
+class _PaceBubble extends ConsumerWidget {
+  const _PaceBubble();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final display = ref.watch(streakDisplayProvider);
+    final message = paceMessage(
+      status: display.status,
+      streak: display.streak,
+      now: clock.now(),
+    );
+    return Semantics(
+      label: 'Pace diyor ki: $message',
+      excludeSemantics: true,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.12),
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(12),
+            topRight: Radius.circular(12),
+            bottomLeft: Radius.circular(12),
+            bottomRight: Radius.circular(3),
+          ),
+        ),
+        child: Text(
+          message,
+          maxLines: 3,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            color: Colors.white.withValues(alpha: 0.92),
+            height: 1.3,
+          ),
+        ),
       ),
     );
   }
