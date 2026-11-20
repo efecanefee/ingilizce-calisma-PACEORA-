@@ -8,6 +8,7 @@ Google Play ve App Store'a yükleme için hazır metinler ve görseller.
 | `liste-en.md` | İngilizce mağaza sayfası |
 | `play-veri-guvenligi.md` | Play Console "Veri güvenliği" formunun cevapları |
 | `derecelendirme.md` | Kategori, içerik derecelendirmesi anketi cevapları, iletişim bilgileri |
+| `gorseller/` | Play öne çıkan görsel (1024×500) ve Play simgesi (512×512). App Store simgesi derlemeyle gelir (`ios/Runner/Assets.xcassets`) |
 | `ekranlar/` | Ekran görüntüleri (`play_*` 1080×1920, `ios_*` 1290×2796; uygulama yalnız iPhone, iPad görüntüsü gerekmez) |
 
 ## Ekran görüntülerini yeniden üretmek
@@ -24,11 +25,18 @@ App Store alfa kanallı görsel kabul etmez; üretimden sonra kanalı kaldırıp
 dosyaları küçültmek için:
 
 ```bash
-python3 -c "import glob; from PIL import Image; [Image.open(f).convert('RGB').save(f, optimize=True) for f in glob.glob('docs/magaza/ekranlar/*.png')]"
+python3 -c "import glob; from PIL import Image; [Image.open(f).convert('RGB').save(f, optimize=True) for f in glob.glob('docs/magaza/ekranlar/*.png') + glob.glob('docs/magaza/gorseller/play_one*.png')]"
 ```
 
 Emoji yazı tipi başka bir yerdeyse yolu `PACE_EMOJI_FONT` ortam değişkeniyle
 verilebilir. Normal `flutter test` çalıştırmasında bu test atlanır.
+
+Öne çıkan görsel de aynı komutla `gorseller/` altına çizilir. Play simgesi
+iOS'taki 1024'lük simgeden küçültülür:
+
+```bash
+python3 -c "from PIL import Image; Image.open('ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x.png').convert('RGBA').resize((512, 512), Image.LANCZOS).save('docs/magaza/gorseller/play_simge_512.png')"
+```
 
 Sıralama mağazadaki sırayla aynıdır:
 
@@ -51,8 +59,7 @@ Sıralama mağazadaki sırayla aynıdır:
 - [ ] Play: Hedef kitle 13+ seçildi
 - [ ] App Store: Uygulama gizlilik etiketi `play-veri-guvenligi.md`'deki
   tabloyla tutarlı dolduruldu
-- [ ] Uygulama simgesi 512×512 (Play) ve 1024×1024 (App Store) yüklendi
-- [ ] Öne çıkan görsel 1024×500 (Play) hazırlandı
+- [ ] Play: `gorseller/play_simge_512.png` ve `gorseller/play_one_cikan_gorsel.png` yüklendi
 
 ---
 

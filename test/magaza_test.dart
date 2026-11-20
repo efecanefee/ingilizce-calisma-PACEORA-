@@ -12,6 +12,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:paceora/app/logo.dart';
+import 'package:paceora/app/theme.dart';
 import 'package:paceora/data/database.dart';
 import 'package:paceora/data/providers.dart';
 import 'package:paceora/data/repository.dart';
@@ -49,6 +51,15 @@ void main() {
       await (FontLoader('Noto Color Emoji')..addFont(Future.value(bytes)))
           .load();
     }
+  });
+
+  testWidgets('Play öne çıkan görsel', (tester) async {
+    tester.view.physicalSize = const Size(1024, 500);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(const _FeatureGraphic());
+    await _settle(tester);
+    await _save(tester, 'play_one_cikan_gorsel', dir: 'gorseller');
   });
 
   for (final MapEntry(key: device, value: (size, ratio)) in _devices.entries) {
@@ -126,6 +137,98 @@ void main() {
   }
 }
 
+/// Google Play öne çıkan görseli (1024×500): Pace, logo ve slogan.
+class _FeatureGraphic extends StatelessWidget {
+  const _FeatureGraphic();
+
+  @override
+  Widget build(BuildContext context) {
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [AppColors.graphite900, AppColors.graphite700],
+          ),
+        ),
+        child: Stack(
+          children: [
+            // Sağ altta yeşil hız ışığı.
+            Positioned(
+              right: -120,
+              bottom: -160,
+              child: Container(
+                width: 520,
+                height: 520,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      AppColors.brandLime.withValues(alpha: 0.35),
+                      AppColors.brandLime.withValues(alpha: 0),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(64, 0, 24, 0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Uygulamadaki logo, koyu temada (PACE lime, ORA beyaz).
+                        Theme(
+                          data: buildTheme(
+                            Brightness.dark,
+                            AppAccent.values.first,
+                          ),
+                          child: const PaceoraWordmark(markSize: 88),
+                        ),
+                        const SizedBox(height: 22),
+                        const Text(
+                          'Her gün kendi hızında İngilizce',
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
+                            fontSize: 30,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.brandLime,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'Günlük dersler · kelime kartları · seri',
+                          style: TextStyle(
+                            fontFamily: AppFonts.inter,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.graphite200,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Yüksek çözünürlüklü varyant: görsel 1x yoğunlukta çizilir.
+                  const Image(
+                    image: ExactAssetImage('assets/mascot/3.0x/pace_run.png'),
+                    width: 430,
+                    fit: BoxFit.contain,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 File? _emojiFont() {
   for (final path in [
     Platform.environment['PACE_EMOJI_FONT'],
@@ -200,13 +303,17 @@ Future<AppDatabase> _seededDatabase() async {
   return db;
 }
 
-/// Ekranın tamamını PNG olarak docs/magaza/ekranlar/ altına yazar.
-Future<void> _save(WidgetTester tester, String name) async {
+/// Ekranın tamamını PNG olarak docs/magaza/[dir]/ altına yazar.
+Future<void> _save(
+  WidgetTester tester,
+  String name, {
+  String dir = 'ekranlar',
+}) async {
   final element = tester.binding.rootElement!;
   final image = await captureImage(element);
   await tester.runAsync(() async {
     final data = await image.toByteData(format: ui.ImageByteFormat.png);
-    final file = File('docs/magaza/ekranlar/$name.png')
+    final file = File('docs/magaza/$dir/$name.png')
       ..createSync(recursive: true);
     file.writeAsBytesSync(data!.buffer.asUint8List());
   });
