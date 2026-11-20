@@ -1,0 +1,19 @@
+# Aylık paket güncelleme önerileri. Büyük sürüm atlamaları (ör. 22 → 23)
+# kırıcı olabileceği için ayrı PR olarak gelir; CI geçmeden birleştirilmez.
+version: 2
+updates:
+  - package-ecosystem: pub
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+    groups:
+      kucuk-guncellemeler:
+        update-types: [minor, patch]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ["*"]

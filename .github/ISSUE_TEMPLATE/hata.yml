@@ -1,0 +1,38 @@
+name: Hata bildirimi
+description: Uygulamada beklenmeyen bir davranış
+labels: [hata]
+body:
+  - type: textarea
+    id: ne-oldu
+    attributes:
+      label: Ne oldu?
+      description: Ne bekliyordun, ne oldu?
+    validations:
+      required: true
+  - type: textarea
+    id: adimlar
+    attributes:
+      label: Nasıl tekrarlanır?
+      placeholder: |
+        1. Bugün sekmesini aç
+        2. Bugünü çalış'a dokun
+        3. ...
+    validations:
+      required: true
+  - type: input
+    id: surum
+    attributes:
+      label: Uygulama sürümü
+      description: Ayarlar > Hakkında > Sürüm
+      placeholder: "1.2.0"
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options: [Android, iOS, Web, Windows]
+  - type: textarea
+    id: hata-kaydi
+    attributes:
+      label: Hata kaydı (isteğe bağlı)
+      description: Ayarlar > Hata kaydı > Paylaş ile alınan metin
+      render: text
