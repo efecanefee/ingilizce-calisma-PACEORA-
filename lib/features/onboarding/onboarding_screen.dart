@@ -5,8 +5,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/constants.dart';
 import '../../app/logo.dart';
+import '../../app/mascot.dart';
 import '../../app/motion.dart';
 import '../../data/providers.dart';
+import '../placement/placement_screen.dart';
 
 /// Üç adımlı onboarding: isim → seviye → günlük süre.
 ///
@@ -56,6 +58,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     } else {
       _finish();
     }
+  }
+
+  Future<void> _takePlacementTest() async {
+    final level = await openPlacementTest(context);
+    if (level != null && mounted) setState(() => _level = level);
   }
 
   void _back() {
@@ -145,6 +152,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     _LevelStep(
                       selected: _level,
                       onChanged: (l) => setState(() => _level = l),
+                      onTest: _takePlacementTest,
                     ),
                     _MinutesStep(
                       selected: _dailyMinutes,
@@ -262,27 +270,52 @@ class _NameStep extends StatelessWidget {
 }
 
 class _LevelStep extends StatelessWidget {
-  const _LevelStep({required this.selected, required this.onChanged});
+  const _LevelStep({
+    required this.selected,
+    required this.onChanged,
+    required this.onTest,
+  });
 
   final DifficultyLevel selected;
   final ValueChanged<DifficultyLevel> onChanged;
+  final VoidCallback onTest;
 
   @override
   Widget build(BuildContext context) {
     return _StepScaffold(
       title: 'Seviyen ne durumda?',
       subtitle:
-          'Emin değilsen B1 ile başla — uygulama ilerledikçe zorluğu kendisi ayarlıyor.',
-      child: Wrap(
-        spacing: 10,
-        runSpacing: 10,
+          'Emin değilsen kısa testi çöz ya da B1 ile başla — uygulama ilerledikçe zorluğu kendisi ayarlıyor.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          for (final level in DifficultyLevel.values)
-            ChoiceChip(
-              label: Text(level.label),
-              selected: level == selected,
-              onSelected: (_) => onChanged(level),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              for (final level in DifficultyLevel.values)
+                ChoiceChip(
+                  label: Text(level.label),
+                  selected: level == selected,
+                  onSelected: (_) => onChanged(level),
+                ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Card(
+            child: ListTile(
+              contentPadding: const EdgeInsets.fromLTRB(8, 4, 16, 4),
+              leading: const PaceMascot(
+                mood: PaceMood.study,
+                size: 52,
+                animate: false,
+              ),
+              title: const Text('Kısa seviye testi'),
+              subtitle: const Text('12 soru, yaklaşık 2 dakika'),
+              trailing: const Icon(Icons.chevron_right_rounded),
+              onTap: onTest,
             ),
+          ),
         ],
       ),
     );
