@@ -871,11 +871,75 @@ List<PlanDaySpec> parseWeeklyPlanResponse(String responseBody) {
 
 /// API erişimi olmadığında kullanılan yerleşik haftalık program.
 ///
-/// B1 ve B2 için ayrı iki set; ara kademeler (B1-, B1+) en yakın sete düşer.
+/// A2, B1, B2 ve C1 için ayrı setler; ara kademeler (B1-, B1+) en yakın
+/// sete düşer.
 List<PlanDaySpec> fallbackWeeklyPlan(String levelCode) {
-  final isB2 = levelCode.startsWith('B2');
-  return isB2 ? _fallbackB2 : _fallbackB1;
+  if (levelCode.startsWith('A')) return _fallbackA2;
+  if (levelCode.startsWith('C')) return _fallbackC1;
+  return levelCode.startsWith('B2') ? _fallbackB2 : _fallbackB1;
 }
+
+const _fallbackA2 = <PlanDaySpec>[
+  PlanDaySpec(
+    grammarTopic: 'to be and have got',
+    vocabTheme: 'Aile ve arkadaşlar',
+  ),
+  PlanDaySpec(
+    grammarTopic: 'Present Simple: daily routines',
+    vocabTheme: 'Günlük rutin',
+  ),
+  PlanDaySpec(
+    grammarTopic: 'There is / there are, some / any',
+    vocabTheme: 'Ev ve eşyalar',
+  ),
+  PlanDaySpec(
+    grammarTopic: 'Past Simple of to be and regular verbs',
+    vocabTheme: 'Hafta sonu ve boş zaman',
+  ),
+  PlanDaySpec(
+    grammarTopic: 'can / can\'t for ability and requests',
+    vocabTheme: 'Yetenekler ve spor',
+  ),
+  PlanDaySpec(
+    grammarTopic: 'Countable and uncountable nouns',
+    vocabTheme: 'Yemek ve alışveriş',
+  ),
+  PlanDaySpec(
+    grammarTopic: 'Haftanın tekrarı: temel yapılar',
+    vocabTheme: 'Hafta boyunca öğrenilen kelimeler',
+  ),
+];
+
+const _fallbackC1 = <PlanDaySpec>[
+  PlanDaySpec(
+    grammarTopic: 'Inversion for emphasis',
+    vocabTheme: 'Liderlik ve yönetim',
+  ),
+  PlanDaySpec(
+    grammarTopic: 'Cleft sentences',
+    vocabTheme: 'Medya ve iletişim',
+  ),
+  PlanDaySpec(
+    grammarTopic: 'Mixed conditionals',
+    vocabTheme: 'Kariyer kararları',
+  ),
+  PlanDaySpec(
+    grammarTopic: 'Advanced passive structures',
+    vocabTheme: 'Akademik araştırma',
+  ),
+  PlanDaySpec(
+    grammarTopic: 'Discourse markers and linking',
+    vocabTheme: 'Tartışma ve ikna',
+  ),
+  PlanDaySpec(
+    grammarTopic: 'Subjunctive and formal register',
+    vocabTheme: 'Hukuk ve toplum',
+  ),
+  PlanDaySpec(
+    grammarTopic: 'Haftanın tekrarı: ileri yapılar',
+    vocabTheme: 'Hafta boyunca öğrenilen kelimeler',
+  ),
+];
 
 const _fallbackB1 = <PlanDaySpec>[
   PlanDaySpec(

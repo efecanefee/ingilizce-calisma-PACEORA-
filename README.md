@@ -49,8 +49,8 @@ dilbilgisi konusu ve bir kelime teması olur; pazar günü haftanın tekrarına 
   kendiliğinden üretilir.
 - **Tamamen yerel veri** — her şey cihazdaki SQLite'ta (drift). Hesap yok,
   sunucu yok; Gemini'ye yalnızca içerik üretirken istek gider.
-- **6 kademeli seviye** — B1-, B1, B1+, B2-, B2, B2+ (adaptif zorluk için ara
-  kademeler).
+- **8 kademeli seviye** — A2, B1-, B1, B1+, B2-, B2, B2+, C1 (B1 ve B2'de
+  adaptif zorluk için ara kademeler).
 - **Açık/koyu tema ve vurgu rengi** — "Lime Spark + Graphite" paleti; Ayarlar'dan
   açık/koyu mod ve 6 vurgu rengi (Lime, Okyanus, Gökyüzü, Gün batımı, Lavanta,
   Gül) seçilebilir. Tüm vurgular WCAG AA kontrast testinden geçer.
@@ -58,8 +58,8 @@ dilbilgisi konusu ve bir kelime teması olur; pazar günü haftanın tekrarına 
   ekranda serinin durumuna göre poz değiştirir. Dokununca dolabı açılır.
 - **Pace'in dolabı** — harcanabilir XP ile 6 forma; çizim aynı kalır, forma
   renkleri değişir. Bakiye seri dondurma haklarıyla ortaktır.
-- **Seviye testi ve önizleme** — onboarding'de 12 soruluk kısa test (her
-  seferinde havuzdan karışık sorular, sonunda yanlışların incelemesi) ya da
+- **Seviye testi ve önizleme** — onboarding'de kısa test (her
+  seferinde havuzdan karışık 16 soru, sonunda yanlışların incelemesi) ya da
   elle seçim; seçilen seviyenin odak konuları ve 4 soruluk kontrol. Ayarlar'dan
   seviye, test çözülmeden değiştirilemez.
 - **SM-2 flash kartlar** — dersi bitirince o günün kelimeleri ve yanlış yaptığın

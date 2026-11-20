@@ -9,7 +9,7 @@ class UserProfiles extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get name => text()();
 
-  /// DifficultyLevel.code — B1-, B1, B1+, B2-, B2, B2+
+  /// DifficultyLevel.code — A2, B1-, B1, B1+, B2-, B2, B2+, C1
   TextColumn get level => text()();
   IntColumn get dailyMinutes => integer()();
   IntColumn get streak => integer().withDefault(const Constant(0))();

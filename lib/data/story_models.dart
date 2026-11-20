@@ -193,7 +193,9 @@ DailyStory? parseDailyStoryResponse(String responseBody) {
 /// Haftanın gününe göre iki hikaye arasında dönülür; böylece çevrimdışı
 /// kullanıcı her gün aynı metni görmez.
 DailyStory fallbackStory(String levelCode, DateTime date) {
-  final pool = levelCode.startsWith('B2') ? _fallbackB2 : _fallbackB1;
+  // A2 en yakın B1 setine, C1 B2 setine düşer.
+  final upper = levelCode.startsWith('B2') || levelCode.startsWith('C');
+  final pool = upper ? _fallbackB2 : _fallbackB1;
   return pool[date.weekday % pool.length];
 }
 

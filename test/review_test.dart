@@ -57,8 +57,11 @@ void main() {
     });
 
     test('uçlarda sınırda kalır', () {
-      expect(shiftLevel('B2+', 1), 'B2+');
-      expect(shiftLevel('B1-', -1), 'B1-');
+      expect(shiftLevel('C1', 1), 'C1');
+      expect(shiftLevel('A2', -1), 'A2');
+      // B1-/B2+ artık uç değil: A2 ve C1'e geçilebilir.
+      expect(shiftLevel('B1-', -1), 'A2');
+      expect(shiftLevel('B2+', 1), 'C1');
     });
   });
 

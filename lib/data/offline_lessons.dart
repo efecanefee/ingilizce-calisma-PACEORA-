@@ -47,7 +47,9 @@ class OfflineLessonBank {
     required String grammarTopic,
     required int dayIndex,
   }) {
-    final group = level.startsWith('B2') ? 'B2' : 'B1';
+    // A2 en yakın B1 grubuna, C1 B2 grubuna düşer.
+    final upper = level.startsWith('B2') || level.startsWith('C');
+    final group = upper ? 'B2' : 'B1';
     final pool = _entries.where((e) => e.group == group).toList();
     if (pool.isEmpty) return null;
 

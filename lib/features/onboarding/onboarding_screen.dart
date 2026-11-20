@@ -8,6 +8,7 @@ import '../../app/logo.dart';
 import '../../app/mascot.dart';
 import '../../app/motion.dart';
 import '../../data/level_check.dart';
+import '../../data/placement.dart';
 import '../../data/providers.dart';
 import '../placement/placement_screen.dart';
 
@@ -330,7 +331,7 @@ class _LevelStep extends StatelessWidget {
                 animate: false,
               ),
               title: const Text('Kısa seviye testi'),
-              subtitle: const Text('12 soru, yaklaşık 2 dakika'),
+              subtitle: Text('$placementQuestionCount soru, yaklaşık 3 dakika'),
               trailing: const Icon(Icons.chevron_right_rounded),
               onTap: onTest,
             ),

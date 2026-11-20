@@ -23,11 +23,11 @@ void main() {
     expect(levelCheckVerdict(DifficultyLevel.b1, 1), LevelCheckVerdict.lower);
     // Uçlarda öneri yok.
     expect(
-      levelCheckVerdict(DifficultyLevel.b2Plus, 4),
+      levelCheckVerdict(DifficultyLevel.c1, 4),
       LevelCheckVerdict.fits,
     );
     expect(
-      levelCheckVerdict(DifficultyLevel.b1Minus, 0),
+      levelCheckVerdict(DifficultyLevel.a2, 0),
       LevelCheckVerdict.fits,
     );
   });

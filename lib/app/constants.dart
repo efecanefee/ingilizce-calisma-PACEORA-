@@ -72,12 +72,14 @@ abstract class AppConstants {
 
 /// CEFR tabanlı zorluk kademeleri (adaptif zorluk için).
 enum DifficultyLevel {
+  a2('A2', 'A2'),
   b1Minus('B1-', 'B1 (kolay)'),
   b1('B1', 'B1'),
   b1Plus('B1+', 'B1 (zor)'),
   b2Minus('B2-', 'B2 (kolay)'),
   b2('B2', 'B2'),
-  b2Plus('B2+', 'B2 (zor)');
+  b2Plus('B2+', 'B2 (zor)'),
+  c1('C1', 'C1');
 
   const DifficultyLevel(this.code, this.label);
   final String code;

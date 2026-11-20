@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../app/constants.dart';
 import 'level_check.dart';
 
-/// Kısa seviye testi: B1-'den B2+'ya kademe başına iki soru.
+/// Kısa seviye testi: A2'den C1'e kademe başına iki soru.
 ///
 /// Sorular cihazda durur; ağ ya da Gemini gerekmez. Doğru sayısı
 /// [placementLevel] ile bir [DifficultyLevel]'a çevrilir.
@@ -62,6 +62,18 @@ List<PlacementQuestion> drawPlacementQuestions([Random? random]) {
 }
 
 const placementQuestions = <PlacementQuestion>[
+  PlacementQuestion(
+    prompt: 'My sister ___ a doctor.',
+    options: ['are', 'is', 'am', 'be'],
+    answer: 1,
+    level: DifficultyLevel.a2,
+  ),
+  PlacementQuestion(
+    prompt: 'We ___ to the cinema last night.',
+    options: ['go', 'goes', 'went', 'going'],
+    answer: 2,
+    level: DifficultyLevel.a2,
+  ),
   PlacementQuestion(
     prompt: 'She ___ to work by bus every day.',
     options: ['go', 'goes', 'going', 'gone'],
@@ -144,18 +156,32 @@ const placementQuestions = <PlacementQuestion>[
     answer: 3,
     level: DifficultyLevel.b2Plus,
   ),
+  PlacementQuestion(
+    prompt: 'Little ___ that the decision would change everything.',
+    options: ['they knew', 'did they know', 'knew they', 'they did know'],
+    answer: 1,
+    level: DifficultyLevel.c1,
+  ),
+  PlacementQuestion(
+    prompt: 'The proposal was rejected on the ___ that it was too costly.',
+    options: ['grounds', 'reasons', 'basis', 'causes'],
+    answer: 0,
+    level: DifficultyLevel.c1,
+  ),
 ];
 
-/// Doğru sayısından seviye: her kademe iki soru "değerinde".
-///
-/// 0-3 → B1-, 4-5 → B1, 6-7 → B1+, 8-9 → B2-, 10 → B2, 11-12 → B2+.
+/// Testteki soru sayısı: kademe başına 2.
+int get placementQuestionCount => DifficultyLevel.values.length * 2;
+
+/// Doğru sayısından seviye (16 soru, 8 kademe):
+/// 0-3 → A2, 4-5 → B1-, 6-7 → B1, 8-9 → B1+, 10-11 → B2-, 12-13 → B2,
+/// 14 → B2+, 15-16 → C1.
 DifficultyLevel placementLevel(int correct) {
-  if (correct <= 3) return DifficultyLevel.b1Minus;
-  if (correct <= 5) return DifficultyLevel.b1;
-  if (correct <= 7) return DifficultyLevel.b1Plus;
-  if (correct <= 9) return DifficultyLevel.b2Minus;
-  if (correct <= 10) return DifficultyLevel.b2;
-  return DifficultyLevel.b2Plus;
+  const thresholds = [3, 5, 7, 9, 11, 13, 14];
+  for (var i = 0; i < thresholds.length; i++) {
+    if (correct <= thresholds[i]) return DifficultyLevel.values[i];
+  }
+  return DifficultyLevel.values.last;
 }
 
 /// Testin sonucu cihazda saklanır (ayarlardaki seviye seçimi buna bakar).

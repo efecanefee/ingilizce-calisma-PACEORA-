@@ -17,7 +17,7 @@ Future<DifficultyLevel?> openPlacementTest(BuildContext context) {
   );
 }
 
-/// 12 soruluk seviye testi. Sorular tek tek gelir; cevap seçilince
+/// Kısa seviye testi (kademe başına 2 soru). Sorular tek tek gelir; cevap seçilince
 /// sıradakine geçilir. Sonda seviye ve doğru sayısı gösterilir.
 class PlacementTestScreen extends ConsumerStatefulWidget {
   const PlacementTestScreen({super.key, this.random});

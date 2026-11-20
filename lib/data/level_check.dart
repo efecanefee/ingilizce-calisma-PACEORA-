@@ -29,6 +29,40 @@ LevelCheckVerdict levelCheckVerdict(DifficultyLevel level, int correct) {
 }
 
 const _previews = <DifficultyLevel, LevelPreview>{
+  DifficultyLevel.a2: LevelPreview(
+    focus: [
+      'to be, have got ve present simple ile kendini anlatma',
+      'Past simple ile geçen hafta sonunu anlatma',
+      'there is / there are, some / any',
+      'Aile, yemek, ev ve alışveriş kelimeleri',
+    ],
+    questions: [
+      PlacementQuestion(
+        prompt: 'There ___ two apples on the table.',
+        options: ['is', 'are', 'be', 'am'],
+        answer: 1,
+        level: DifficultyLevel.a2,
+      ),
+      PlacementQuestion(
+        prompt: 'He ___ like coffee.',
+        options: ["don't", "doesn't", "isn't", "not"],
+        answer: 1,
+        level: DifficultyLevel.a2,
+      ),
+      PlacementQuestion(
+        prompt: 'I ___ born in Bolu.',
+        options: ['am', 'were', 'was', 'did'],
+        answer: 2,
+        level: DifficultyLevel.a2,
+      ),
+      PlacementQuestion(
+        prompt: 'Can I have ___ water, please?',
+        options: ['a', 'some', 'many', 'an'],
+        answer: 1,
+        level: DifficultyLevel.a2,
+      ),
+    ],
+  ),
   DifficultyLevel.b1Minus: LevelPreview(
     focus: [
       'Present simple ve present continuous farkı',
@@ -240,6 +274,40 @@ const _previews = <DifficultyLevel, LevelPreview>{
         options: ['marginal', 'massive', 'pivotal', 'sweeping'],
         answer: 0,
         level: DifficultyLevel.b2Plus,
+      ),
+    ],
+  ),
+  DifficultyLevel.c1: LevelPreview(
+    focus: [
+      'Vurgu için inversion ve cleft yapılar',
+      'Gelişmiş bağlaçlar ve söylem belirleyiciler',
+      'Akademik ve iş İngilizcesinde resmi üslup',
+      'Deyimler, phrasal verb’ler ve ince anlam farkları',
+    ],
+    questions: [
+      PlacementQuestion(
+        prompt: 'Rarely ___ such a convincing argument.',
+        options: ['I have heard', 'have I heard', 'I heard', 'heard I'],
+        answer: 1,
+        level: DifficultyLevel.c1,
+      ),
+      PlacementQuestion(
+        prompt: 'What I need ___ a long holiday.',
+        options: ['are', 'is', 'be', 'being'],
+        answer: 1,
+        level: DifficultyLevel.c1,
+      ),
+      PlacementQuestion(
+        prompt: 'The results were inconclusive; ___, further research is needed.',
+        options: ['nevertheless', 'consequently', 'whereas', 'albeit'],
+        answer: 1,
+        level: DifficultyLevel.c1,
+      ),
+      PlacementQuestion(
+        prompt: "She's very good at ___ difficult situations.",
+        options: ['defusing', 'diffusing', 'refusing', 'confusing'],
+        answer: 0,
+        level: DifficultyLevel.c1,
       ),
     ],
   ),

@@ -12,7 +12,9 @@
   açık/koyu mod korunur.
 - **Pace'in dolabı:** Harcanabilir XP ile 6 forma; satın almadan önce onay,
   sonra kutlama.
-- **Kısa seviye testi:** Onboarding'de 12 soru. Her seferinde havuzdan karışık
+- **A2 ve C1 seviyeleri:** Başlangıç ve ileri seviye kullanıcılar için yeni
+  kademeler; yedek haftalık program ve seviye önizlemeleriyle.
+- **Kısa seviye testi:** Onboarding'de 16 soru. Her seferinde havuzdan karışık
   sorular, sonunda yanlışların incelemesi, yarıda çıkarken onay.
 - **Seviye önizlemesi:** Seviye seçildikten sonra odak konuları ve isteğe bağlı
   4 soruluk kontrol; sonuca göre alt/üst seviye önerisi.

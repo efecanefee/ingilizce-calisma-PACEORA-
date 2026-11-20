@@ -12,7 +12,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   test('her kademe iki soruyla temsil edilir ve cevaplar geçerli', () {
-    expect(placementQuestions, hasLength(12));
+    expect(placementQuestions, hasLength(placementQuestionCount));
+    expect(placementQuestionCount, 16);
     for (final level in DifficultyLevel.values) {
       expect(placementQuestions.where((q) => q.level == level), hasLength(2));
     }
@@ -23,19 +24,21 @@ void main() {
   });
 
   test('doğru sayısı seviyeye çevrilir', () {
-    expect(placementLevel(0), DifficultyLevel.b1Minus);
-    expect(placementLevel(3), DifficultyLevel.b1Minus);
-    expect(placementLevel(5), DifficultyLevel.b1);
-    expect(placementLevel(7), DifficultyLevel.b1Plus);
-    expect(placementLevel(9), DifficultyLevel.b2Minus);
-    expect(placementLevel(10), DifficultyLevel.b2);
-    expect(placementLevel(12), DifficultyLevel.b2Plus);
+    expect(placementLevel(0), DifficultyLevel.a2);
+    expect(placementLevel(3), DifficultyLevel.a2);
+    expect(placementLevel(5), DifficultyLevel.b1Minus);
+    expect(placementLevel(7), DifficultyLevel.b1);
+    expect(placementLevel(9), DifficultyLevel.b1Plus);
+    expect(placementLevel(11), DifficultyLevel.b2Minus);
+    expect(placementLevel(13), DifficultyLevel.b2);
+    expect(placementLevel(14), DifficultyLevel.b2Plus);
+    expect(placementLevel(16), DifficultyLevel.c1);
   });
 
   test('her test kademe başına 2 soru çeker, seçenekler karışık', () {
     final a = drawPlacementQuestions(Random(1));
     final b = drawPlacementQuestions(Random(2));
-    expect(a, hasLength(12));
+    expect(a, hasLength(16));
     for (final level in DifficultyLevel.values) {
       expect(a.where((q) => q.level == level), hasLength(2));
       expect(placementPool(level), hasLength(6));
@@ -73,7 +76,7 @@ void main() {
     final prefs = await pumpTest(tester);
     final questions = drawPlacementQuestions(Random(7));
 
-    // İlk 7 soruyu doğru, kalanını yanlış cevapla → 7 doğru = B1+.
+    // İlk 7 soruyu doğru, kalanını yanlış cevapla → 7 doğru = B1.
     for (var i = 0; i < questions.length; i++) {
       final q = questions[i];
       final pick = i < 7 ? q.answer : (q.answer + 1) % q.options.length;
@@ -83,13 +86,13 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
 
     expect(
-      find.text('Seviyen: ${DifficultyLevel.b1Plus.label}'),
+      find.text('Seviyen: ${DifficultyLevel.b1.label}'),
       findsOneWidget,
     );
-    expect(PlacementRecord.read(prefs), DifficultyLevel.b1Plus);
+    expect(PlacementRecord.read(prefs), DifficultyLevel.b1);
 
-    await tester.ensureVisible(find.text('Yanlışlarını gör (5)'));
-    await tester.tap(find.text('Yanlışlarını gör (5)'));
+    await tester.ensureVisible(find.text('Yanlışlarını gör (9)'));
+    await tester.tap(find.text('Yanlışlarını gör (9)'));
     // Sonuç ekranındaki Pace sürekli hareket eder; sabit süre ilerlet.
     await tester.pump(const Duration(milliseconds: 600));
     expect(find.text(questions.last.prompt), findsOneWidget);
