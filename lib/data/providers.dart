@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:clock/clock.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -9,6 +10,7 @@ import 'database.dart';
 import 'gemini_service.dart';
 import 'lesson_models.dart';
 import 'match_game.dart';
+import 'offline_lessons.dart';
 import 'pronunciation.dart';
 import 'roleplay.dart';
 import 'streak_freeze.dart';
@@ -194,6 +196,11 @@ final todayLessonProvider = FutureProvider<Lesson?>((ref) async {
   return ref.read(repositoryProvider).lessonFor(clock.now());
 });
 
+/// Uygulamanın içinde gelen hazır dersler (Gemini'ye ulaşılamadığında).
+final offlineLessonBankProvider = FutureProvider<OfflineLessonBank>(
+  (ref) => OfflineLessonBank.load(rootBundle),
+);
+
 /// Ders üretilemediğinde fırlatılır.
 ///
 /// Kullanıcıya ham hata yerine ne yapabileceğini söyleyen bir ekran gösterilsin
@@ -257,6 +264,31 @@ class LessonNotifier extends AsyncNotifier<LessonState> {
     final lessonState = LessonState(lesson: lesson);
     await repository.saveLesson(clock.now(), lessonState);
     return lessonState;
+  }
+
+  /// Gemini'ye ulaşılamadığında günün dersini hazır ders havuzundan açar.
+  Future<void> useOfflineLesson() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final repository = ref.read(repositoryProvider);
+      final profile = await repository.profile();
+      final today = (await ref.read(weekPlanProvider.future)).today;
+      if (profile == null || today == null) {
+        throw const LessonUnavailable('Bugün için plan bulunamadı.');
+      }
+      final bank = await ref.read(offlineLessonBankProvider.future);
+      final lesson = bank.lessonFor(
+        level: profile.level,
+        grammarTopic: today.grammarTopic,
+        dayIndex: today.dayIndex,
+      );
+      if (lesson == null) {
+        throw const LessonUnavailable('Hazır ders bulunamadı.');
+      }
+      final lessonState = LessonState(lesson: lesson, offline: true);
+      await repository.saveLesson(clock.now(), lessonState);
+      return lessonState;
+    });
   }
 
   /// Üretim başarısız olduysa yeniden dener.

@@ -1,0 +1,1780 @@
+{
+ "version": 1,
+ "lessons": [
+  {
+   "level": "B1",
+   "grammarTopic": "Present Simple vs Present Continuous",
+   "vocabTheme": "Günlük rutin ve ev işleri",
+   "lesson": {
+    "vocab": [
+     {
+      "word": "do the dishes",
+      "meaning": "bulaşık yıkamak",
+      "example": "I do the dishes after dinner."
+     },
+     {
+      "word": "commute",
+      "meaning": "işe gidip gelmek",
+      "example": "She commutes to work by metro."
+     },
+     {
+      "word": "tidy up",
+      "meaning": "toparlamak",
+      "example": "Can you tidy up your room?"
+     },
+     {
+      "word": "usually",
+      "meaning": "genellikle",
+      "example": "I usually get up at seven."
+     },
+     {
+      "word": "at the moment",
+      "meaning": "şu anda",
+      "example": "He is cooking at the moment."
+     },
+     {
+      "word": "laundry",
+      "meaning": "çamaşır",
+      "example": "I do the laundry on Saturdays."
+     }
+    ],
+    "gapFill": [
+     {
+      "sentence": "She ___ to work every day.",
+      "answer": "walks",
+      "options": [
+       "walks",
+       "is walking",
+       "walk"
+      ],
+      "hintTr": "Her gün işe yürüyerek gider."
+     },
+     {
+      "sentence": "Look! The kids ___ in the garden.",
+      "answer": "are playing",
+      "options": [
+       "are playing",
+       "play",
+       "plays"
+      ],
+      "hintTr": "Bak! Çocuklar bahçede oynuyor."
+     },
+     {
+      "sentence": "I ___ coffee in the morning, but today I'm drinking tea.",
+      "answer": "usually drink",
+      "options": [
+       "usually drink",
+       "am usually drinking",
+       "drinks"
+      ],
+      "hintTr": "Sabahları genellikle kahve içerim."
+     },
+     {
+      "sentence": "Water ___ at 100 degrees.",
+      "answer": "boils",
+      "options": [
+       "boils",
+       "is boiling",
+       "boil"
+      ],
+      "hintTr": "Su 100 derecede kaynar."
+     }
+    ],
+    "translate": [
+     {
+      "tr": "Her sabah kahvaltı yaparım.",
+      "en": "I have breakfast every morning.",
+      "accepted": [
+       "I eat breakfast every morning."
+      ]
+     },
+     {
+      "tr": "Şu anda televizyon izliyor.",
+      "en": "He is watching TV at the moment.",
+      "accepted": [
+       "She is watching TV at the moment.",
+       "He is watching TV now.",
+       "She is watching TV now."
+      ]
+     },
+     {
+      "tr": "Hafta sonları çamaşır yıkarız.",
+      "en": "We do the laundry at the weekend.",
+      "accepted": [
+       "We do the laundry on weekends.",
+       "We do the laundry at weekends."
+      ]
+     }
+    ],
+    "quiz": [
+     {
+      "question": "Which sentence is correct?",
+      "options": [
+       "I am knowing the answer.",
+       "I know the answer."
+      ],
+      "answerIndex": 1,
+      "explanationTr": "'know' durum fiilidir; continuous kullanılmaz."
+     },
+     {
+      "question": "'She ___ in London these days.' (geçici durum)",
+      "options": [
+       "lives",
+       "is living",
+       "live"
+      ],
+      "answerIndex": 1,
+      "explanationTr": "Geçici durumlar için present continuous kullanılır."
+     },
+     {
+      "question": "How often ___ you clean your room?",
+      "options": [
+       "do",
+       "are",
+       "does"
+      ],
+      "answerIndex": 0,
+      "explanationTr": "Alışkanlık sorularında present simple: do you…"
+     },
+     {
+      "question": "Which word goes with present continuous?",
+      "options": [
+       "always (alışkanlık)",
+       "right now",
+       "every day"
+      ],
+      "answerIndex": 1,
+      "explanationTr": "'right now' şu anda olan eylemi gösterir."
+     }
+    ]
+   }
+  },
+  {
+   "level": "B1",
+   "grammarTopic": "Past Simple: regular & irregular verbs",
+   "vocabTheme": "Seyahat ve ulaşım",
+   "lesson": {
+    "vocab": [
+     {
+      "word": "book a ticket",
+      "meaning": "bilet almak / rezervasyon yapmak",
+      "example": "We booked our tickets online."
+     },
+     {
+      "word": "miss the bus",
+      "meaning": "otobüsü kaçırmak",
+      "example": "I missed the bus this morning."
+     },
+     {
+      "word": "luggage",
+      "meaning": "bagaj",
+      "example": "Our luggage was very heavy."
+     },
+     {
+      "word": "delayed",
+      "meaning": "rötarlı",
+      "example": "The flight was delayed by two hours."
+     },
+     {
+      "word": "sightseeing",
+      "meaning": "gezip görme",
+      "example": "We went sightseeing in Rome."
+     },
+     {
+      "word": "journey",
+      "meaning": "yolculuk",
+      "example": "The journey took six hours."
+     }
+    ],
+    "gapFill": [
+     {
+      "sentence": "We ___ to Antalya last summer.",
+      "answer": "went",
+      "options": [
+       "went",
+       "goed",
+       "have gone"
+      ],
+      "hintTr": "Geçen yaz Antalya'ya gittik."
+     },
+     {
+      "sentence": "The train ___ late yesterday.",
+      "answer": "arrived",
+      "options": [
+       "arrived",
+       "arrives",
+       "arrive"
+      ],
+      "hintTr": "Tren dün geç geldi."
+     },
+     {
+      "sentence": "I ___ my passport at home!",
+      "answer": "left",
+      "options": [
+       "left",
+       "leaved",
+       "leave"
+      ],
+      "hintTr": "Pasaportumu evde unuttum!"
+     },
+     {
+      "sentence": "___ you enjoy the trip?",
+      "answer": "Did",
+      "options": [
+       "Did",
+       "Were",
+       "Do"
+      ],
+      "hintTr": "Geziden keyif aldın mı?"
+     }
+    ],
+    "translate": [
+     {
+      "tr": "Dün otobüsü kaçırdım.",
+      "en": "I missed the bus yesterday.",
+      "accepted": []
+     },
+     {
+      "tr": "Geçen hafta İzmir'e uçtuk.",
+      "en": "We flew to Izmir last week.",
+      "accepted": []
+     },
+     {
+      "tr": "Bilet pahalı değildi.",
+      "en": "The ticket wasn't expensive.",
+      "accepted": [
+       "The ticket was not expensive."
+      ]
+     }
+    ],
+    "quiz": [
+     {
+      "question": "Past form of 'buy'?",
+      "options": [
+       "buyed",
+       "bought",
+       "brought"
+      ],
+      "answerIndex": 1,
+      "explanationTr": "buy düzensizdir: buy – bought – bought."
+     },
+     {
+      "question": "Which question is correct?",
+      "options": [
+       "Where you went?",
+       "Where did you go?",
+       "Where did you went?"
+      ],
+      "answerIndex": 1,
+      "explanationTr": "did'den sonra fiil yalın hâlde kalır."
+     },
+     {
+      "question": "'I ___ the museum two days ago.'",
+      "options": [
+       "visit",
+       "visited",
+       "have visited"
+      ],
+      "answerIndex": 1,
+      "explanationTr": "'ago' geçmişte belli bir zamanı gösterir: past simple."
+     },
+     {
+      "question": "Negative: 'She took a taxi.'",
+      "options": [
+       "She didn't took a taxi.",
+       "She didn't take a taxi.",
+       "She not took a taxi."
+      ],
+      "answerIndex": 1,
+      "explanationTr": "didn't + yalın fiil."
+     }
+    ]
+   }
+  },
+  {
+   "level": "B1",
+   "grammarTopic": "Present Perfect: ever, never, just, already",
+   "vocabTheme": "Deneyimler ve hobiler",
+   "lesson": {
+    "vocab": [
+     {
+      "word": "take up",
+      "meaning": "(bir hobiye) başlamak",
+      "example": "I've taken up yoga."
+     },
+     {
+      "word": "try",
+      "meaning": "denemek",
+      "example": "Have you ever tried sushi?"
+     },
+     {
+      "word": "hiking",
+      "meaning": "doğa yürüyüşü",
+      "example": "We go hiking in spring."
+     },
+     {
+      "word": "experience",
+      "meaning": "deneyim",
+      "example": "It was an amazing experience."
+     },
+     {
+      "word": "collect",
+      "meaning": "biriktirmek",
+      "example": "He collects old coins."
+     },
+     {
+      "word": "so far",
+      "meaning": "şimdiye kadar",
+      "example": "I've read three books so far."
+     }
+    ],
+    "gapFill": [
+     {
+      "sentence": "Have you ___ been to Paris?",
+      "answer": "ever",
+      "options": [
+       "ever",
+       "never",
+       "yet"
+      ],
+      "hintTr": "Hiç Paris'te bulundun mu?"
+     },
+     {
+      "sentence": "I've ___ finished my homework. I'm free now!",
+      "answer": "just",
+      "options": [
+       "just",
+       "ever",
+       "yet"
+      ],
+      "hintTr": "Ödevimi az önce bitirdim."
+     },
+     {
+      "sentence": "She has ___ seen snow. She's never been to a cold country.",
+      "answer": "never",
+      "options": [
+       "never",
+       "ever",
+       "already"
+      ],
+      "hintTr": "Hiç kar görmedi."
+     },
+     {
+      "sentence": "We have ___ booked the hotel, so don't worry.",
+      "answer": "already",
+      "options": [
+       "already",
+       "ever",
+       "never"
+      ],
+      "hintTr": "Oteli zaten ayırttık."
+     }
+    ],
+    "translate": [
+     {
+      "tr": "Hiç dağa tırmandın mı?",
+      "en": "Have you ever climbed a mountain?",
+      "accepted": []
+     },
+     {
+      "tr": "Bu filmi zaten izledim.",
+      "en": "I have already watched this film.",
+      "accepted": [
+       "I've already watched this film.",
+       "I have already seen this film.",
+       "I've already seen this film.",
+       "I have already watched this movie.",
+       "I've already watched this movie."
+      ]
+     },
+     {
+      "tr": "O hiç uçağa binmedi.",
+      "en": "He has never flown.",
+      "accepted": [
+       "She has never flown.",
+       "He has never been on a plane.",
+       "She has never been on a plane."
+      ]
+     }
+    ],
+    "quiz": [
+     {
+      "question": "Which is correct?",
+      "options": [
+       "I have seen him yesterday.",
+       "I saw him yesterday."
+      ],
+      "answerIndex": 1,
+      "explanationTr": "Belli bir geçmiş zaman (yesterday) varsa past simple."
+     },
+     {
+      "question": "'___ you ever played chess?'",
+      "options": [
+       "Did",
+       "Have",
+       "Do"
+      ],
+      "answerIndex": 1,
+      "explanationTr": "Deneyim sorusu: Have you ever…?"
+     },
+     {
+      "question": "Past participle of 'go'?",
+      "options": [
+       "went",
+       "gone",
+       "goed"
+      ],
+      "answerIndex": 1,
+      "explanationTr": "go – went – gone."
+     },
+     {
+      "question": "'I have lived here ___ 2020.'",
+      "options": [
+       "for",
+       "since",
+       "ago"
+      ],
+      "answerIndex": 1,
+      "explanationTr": "Başlangıç noktası için since."
+     }
+    ]
+   }
+  },
+  {
+   "level": "B1",
+   "grammarTopic": "Comparatives and superlatives",
+   "vocabTheme": "Şehir hayatı ve alışveriş",
+   "lesson": {
+    "vocab": [
+     {
+      "word": "crowded",
+      "meaning": "kalabalık",
+      "example": "The market is crowded on Sundays."
+     },
+     {
+      "word": "cheap",
+      "meaning": "ucuz",
+      "example": "This shop is cheaper than that one."
+     },
+     {
+      "word": "neighbourhood",
+      "meaning": "mahalle",
+      "example": "I live in a quiet neighbourhood."
+     },
+     {
+      "word": "on sale",
+      "meaning": "indirimde",
+      "example": "These shoes are on sale."
+     },
+     {
+      "word": "traffic jam",
+      "meaning": "trafik sıkışıklığı",
+      "example": "We were stuck in a traffic jam."
+     },
+     {
+      "word": "convenient",
+      "meaning": "elverişli, kullanışlı",
+      "example": "The metro is very convenient."
+     }
+    ],
+    "gapFill": [
+     {
+      "sentence": "Istanbul is ___ than Bolu.",
+      "answer": "bigger",
+      "options": [
+       "bigger",
+       "more big",
+       "biggest"
+      ],
+      "hintTr": "İstanbul Bolu'dan daha büyük."
+     },
+     {
+      "sentence": "This is the ___ restaurant in the city.",
+      "answer": "best",
+      "options": [
+       "best",
+       "better",
+       "goodest"
+      ],
+      "hintTr": "Şehrin en iyi restoranı."
+     },
+     {
+      "sentence": "The blue dress is ___ than the red one.",
+      "answer": "more expensive",
+      "options": [
+       "more expensive",
+       "expensiver",
+       "most expensive"
+      ],
+      "hintTr": "Mavi elbise kırmızıdan daha pahalı."
+     },
+     {
+      "sentence": "My street is as quiet ___ yours.",
+      "answer": "as",
+      "options": [
+       "as",
+       "than",
+       "like"
+      ],
+      "hintTr": "Sokağım seninki kadar sessiz."
+     }
+    ],
+    "translate": [
+     {
+      "tr": "Metro otobüsten daha hızlı.",
+      "en": "The metro is faster than the bus.",
+      "accepted": [
+       "The subway is faster than the bus."
+      ]
+     },
+     {
+      "tr": "Bu, şehirdeki en kalabalık cadde.",
+      "en": "This is the most crowded street in the city.",
+      "accepted": []
+     },
+     {
+      "tr": "Bu ayakkabılar daha ucuz.",
+      "en": "These shoes are cheaper.",
+      "accepted": []
+     }
+    ],
+    "quiz": [
+     {
+      "question": "Comparative of 'bad'?",
+      "options": [
+       "badder",
+       "worse",
+       "more bad"
+      ],
+      "answerIndex": 1,
+      "explanationTr": "bad – worse – the worst."
+     },
+     {
+      "question": "'It's the ___ day of the year.'",
+      "options": [
+       "hottest",
+       "hotter",
+       "most hot"
+      ],
+      "answerIndex": 0,
+      "explanationTr": "Tek heceli sıfat: hot – hotter – the hottest."
+     },
+     {
+      "question": "Which is correct?",
+      "options": [
+       "more easy",
+       "easier",
+       "easyer"
+      ],
+      "answerIndex": 1,
+      "explanationTr": "-y ile biten iki heceli sıfat: easy → easier."
+     },
+     {
+      "question": "'This bag is ___ than mine.'",
+      "options": [
+       "heavier",
+       "heaviest",
+       "more heavy"
+      ],
+      "answerIndex": 0,
+      "explanationTr": "İki şeyi karşılaştırıyoruz: comparative."
+     }
+    ]
+   }
+  },
+  {
+   "level": "B1",
+   "grammarTopic": "Future forms: will, going to, present continuous",
+   "vocabTheme": "Planlar ve randevular",
+   "lesson": {
+    "vocab": [
+     {
+      "word": "appointment",
+      "meaning": "randevu",
+      "example": "I have a dentist appointment on Monday."
+     },
+     {
+      "word": "arrange",
+      "meaning": "ayarlamak",
+      "example": "We arranged a meeting for Friday."
+     },
+     {
+      "word": "cancel",
+      "meaning": "iptal etmek",
+      "example": "They cancelled the concert."
+     },
+     {
+      "word": "postpone",
+      "meaning": "ertelemek",
+      "example": "Let's postpone the trip."
+     },
+     {
+      "word": "schedule",
+      "meaning": "program, takvim",
+      "example": "My schedule is full this week."
+     },
+     {
+      "word": "free",
+      "meaning": "boş, müsait",
+      "example": "Are you free on Saturday?"
+     }
+    ],
+    "gapFill": [
+     {
+      "sentence": "Look at those clouds! It ___ rain.",
+      "answer": "is going to",
+      "options": [
+       "is going to",
+       "will",
+       "is raining"
+      ],
+      "hintTr": "Bulutlara bak, yağmur yağacak (kanıt var)."
+     },
+     {
+      "sentence": "I'm ___ my grandparents this weekend. It's all arranged.",
+      "answer": "visiting",
+      "options": [
+       "visiting",
+       "visit",
+       "will visiting"
+      ],
+      "hintTr": "Bu hafta sonu büyükanne ve büyükbabamı ziyaret ediyorum (ayarlandı)."
+     },
+     {
+      "sentence": "The phone is ringing. I ___ answer it.",
+      "answer": "'ll",
+      "options": [
+       "'ll",
+       "am going to",
+       "am"
+      ],
+      "hintTr": "Telefon çalıyor, ben açarım (anlık karar)."
+     },
+     {
+      "sentence": "We ___ buy a new car next year. We've saved the money.",
+      "answer": "are going to",
+      "options": [
+       "are going to",
+       "will",
+       "are buying"
+      ],
+      "hintTr": "Seneye araba alacağız (niyet)."
+     }
+    ],
+    "translate": [
+     {
+      "tr": "Yarın doktora gidiyorum.",
+      "en": "I'm going to the doctor tomorrow.",
+      "accepted": [
+       "I am going to the doctor tomorrow.",
+       "I'm seeing the doctor tomorrow.",
+       "I am seeing the doctor tomorrow."
+      ]
+     },
+     {
+      "tr": "Sana yardım ederim.",
+      "en": "I'll help you.",
+      "accepted": [
+       "I will help you."
+      ]
+     },
+     {
+      "tr": "Toplantıyı iptal edecekler.",
+      "en": "They are going to cancel the meeting.",
+      "accepted": [
+       "They're going to cancel the meeting.",
+       "They will cancel the meeting.",
+       "They'll cancel the meeting."
+      ]
+     }
+    ],
+    "quiz": [
+     {
+      "question": "Instant decision: 'I'm thirsty.' — '___ get you some water.'",
+      "options": [
+       "I'm going to",
+       "I'll",
+       "I'm getting"
+      ],
+      "answerIndex": 1,
+      "explanationTr": "Konuşma anında verilen karar: will."
+     },
+     {
+      "question": "Fixed arrangement:",
+      "options": [
+       "I meet Ali at 6 tomorrow.",
+       "I'm meeting Ali at 6 tomorrow."
+      ],
+      "answerIndex": 1,
+      "explanationTr": "Ayarlanmış planlar için present continuous."
+     },
+     {
+      "question": "Prediction with evidence:",
+      "options": [
+       "She's going to fall!",
+       "She will falling!"
+      ],
+      "answerIndex": 0,
+      "explanationTr": "Gözle görülen kanıt varsa going to."
+     },
+     {
+      "question": "'I think it ___ be sunny tomorrow.'",
+      "options": [
+       "will",
+       "is going",
+       "is"
+      ],
+      "answerIndex": 0,
+      "explanationTr": "Fikre dayalı tahmin: I think … will."
+     }
+    ]
+   }
+  },
+  {
+   "level": "B1",
+   "grammarTopic": "First conditional",
+   "vocabTheme": "Hava durumu ve doğa",
+   "lesson": {
+    "vocab": [
+     {
+      "word": "forecast",
+      "meaning": "hava tahmini",
+      "example": "The forecast says it will snow."
+     },
+     {
+      "word": "storm",
+      "meaning": "fırtına",
+      "example": "A big storm is coming."
+     },
+     {
+      "word": "freezing",
+      "meaning": "dondurucu soğuk",
+      "example": "It's freezing outside."
+     },
+     {
+      "word": "shower",
+      "meaning": "sağanak",
+      "example": "There may be showers in the afternoon."
+     },
+     {
+      "word": "forest",
+      "meaning": "orman",
+      "example": "Bolu has beautiful forests."
+     },
+     {
+      "word": "pollution",
+      "meaning": "kirlilik",
+      "example": "Air pollution is a big problem."
+     }
+    ],
+    "gapFill": [
+     {
+      "sentence": "If it rains, we ___ at home.",
+      "answer": "will stay",
+      "options": [
+       "will stay",
+       "stay",
+       "would stay"
+      ],
+      "hintTr": "Yağmur yağarsa evde kalacağız."
+     },
+     {
+      "sentence": "If you ___ now, you'll catch the bus.",
+      "answer": "leave",
+      "options": [
+       "leave",
+       "will leave",
+       "left"
+      ],
+      "hintTr": "Şimdi çıkarsan otobüse yetişirsin."
+     },
+     {
+      "sentence": "We won't go hiking ___ the weather is bad.",
+      "answer": "if",
+      "options": [
+       "if",
+       "unless",
+       "when"
+      ],
+      "hintTr": "Hava kötüyse yürüyüşe gitmeyeceğiz."
+     },
+     {
+      "sentence": "___ you hurry, you'll be late.",
+      "answer": "Unless",
+      "options": [
+       "Unless",
+       "If",
+       "When"
+      ],
+      "hintTr": "Acele etmezsen geç kalacaksın."
+     }
+    ],
+    "translate": [
+     {
+      "tr": "Kar yağarsa okul kapanacak.",
+      "en": "If it snows, the school will close.",
+      "accepted": [
+       "If it snows, school will close.",
+       "The school will close if it snows."
+      ]
+     },
+     {
+      "tr": "Ceket giymezsen üşüyeceksin.",
+      "en": "If you don't wear a jacket, you will be cold.",
+      "accepted": [
+       "If you don't wear a jacket, you'll be cold.",
+       "You will be cold if you don't wear a jacket."
+      ]
+     },
+     {
+      "tr": "Hava güzel olursa denize gideriz.",
+      "en": "If the weather is nice, we will go to the sea.",
+      "accepted": [
+       "If the weather is nice, we'll go to the sea.",
+       "If the weather is good, we will go to the sea."
+      ]
+     }
+    ],
+    "quiz": [
+     {
+      "question": "Which is correct?",
+      "options": [
+       "If it will rain, I'll take an umbrella.",
+       "If it rains, I'll take an umbrella."
+      ],
+      "answerIndex": 1,
+      "explanationTr": "if cümleciğinde will kullanılmaz: if + present simple."
+     },
+     {
+      "question": "'unless' means…",
+      "options": [
+       "if not",
+       "when",
+       "because"
+      ],
+      "answerIndex": 0,
+      "explanationTr": "unless = if … not."
+     },
+     {
+      "question": "'If I see Ayşe, I ___ her.'",
+      "options": [
+       "tell",
+       "will tell",
+       "told"
+      ],
+      "answerIndex": 1,
+      "explanationTr": "Ana cümlede will + fiil."
+     },
+     {
+      "question": "First conditional is for…",
+      "options": [
+       "real/possible future",
+       "imaginary present",
+       "past regrets"
+      ],
+      "answerIndex": 0,
+      "explanationTr": "Gerçekleşmesi mümkün gelecek durumlar."
+     }
+    ]
+   }
+  },
+  {
+   "level": "B2",
+   "grammarTopic": "Present Perfect Continuous vs Present Perfect",
+   "vocabTheme": "İş hayatı ve kariyer",
+   "lesson": {
+    "vocab": [
+     {
+      "word": "deadline",
+      "meaning": "son teslim tarihi",
+      "example": "We have to meet the deadline."
+     },
+     {
+      "word": "promotion",
+      "meaning": "terfi",
+      "example": "She got a promotion last month."
+     },
+     {
+      "word": "colleague",
+      "meaning": "iş arkadaşı",
+      "example": "My colleagues are very helpful."
+     },
+     {
+      "word": "apply for",
+      "meaning": "başvurmak",
+      "example": "I've applied for a new job."
+     },
+     {
+      "word": "workload",
+      "meaning": "iş yükü",
+      "example": "My workload has increased."
+     },
+     {
+      "word": "resign",
+      "meaning": "istifa etmek",
+      "example": "He resigned after ten years."
+     }
+    ],
+    "gapFill": [
+     {
+      "sentence": "I ___ on this report all morning, and I'm exhausted.",
+      "answer": "have been working",
+      "options": [
+       "have been working",
+       "have worked",
+       "worked"
+      ],
+      "hintTr": "Bütün sabah bu rapor üzerinde çalışıyorum."
+     },
+     {
+      "sentence": "She ___ three job interviews this week.",
+      "answer": "has had",
+      "options": [
+       "has had",
+       "has been having",
+       "had been"
+      ],
+      "hintTr": "Bu hafta üç iş görüşmesi yaptı."
+     },
+     {
+      "sentence": "How long ___ you been waiting for the manager?",
+      "answer": "have",
+      "options": [
+       "have",
+       "did",
+       "are"
+      ],
+      "hintTr": "Müdürü ne kadar süredir bekliyorsun?"
+     },
+     {
+      "sentence": "They ___ the project. Here are the results.",
+      "answer": "have finished",
+      "options": [
+       "have finished",
+       "have been finishing",
+       "finish"
+      ],
+      "hintTr": "Projeyi bitirdiler, işte sonuçlar."
+     }
+    ],
+    "translate": [
+     {
+      "tr": "İki saattir bu e-postayı yazıyorum.",
+      "en": "I have been writing this email for two hours.",
+      "accepted": [
+       "I've been writing this email for two hours."
+      ]
+     },
+     {
+      "tr": "Yeni bir işe başvurdu.",
+      "en": "She has applied for a new job.",
+      "accepted": [
+       "He has applied for a new job.",
+       "She's applied for a new job.",
+       "He's applied for a new job."
+      ]
+     },
+     {
+      "tr": "Bu şirkette beş yıldır çalışıyoruz.",
+      "en": "We have been working at this company for five years.",
+      "accepted": [
+       "We've been working at this company for five years.",
+       "We have worked at this company for five years.",
+       "We've worked at this company for five years."
+      ]
+     }
+    ],
+    "quiz": [
+     {
+      "question": "Focus on the result (completed):",
+      "options": [
+       "I've written five emails.",
+       "I've been writing five emails."
+      ],
+      "answerIndex": 0,
+      "explanationTr": "Tamamlanmış sayı/sonuç: present perfect simple."
+     },
+     {
+      "question": "'Your eyes are red.' — 'I ___.'",
+      "options": [
+       "have cried",
+       "have been crying"
+      ],
+      "answerIndex": 1,
+      "explanationTr": "Görünen etkisi olan süregelen eylem: continuous."
+     },
+     {
+      "question": "Which verb is NOT normally used in continuous?",
+      "options": [
+       "work",
+       "know",
+       "wait"
+      ],
+      "answerIndex": 1,
+      "explanationTr": "know durum fiilidir."
+     },
+     {
+      "question": "'She has been ___ since 9 a.m.'",
+      "options": [
+       "working",
+       "worked",
+       "work"
+      ],
+      "answerIndex": 0,
+      "explanationTr": "have/has been + -ing."
+     }
+    ]
+   }
+  },
+  {
+   "level": "B2",
+   "grammarTopic": "Past Perfect and narrative tenses",
+   "vocabTheme": "Haberler ve güncel olaylar",
+   "lesson": {
+    "vocab": [
+     {
+      "word": "witness",
+      "meaning": "tanık",
+      "example": "A witness saw the accident."
+     },
+     {
+      "word": "headline",
+      "meaning": "manşet",
+      "example": "The headline shocked everyone."
+     },
+     {
+      "word": "investigation",
+      "meaning": "soruşturma",
+      "example": "The police started an investigation."
+     },
+     {
+      "word": "break out",
+      "meaning": "patlak vermek",
+      "example": "A fire broke out at night."
+     },
+     {
+      "word": "rescue",
+      "meaning": "kurtarmak",
+      "example": "Firefighters rescued the family."
+     },
+     {
+      "word": "eventually",
+      "meaning": "sonunda",
+      "example": "They eventually found the driver."
+     }
+    ],
+    "gapFill": [
+     {
+      "sentence": "When the firefighters arrived, the fire ___ already spread.",
+      "answer": "had",
+      "options": [
+       "had",
+       "has",
+       "was"
+      ],
+      "hintTr": "İtfaiye geldiğinde yangın çoktan yayılmıştı."
+     },
+     {
+      "sentence": "While the reporter ___ , the lights went out.",
+      "answer": "was speaking",
+      "options": [
+       "was speaking",
+       "had spoken",
+       "spoke"
+      ],
+      "hintTr": "Muhabir konuşurken ışıklar söndü."
+     },
+     {
+      "sentence": "She realised she ___ her keys in the office.",
+      "answer": "had left",
+      "options": [
+       "had left",
+       "has left",
+       "was leaving"
+      ],
+      "hintTr": "Anahtarlarını ofiste unuttuğunu fark etti."
+     },
+     {
+      "sentence": "By the time the police came, the thief ___ .",
+      "answer": "had escaped",
+      "options": [
+       "had escaped",
+       "escaped",
+       "has escaped"
+      ],
+      "hintTr": "Polis geldiğinde hırsız kaçmıştı."
+     }
+    ],
+    "translate": [
+     {
+      "tr": "Oraya vardığımızda film başlamıştı.",
+      "en": "When we got there, the film had started.",
+      "accepted": [
+       "When we arrived, the film had started.",
+       "When we got there, the movie had started.",
+       "When we arrived, the movie had already started.",
+       "When we got there, the film had already started."
+      ]
+     },
+     {
+      "tr": "Haberi okurken telefonum çaldı.",
+      "en": "While I was reading the news, my phone rang.",
+      "accepted": [
+       "My phone rang while I was reading the news."
+      ]
+     },
+     {
+      "tr": "Daha önce hiç böyle bir şey görmemişti.",
+      "en": "He had never seen anything like that before.",
+      "accepted": [
+       "She had never seen anything like that before.",
+       "He had never seen such a thing before.",
+       "She had never seen such a thing before."
+      ]
+     }
+    ],
+    "quiz": [
+     {
+      "question": "Which happened first? 'When I arrived, she had left.'",
+      "options": [
+       "She left",
+       "I arrived"
+      ],
+      "answerIndex": 0,
+      "explanationTr": "Past perfect daha önce olan eylemi gösterir."
+     },
+     {
+      "question": "Background action in a story:",
+      "options": [
+       "was raining",
+       "had rained",
+       "rains"
+      ],
+      "answerIndex": 0,
+      "explanationTr": "Arka plan için past continuous."
+     },
+     {
+      "question": "'They ___ for hours before they found the child.'",
+      "options": [
+       "had been searching",
+       "have searched",
+       "searched for"
+      ],
+      "answerIndex": 0,
+      "explanationTr": "Geçmişteki bir andan önce süregelen eylem: past perfect continuous."
+     },
+     {
+      "question": "Narrative: 'Suddenly the door ___.'",
+      "options": [
+       "opened",
+       "had been opening",
+       "was opening"
+      ],
+      "answerIndex": 0,
+      "explanationTr": "Hikâyede ani olay: past simple."
+     }
+    ]
+   }
+  },
+  {
+   "level": "B2",
+   "grammarTopic": "Passive voice in all tenses",
+   "vocabTheme": "Bilim ve teknoloji",
+   "lesson": {
+    "vocab": [
+     {
+      "word": "invent",
+      "meaning": "icat etmek",
+      "example": "The telephone was invented in 1876."
+     },
+     {
+      "word": "device",
+      "meaning": "cihaz",
+      "example": "This device is used in hospitals."
+     },
+     {
+      "word": "research",
+      "meaning": "araştırma",
+      "example": "More research is needed."
+     },
+     {
+      "word": "develop",
+      "meaning": "geliştirmek",
+      "example": "A new vaccine is being developed."
+     },
+     {
+      "word": "launch",
+      "meaning": "fırlatmak / piyasaya sürmek",
+      "example": "The satellite will be launched next year."
+     },
+     {
+      "word": "data",
+      "meaning": "veri",
+      "example": "The data was collected over five years."
+     }
+    ],
+    "gapFill": [
+     {
+      "sentence": "English ___ all over the world.",
+      "answer": "is spoken",
+      "options": [
+       "is spoken",
+       "speaks",
+       "is speaking"
+      ],
+      "hintTr": "İngilizce tüm dünyada konuşulur."
+     },
+     {
+      "sentence": "A new app ___ by our team right now.",
+      "answer": "is being developed",
+      "options": [
+       "is being developed",
+       "is developing",
+       "has developed"
+      ],
+      "hintTr": "Şu anda ekibimiz tarafından yeni bir uygulama geliştiriliyor."
+     },
+     {
+      "sentence": "The results ___ next week.",
+      "answer": "will be published",
+      "options": [
+       "will be published",
+       "will publish",
+       "are publishing"
+      ],
+      "hintTr": "Sonuçlar gelecek hafta yayımlanacak."
+     },
+     {
+      "sentence": "The bridge ___ before the storm.",
+      "answer": "had been repaired",
+      "options": [
+       "had been repaired",
+       "had repaired",
+       "was repairing"
+      ],
+      "hintTr": "Köprü fırtınadan önce onarılmıştı."
+     }
+    ],
+    "translate": [
+     {
+      "tr": "Bu bina 1990'da inşa edildi.",
+      "en": "This building was built in 1990.",
+      "accepted": []
+     },
+     {
+      "tr": "Veriler şu anda analiz ediliyor.",
+      "en": "The data is being analysed now.",
+      "accepted": [
+       "The data is being analyzed now.",
+       "The data are being analysed now.",
+       "The data is being analysed at the moment."
+      ]
+     },
+     {
+      "tr": "Toplantı iptal edildi.",
+      "en": "The meeting has been cancelled.",
+      "accepted": [
+       "The meeting was cancelled.",
+       "The meeting has been canceled.",
+       "The meeting was canceled."
+      ]
+     }
+    ],
+    "quiz": [
+     {
+      "question": "Passive of 'They make cars here.'",
+      "options": [
+       "Cars are made here.",
+       "Cars made here.",
+       "Cars are making here."
+      ],
+      "answerIndex": 0,
+      "explanationTr": "be + past participle."
+     },
+     {
+      "question": "'The window ___ yesterday.'",
+      "options": [
+       "was broken",
+       "broke by",
+       "has broken"
+      ],
+      "answerIndex": 0,
+      "explanationTr": "Geçmiş, edilgen: was/were + V3."
+     },
+     {
+      "question": "Present perfect passive:",
+      "options": [
+       "has been sent",
+       "has sent",
+       "is sent"
+      ],
+      "answerIndex": 0,
+      "explanationTr": "have/has been + V3."
+     },
+     {
+      "question": "Who did it? 'The novel was written ___ Orhan Pamuk.'",
+      "options": [
+       "by",
+       "from",
+       "with"
+      ],
+      "answerIndex": 0,
+      "explanationTr": "Eylemi yapan 'by' ile verilir."
+     }
+    ]
+   }
+  },
+  {
+   "level": "B2",
+   "grammarTopic": "Second and third conditionals",
+   "vocabTheme": "Pişmanlıklar ve varsayımlar",
+   "lesson": {
+    "vocab": [
+     {
+      "word": "regret",
+      "meaning": "pişman olmak",
+      "example": "I regret not studying harder."
+     },
+     {
+      "word": "chance",
+      "meaning": "şans, fırsat",
+      "example": "I missed my chance."
+     },
+     {
+      "word": "decision",
+      "meaning": "karar",
+      "example": "It was a difficult decision."
+     },
+     {
+      "word": "afford",
+      "meaning": "(parası) yetmek",
+      "example": "If I could afford it, I'd buy a house."
+     },
+     {
+      "word": "otherwise",
+      "meaning": "aksi hâlde",
+      "example": "Hurry, otherwise we'll be late."
+     },
+     {
+      "word": "lottery",
+      "meaning": "piyango",
+      "example": "If I won the lottery, I'd travel."
+     }
+    ],
+    "gapFill": [
+     {
+      "sentence": "If I ___ more time, I would learn the guitar.",
+      "answer": "had",
+      "options": [
+       "had",
+       "have",
+       "would have"
+      ],
+      "hintTr": "Daha çok vaktim olsa gitar öğrenirdim."
+     },
+     {
+      "sentence": "If she had left earlier, she ___ the train.",
+      "answer": "would have caught",
+      "options": [
+       "would have caught",
+       "would catch",
+       "will catch"
+      ],
+      "hintTr": "Daha erken çıksaydı trene yetişirdi."
+     },
+     {
+      "sentence": "I ___ that job if I were you.",
+      "answer": "would take",
+      "options": [
+       "would take",
+       "will take",
+       "took"
+      ],
+      "hintTr": "Senin yerinde olsam o işi alırdım."
+     },
+     {
+      "sentence": "If we hadn't got lost, we ___ on time.",
+      "answer": "would have arrived",
+      "options": [
+       "would have arrived",
+       "would arrive",
+       "had arrived"
+      ],
+      "hintTr": "Kaybolmasaydık zamanında varırdık."
+     }
+    ],
+    "translate": [
+     {
+      "tr": "Zengin olsaydım dünyayı gezerdim.",
+      "en": "If I were rich, I would travel the world.",
+      "accepted": [
+       "If I was rich, I would travel the world.",
+       "If I were rich, I'd travel the world.",
+       "If I was rich, I'd travel the world."
+      ]
+     },
+     {
+      "tr": "Çalışsaydın sınavı geçerdin.",
+      "en": "If you had studied, you would have passed the exam.",
+      "accepted": [
+       "If you'd studied, you'd have passed the exam.",
+       "If you had studied, you'd have passed the exam."
+      ]
+     },
+     {
+      "tr": "Senin yerinde olsam ona söylerdim.",
+      "en": "If I were you, I would tell him.",
+      "accepted": [
+       "If I were you, I'd tell him.",
+       "If I were you, I would tell her.",
+       "If I were you, I'd tell her."
+      ]
+     }
+    ],
+    "quiz": [
+     {
+      "question": "Third conditional is about…",
+      "options": [
+       "the past (unreal)",
+       "the future (real)",
+       "general truths"
+      ],
+      "answerIndex": 0,
+      "explanationTr": "Geçmişte olmamış durumlar ve sonuçları."
+     },
+     {
+      "question": "'If I ___ you, I'd apologise.'",
+      "options": [
+       "were",
+       "am",
+       "will be"
+      ],
+      "answerIndex": 0,
+      "explanationTr": "If I were you: tavsiye kalıbı."
+     },
+     {
+      "question": "Which is correct?",
+      "options": [
+       "If I would know, I'd tell you.",
+       "If I knew, I'd tell you."
+      ],
+      "answerIndex": 1,
+      "explanationTr": "if cümleciğinde would kullanılmaz."
+     },
+     {
+      "question": "'If he had asked me, I ___ him.'",
+      "options": [
+       "would help",
+       "would have helped",
+       "helped"
+      ],
+      "answerIndex": 1,
+      "explanationTr": "Third conditional: would have + V3."
+     }
+    ]
+   }
+  },
+  {
+   "level": "B2",
+   "grammarTopic": "Reported speech",
+   "vocabTheme": "Tartışma ve fikir belirtme",
+   "lesson": {
+    "vocab": [
+     {
+      "word": "claim",
+      "meaning": "iddia etmek",
+      "example": "He claimed that he was innocent."
+     },
+     {
+      "word": "argue",
+      "meaning": "tartışmak, savunmak",
+      "example": "She argued that the plan was too expensive."
+     },
+     {
+      "word": "admit",
+      "meaning": "kabul etmek",
+      "example": "He admitted that he was wrong."
+     },
+     {
+      "word": "deny",
+      "meaning": "inkâr etmek",
+      "example": "She denied taking the money."
+     },
+     {
+      "word": "point out",
+      "meaning": "dikkat çekmek",
+      "example": "He pointed out a mistake."
+     },
+     {
+      "word": "convince",
+      "meaning": "ikna etmek",
+      "example": "I couldn't convince her."
+     }
+    ],
+    "gapFill": [
+     {
+      "sentence": "She said she ___ tired.",
+      "answer": "was",
+      "options": [
+       "was",
+       "is",
+       "will be"
+      ],
+      "hintTr": "Yorgun olduğunu söyledi."
+     },
+     {
+      "sentence": "He told me he ___ the film before.",
+      "answer": "had seen",
+      "options": [
+       "had seen",
+       "has seen",
+       "saw"
+      ],
+      "hintTr": "Filmi daha önce izlediğini söyledi."
+     },
+     {
+      "sentence": "They asked me where I ___ .",
+      "answer": "lived",
+      "options": [
+       "lived",
+       "do live",
+       "live"
+      ],
+      "hintTr": "Nerede yaşadığımı sordular."
+     },
+     {
+      "sentence": "She asked ___ I could help her.",
+      "answer": "if",
+      "options": [
+       "if",
+       "that",
+       "what"
+      ],
+      "hintTr": "Ona yardım edip edemeyeceğimi sordu."
+     }
+    ],
+    "translate": [
+     {
+      "tr": "Bana yorgun olduğunu söyledi.",
+      "en": "He told me that he was tired.",
+      "accepted": [
+       "She told me that she was tired.",
+       "He told me he was tired.",
+       "She told me she was tired."
+      ]
+     },
+     {
+      "tr": "Nerede çalıştığımı sordu.",
+      "en": "She asked me where I worked.",
+      "accepted": [
+       "He asked me where I worked.",
+       "She asked where I worked.",
+       "He asked where I worked."
+      ]
+     },
+     {
+      "tr": "Yarın geleceğini söyledi.",
+      "en": "He said he would come the next day.",
+      "accepted": [
+       "She said she would come the next day.",
+       "He said that he would come the following day.",
+       "She said that she would come the following day.",
+       "He said he would come tomorrow.",
+       "She said she would come tomorrow."
+      ]
+     }
+    ],
+    "quiz": [
+     {
+      "question": "Direct: 'I am busy.' → Reported:",
+      "options": [
+       "She said she was busy.",
+       "She said she is busy yesterday."
+      ],
+      "answerIndex": 0,
+      "explanationTr": "Zaman bir geri kayar: am → was."
+     },
+     {
+      "question": "'will' in reported speech becomes…",
+      "options": [
+       "would",
+       "will be",
+       "had"
+      ],
+      "answerIndex": 0,
+      "explanationTr": "will → would."
+     },
+     {
+      "question": "Which is correct?",
+      "options": [
+       "He said me the truth.",
+       "He told me the truth."
+      ],
+      "answerIndex": 1,
+      "explanationTr": "tell + kişi; say + (to) kişi."
+     },
+     {
+      "question": "Reported question: 'Are you coming?'",
+      "options": [
+       "She asked if I was coming.",
+       "She asked was I coming?"
+      ],
+      "answerIndex": 0,
+      "explanationTr": "Evet/hayır sorularında if/whether, soru düzeni yok."
+     }
+    ]
+   }
+  },
+  {
+   "level": "B2",
+   "grammarTopic": "Relative clauses: defining & non-defining",
+   "vocabTheme": "Sağlık ve yaşam tarzı",
+   "lesson": {
+    "vocab": [
+     {
+      "word": "diet",
+      "meaning": "beslenme düzeni",
+      "example": "A balanced diet is important."
+     },
+     {
+      "word": "work out",
+      "meaning": "spor yapmak",
+      "example": "I work out three times a week."
+     },
+     {
+      "word": "symptom",
+      "meaning": "belirti",
+      "example": "Fever is a common symptom."
+     },
+     {
+      "word": "habit",
+      "meaning": "alışkanlık",
+      "example": "Smoking is a bad habit."
+     },
+     {
+      "word": "recover",
+      "meaning": "iyileşmek",
+      "example": "He recovered quickly."
+     },
+     {
+      "word": "prescription",
+      "meaning": "reçete",
+      "example": "The doctor gave me a prescription."
+     }
+    ],
+    "gapFill": [
+     {
+      "sentence": "The doctor ___ treated me was very kind.",
+      "answer": "who",
+      "options": [
+       "who",
+       "which",
+       "whose"
+      ],
+      "hintTr": "Beni tedavi eden doktor çok nazikti."
+     },
+     {
+      "sentence": "This is the gym ___ I work out.",
+      "answer": "where",
+      "options": [
+       "where",
+       "which",
+       "who"
+      ],
+      "hintTr": "Spor yaptığım salon burası."
+     },
+     {
+      "sentence": "My brother, ___ is a nurse, works at night.",
+      "answer": "who",
+      "options": [
+       "who",
+       "that",
+       "which"
+      ],
+      "hintTr": "Hemşire olan ağabeyim geceleri çalışır."
+     },
+     {
+      "sentence": "The man ___ car was stolen called the police.",
+      "answer": "whose",
+      "options": [
+       "whose",
+       "who",
+       "which"
+      ],
+      "hintTr": "Arabası çalınan adam polisi aradı."
+     }
+    ],
+    "translate": [
+     {
+      "tr": "Dün tanıştığım kadın bir doktor.",
+      "en": "The woman I met yesterday is a doctor.",
+      "accepted": [
+       "The woman who I met yesterday is a doctor.",
+       "The woman that I met yesterday is a doctor.",
+       "The woman whom I met yesterday is a doctor."
+      ]
+     },
+     {
+      "tr": "Sporu çok seven annem her sabah yürür.",
+      "en": "My mother, who loves sport, walks every morning.",
+      "accepted": [
+       "My mother, who loves sports, walks every morning.",
+       "My mother, who loves sport, goes for a walk every morning.",
+       "My mother, who loves sports, goes for a walk every morning."
+      ]
+     },
+     {
+      "tr": "Bu, beni hasta eden yemek.",
+      "en": "This is the food that made me ill.",
+      "accepted": [
+       "This is the food which made me ill.",
+       "This is the food that made me sick.",
+       "This is the food which made me sick."
+      ]
+     }
+    ],
+    "quiz": [
+     {
+      "question": "Non-defining clauses use…",
+      "options": [
+       "commas and no 'that'",
+       "no commas and 'that'"
+      ],
+      "answerIndex": 0,
+      "explanationTr": "Tanımlamayan cümleciklerde virgül kullanılır, 'that' kullanılmaz."
+     },
+     {
+      "question": "'The book ___ I bought is great.' (object)",
+      "options": [
+       "(no pronoun) / that",
+       "whose",
+       "where"
+      ],
+      "answerIndex": 0,
+      "explanationTr": "Nesne konumundaki zamir atılabilir."
+     },
+     {
+      "question": "Possession:",
+      "options": [
+       "whose",
+       "who's",
+       "which"
+      ],
+      "answerIndex": 0,
+      "explanationTr": "İyelik için whose."
+     },
+     {
+      "question": "'Ankara, ___ is the capital, is in central Turkey.'",
+      "options": [
+       "which",
+       "that",
+       "where"
+      ],
+      "answerIndex": 0,
+      "explanationTr": "Tanımlamayan cümlecik, şey: which."
+     }
+    ]
+   }
+  }
+ ]
+}

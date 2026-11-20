@@ -21,9 +21,11 @@ class LessonScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final lesson = ref.watch(lessonProvider);
 
+    final offline = lesson.value?.offline ?? false;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Bugünün dersi'),
+        title: Text(offline ? 'Bugünün dersi · hazır ders' : 'Bugünün dersi'),
         leading: IconButton(
           tooltip: 'Kapat',
           icon: const Icon(Icons.close),
@@ -75,9 +77,8 @@ class _PreparingView extends StatelessWidget {
 
 /// Ders üretilemediğinde çıkış yolu bırakan ekran.
 ///
-/// Çevrimdışıyken haftalık plandaki gibi hazır bir yedek ders veremiyoruz;
-/// bunun yerine kullanıcı yeniden deneyebilir ya da günü elle işaretleyerek
-/// serisini koruyabilir.
+/// Kullanıcı uygulamadaki hazır dersle çalışabilir, yeniden deneyebilir ya da
+/// günü elle işaretleyerek serisini koruyabilir.
 class _UnavailableView extends ConsumerStatefulWidget {
   const _UnavailableView({required this.message});
 
@@ -130,7 +131,16 @@ class _UnavailableViewState extends ConsumerState<_UnavailableView> {
               ),
             ),
             const SizedBox(height: 24),
-            FilledButton(
+            // Anahtar ya da ağ yoksa bile gün boşa geçmesin.
+            FilledButton.icon(
+              onPressed: _busy
+                  ? null
+                  : () => ref.read(lessonProvider.notifier).useOfflineLesson(),
+              icon: const Icon(Icons.menu_book_rounded),
+              label: const Text('Hazır dersle çalış'),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton(
               onPressed: _busy
                   ? null
                   : () => ref.read(lessonProvider.notifier).retry(),

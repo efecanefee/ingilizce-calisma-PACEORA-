@@ -375,15 +375,23 @@ class AnswerOutcome {
 /// yarıda bırakılıp geri dönüldüğünde kaldığı adımdan devam eder ve bunun için
 /// şemaya yeni kolon eklemek gerekmez.
 class LessonState {
-  const LessonState({required this.lesson, this.progress = const LessonProgress()});
+  const LessonState({
+    required this.lesson,
+    this.progress = const LessonProgress(),
+    this.offline = false,
+  });
 
   final DailyLesson lesson;
   final LessonProgress progress;
+
+  /// Ders Gemini yerine uygulamadaki hazır ders havuzundan geldi.
+  final bool offline;
 
   LessonState copyWith({DailyLesson? lesson, LessonProgress? progress}) =>
       LessonState(
         lesson: lesson ?? this.lesson,
         progress: progress ?? this.progress,
+        offline: offline,
       );
 
   int get answeredCount => progress.answers.length;
@@ -441,6 +449,7 @@ class LessonState {
   String encode() => jsonEncode({
         'lesson': lesson.toJson(),
         'progress': progress.toJson(),
+        if (offline) 'offline': true,
       });
 
   /// `Lessons.contentJson` içeriğini geri okur; bozuksa null.
@@ -453,6 +462,7 @@ class LessonState {
       return LessonState(
         lesson: lesson,
         progress: LessonProgress.fromJson(raw['progress']),
+        offline: raw['offline'] == true,
       );
     } catch (_) {
       return null;
