@@ -146,6 +146,7 @@ class Celebration {
     required this.icon,
     required this.color,
     this.chip,
+    this.art,
   });
 
   final String title;
@@ -155,6 +156,9 @@ class Celebration {
 
   /// Kartın altındaki küçük etiket (ör. "Seviye 3").
   final String? chip;
+
+  /// İkon dairesi yerine gösterilecek görsel (ör. Pace).
+  final Widget? art;
 }
 
 /// Uygulamanın en üstünde durur; yeni oyuncu seviyesi ya da rozet
@@ -166,6 +170,14 @@ class CelebrationHost extends ConsumerStatefulWidget {
   const CelebrationHost({super.key, required this.child});
 
   final Widget child;
+
+  /// Hangi ekrandan olursa olsun bir kutlama gösterir (ör. forma alındı,
+  /// seri hedefi). Kuyruktaki diğer kutlamalardan sonra sıraya girer.
+  static void show(BuildContext context, Celebration celebration) {
+    context
+        .findAncestorStateOfType<_CelebrationHostState>()
+        ?._enqueue(celebration);
+  }
 
   @override
   ConsumerState<CelebrationHost> createState() => _CelebrationHostState();
@@ -224,6 +236,8 @@ class _CelebrationHostState extends ConsumerState<CelebrationHost> {
     prefs.setStringList(_seenBadgesKey, earned.toList());
     if (fresh.isNotEmpty) setState(() => _queue.addAll(fresh));
   }
+
+  void _enqueue(Celebration c) => setState(() => _queue.add(c));
 
   void _dismiss() {
     setState(() {
@@ -301,7 +315,8 @@ class _CelebrationView extends StatelessWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Container(
+                        c.art ??
+                            Container(
                               width: 96,
                               height: 96,
                               decoration: BoxDecoration(

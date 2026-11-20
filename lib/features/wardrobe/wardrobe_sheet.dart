@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/celebration.dart';
 import '../../app/mascot.dart';
 import '../../app/motion.dart';
 import '../../data/providers.dart';
@@ -35,11 +36,46 @@ class _WardrobeSheetState extends ConsumerState<WardrobeSheet> {
       await equipKit(ref, kit);
       return;
     }
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('${kit.label} alınsın mı?'),
+        content: Text(
+          '${kit.price} XP harcanacak. Seviyen düşmez; harcanabilir XP '
+          'seri dondurma haklarıyla ortaktır.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Vazgeç'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: FilledButton.styleFrom(minimumSize: const Size(0, 44)),
+            child: Text('${kit.price} XP harca'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
     setState(() => _busy = true);
     final ok = await buyKit(ref, kit);
     if (!mounted) return;
     setState(() => _busy = false);
-    if (ok) Haptics.success();
+    if (!ok) return;
+    Haptics.success();
+    CelebrationHost.show(
+      context,
+      Celebration(
+        title: 'Yeni forma: ${kit.label}',
+        subtitle: 'Pace artık ${kit.label} formasını giyiyor.',
+        icon: Icons.checkroom_rounded,
+        color: kit.trim ?? const Color(0xFFC6F432),
+        chip: '-${kit.price} XP',
+        art: PaceMascot(mood: PaceMood.cheer, kit: kit, size: 130),
+      ),
+    );
   }
 
   @override

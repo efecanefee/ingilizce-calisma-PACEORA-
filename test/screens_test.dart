@@ -9,6 +9,7 @@ import 'package:paceora/data/providers.dart';
 import 'package:paceora/data/repository.dart';
 import 'package:paceora/data/review_models.dart';
 import 'package:paceora/data/rewards.dart';
+import 'package:paceora/data/wardrobe.dart';
 import 'package:paceora/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -100,6 +101,44 @@ void main() {
 
     expect(find.text('Dilbilgisi'), findsOneWidget);
     expect(find.text('Derse başla'), findsOneWidget);
+  });
+
+  testWidgets('Pace\'e dokununca dolap açılır, forma onayla alınır', (
+    tester,
+  ) async {
+    // 100 kart tekrarı = 200 XP; kutlamalar önceden görülmüş sayılır.
+    final prefs = await pumpApp(tester, {
+      'seen_player_level': 99,
+      'seen_badges': [for (final b in badges) b.id],
+      cardsReviewedKey(DateTime.now()): 100,
+    });
+
+    await tester.tap(find.bySemanticsLabel("Pace'in dolabını aç"));
+    await _advance(tester);
+    expect(find.text("Pace'in dolabı"), findsOneWidget);
+
+    await tester.tap(find.text('Kırmızı Şimşek'));
+    await tester.pump();
+    final buy = find.text('Kırmızı Şimşek al · 150 XP');
+    await tester.ensureVisible(buy);
+    await tester.tap(buy);
+    await _advance(tester);
+
+    // Onay penceresi: vazgeçince hiçbir şey alınmaz.
+    expect(find.text('Kırmızı Şimşek alınsın mı?'), findsOneWidget);
+    await tester.tap(find.text('Vazgeç'));
+    await _advance(tester);
+    expect(WardrobeState.read(prefs).owns(PaceKit.crimson), isFalse);
+
+    await tester.tap(buy);
+    await _advance(tester);
+    await tester.tap(find.text('150 XP harca'));
+    await _advance(tester);
+
+    expect(find.text('Yeni forma: Kırmızı Şimşek'), findsOneWidget);
+    final wardrobe = WardrobeState.read(prefs);
+    expect(wardrobe.owns(PaceKit.crimson), isTrue);
+    expect(wardrobe.equipped, PaceKit.crimson);
   });
 
   testWidgets('seviye testi çözülmeden ayarlardan seviye seçilemez', (

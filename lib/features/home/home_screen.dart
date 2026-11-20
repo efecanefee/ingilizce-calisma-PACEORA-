@@ -18,6 +18,7 @@ import '../../data/rewards.dart';
 import '../../data/repository.dart' show mondayOf;
 import '../../data/streak_freeze.dart';
 import '../program/program_screen.dart';
+import '../wardrobe/wardrobe_sheet.dart';
 
 /// Ana ekran ("Bugün" sekmesi): karşılama, bugünün dersi, günlük hedef,
 /// haftanın özeti ve pratik alanları.
@@ -257,7 +258,27 @@ class _HeroPace extends ConsumerWidget {
       StreakStatus.protected => PaceMood.surprised,
       _ => PaceMood.run,
     };
-    return EquippedPace(mood: mood, size: 80);
+    // Pace'e dokununca dolabı açılır.
+    return Semantics(
+      button: true,
+      label: "Pace'in dolabını aç",
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => showWardrobeSheet(context),
+        // Sabit kutu: görsel yüklenirken yazılar kaymaz, dokunma alanı
+        // pozdan bağımsız kalır.
+        child: SizedBox(
+          width: 88,
+          height: 80,
+          child: Align(
+            alignment: Alignment.bottomRight,
+            child: ExcludeSemantics(
+              child: EquippedPace(mood: mood, size: 80),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
