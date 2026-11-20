@@ -1025,7 +1025,7 @@ class _ApiKeyFormState extends ConsumerState<_ApiKeyForm> {
         const SizedBox(height: 8),
         Text(
           'Anahtarı aistudio.google.com/apikey adresinden ücretsiz alabilirsin. '
-          'Anahtar yalnızca bu cihazda saklanır.',
+          'Anahtar bu cihazın güvenli kasasında şifreli saklanır.',
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
           ),

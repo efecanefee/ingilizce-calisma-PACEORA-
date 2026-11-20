@@ -1,30 +1,65 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../app/constants.dart';
 import '../app/motion.dart';
 import '../app/theme.dart';
 import 'providers.dart';
 
+/// Anahtarın güvenli kasadaki adı.
+const apiKeyStorageKey = 'gemini_api_key';
+
+/// Telefonun güvenli kasası (Android Keystore / iOS Keychain).
+final secureStorageProvider = Provider<FlutterSecureStorage>(
+  (_) => const FlutterSecureStorage(),
+);
+
+/// Açılışta kasadan okunan anahtar; `main` bunu doldurur.
+final storedApiKeyProvider = Provider<String>((_) => '');
+
+/// Kasadaki anahtarı okur. Eski sürümler anahtarı SharedPreferences'ta düz
+/// metin tutuyordu; bulunursa kasaya taşınır ve eski kayıt silinir.
+Future<String> loadApiKey(
+  SharedPreferences prefs,
+  FlutterSecureStorage storage,
+) async {
+  try {
+    final legacy = prefs.getString(AppConstants.prefApiKey);
+    if (legacy != null) {
+      if (legacy.isNotEmpty) {
+        await storage.write(key: apiKeyStorageKey, value: legacy);
+      }
+      await prefs.remove(AppConstants.prefApiKey);
+      return legacy;
+    }
+    return await storage.read(key: apiKeyStorageKey) ?? '';
+  } catch (e) {
+    // Kasa açılamazsa (bozuk anahtar deposu vb.) uygulama yine açılsın.
+    debugPrint('Güvenli kasa okunamadı: $e');
+    return '';
+  }
+}
+
 /// Kullanıcının Ayarlar'dan girdiği Gemini anahtarı.
 ///
 /// Boş string, "kendi anahtarım yok" demektir; bu durumda derleme zamanında
 /// verilen anahtar (`--dart-define`) kullanılır. Böylece uygulama kendi
 /// telefonunda kurulum istemeden çalışır, başkasına verildiğinde ise karşı
-/// taraf kendi kotasını kullanabilir.
+/// taraf kendi kotasını kullanabilir. Anahtar düz metin olarak değil,
+/// güvenli kasada saklanır.
 class ApiKeyNotifier extends Notifier<String> {
   @override
-  String build() =>
-      ref.watch(sharedPreferencesProvider).getString(AppConstants.prefApiKey) ??
-      '';
+  String build() => ref.watch(storedApiKeyProvider);
 
   Future<void> save(String value) async {
-    final prefs = ref.read(sharedPreferencesProvider);
+    final storage = ref.read(secureStorageProvider);
     final trimmed = value.trim();
     if (trimmed.isEmpty) {
-      await prefs.remove(AppConstants.prefApiKey);
+      await storage.delete(key: apiKeyStorageKey);
     } else {
-      await prefs.setString(AppConstants.prefApiKey, trimmed);
+      await storage.write(key: apiKeyStorageKey, value: trimmed);
     }
     state = trimmed;
   }

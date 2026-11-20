@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app/celebration.dart';
@@ -17,11 +18,14 @@ Future<void> main() async {
   final prefs = await SharedPreferences.getInstance();
   final onboardingDone = prefs.getBool(AppConstants.prefOnboardingDone) ?? false;
   final reminders = await LocalReminderService.create();
+  const storage = FlutterSecureStorage();
+  final apiKey = await loadApiKey(prefs, storage);
 
   final container = ProviderContainer(
     overrides: [
       sharedPreferencesProvider.overrideWithValue(prefs),
       reminderServiceProvider.overrideWithValue(reminders),
+      storedApiKeyProvider.overrideWithValue(apiKey),
     ],
   );
   // Saat dilimi ya da cihaz değişmiş olabilir; açık hatırlatma yeniden kurulur.
