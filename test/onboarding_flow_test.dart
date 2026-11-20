@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:paceora/app/constants.dart';
 import 'package:paceora/app/logo.dart';
 import 'package:paceora/data/database.dart';
+import 'package:paceora/data/level_check.dart';
 import 'package:paceora/data/providers.dart';
 import 'package:paceora/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -50,6 +51,25 @@ void main() {
     expect(find.byType(PaceoraWordmark), findsOneWidget);
     await tester.tap(find.widgetWithText(ChoiceChip, 'B2'));
     await tester.pump();
+    await tester.tap(find.widgetWithText(FilledButton, 'Devam'));
+    await _advance(tester);
+
+    // Seviye önizlemesi: odak konuları ve kısa kontrol (isteğe bağlı).
+    expect(find.text('B2 seviyesinde neler var?'), findsOneWidget);
+    expect(find.text('Nelere odaklanacağız'), findsOneWidget);
+    // Kontrolü çöz: hepsi doğru → bir üst seviye önerilir.
+    await tester.ensureVisible(find.text('4 soruluk kontrolü çöz'));
+    await tester.tap(find.text('4 soruluk kontrolü çöz'));
+    await tester.pump();
+    for (final q in LevelPreview.of(DifficultyLevel.b2).questions) {
+      final chip = find.widgetWithText(ActionChip, q.options[q.answer]);
+      await tester.ensureVisible(chip);
+      await tester.tap(chip);
+      await tester.pump();
+    }
+    expect(find.text('4 sorudan 4 doğru'), findsOneWidget);
+    await tester.ensureVisible(find.text('B2 (zor) seviyesine geç'));
+    expect(find.text('B2 (zor) seviyesine geç'), findsOneWidget);
     await tester.tap(find.widgetWithText(FilledButton, 'Devam'));
     await _advance(tester);
 

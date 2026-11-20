@@ -7,10 +7,11 @@ import '../../app/constants.dart';
 import '../../app/logo.dart';
 import '../../app/mascot.dart';
 import '../../app/motion.dart';
+import '../../data/level_check.dart';
 import '../../data/providers.dart';
 import '../placement/placement_screen.dart';
 
-/// Üç adımlı onboarding: isim → seviye → günlük süre.
+/// Dört adımlı onboarding: isim → seviye → seviye önizlemesi → günlük süre.
 ///
 /// Son adımda profil kaydedilir ve Gemini'den haftalık plan üretilir.
 class OnboardingScreen extends ConsumerStatefulWidget {
@@ -21,13 +22,16 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 }
 
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
-  static const _stepCount = 3;
+  static const _stepCount = 4;
 
   final _pageController = PageController();
   final _nameController = TextEditingController();
 
   int _step = 0;
   DifficultyLevel _level = DifficultyLevel.b1;
+
+  /// Seviye testten geldiyse önizleme adımında kontrol soruları sorulmaz.
+  bool _placementDone = false;
   int _dailyMinutes = AppConstants.defaultDailyMinutes;
   bool _submitting = false;
 
@@ -62,7 +66,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   Future<void> _takePlacementTest() async {
     final level = await openPlacementTest(context);
-    if (level != null && mounted) setState(() => _level = level);
+    if (level != null && mounted) {
+      setState(() {
+        _level = level;
+        _placementDone = true;
+      });
+    }
   }
 
   void _back() {
@@ -151,8 +160,18 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     _NameStep(controller: _nameController),
                     _LevelStep(
                       selected: _level,
-                      onChanged: (l) => setState(() => _level = l),
+                      onChanged: (l) => setState(() {
+                        _level = l;
+                        _placementDone = false;
+                      }),
                       onTest: _takePlacementTest,
+                    ),
+                    _LevelCheckStep(
+                      // Seviye değişince kontrol baştan başlar.
+                      key: ValueKey(_level),
+                      level: _level,
+                      placementDone: _placementDone,
+                      onChangeLevel: (l) => setState(() => _level = l),
                     ),
                     _MinutesStep(
                       selected: _dailyMinutes,
@@ -317,6 +336,188 @@ class _LevelStep extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Seçilen seviyenin önizlemesi ve isteğe bağlı 4 soruluk kontrol.
+class _LevelCheckStep extends StatefulWidget {
+  const _LevelCheckStep({
+    super.key,
+    required this.level,
+    required this.placementDone,
+    required this.onChangeLevel,
+  });
+
+  final DifficultyLevel level;
+  final bool placementDone;
+  final ValueChanged<DifficultyLevel> onChangeLevel;
+
+  @override
+  State<_LevelCheckStep> createState() => _LevelCheckStepState();
+}
+
+class _LevelCheckStepState extends State<_LevelCheckStep> {
+  final _answers = <int>[];
+  bool _started = false;
+
+  LevelPreview get _preview => LevelPreview.of(widget.level);
+
+  int get _correct => [
+    for (var i = 0; i < _answers.length; i++)
+      if (_preview.questions[i].isCorrect(_answers[i])) i,
+  ].length;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final preview = _preview;
+
+    return _StepScaffold(
+      title: '${widget.level.label} seviyesinde neler var?',
+      subtitle: widget.placementDone
+          ? 'Seviye testine göre programın bu konular üzerine kurulacak.'
+          : 'Programın bu konular üzerine kurulacak. İstersen 4 soruluk kısa '
+                'kontrolle seviyenin sana uygun olup olmadığını gör.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Nelere odaklanacağız',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  for (final item in preview.focus)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.check_circle_rounded,
+                            size: 18,
+                            color: theme.colorScheme.primary,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              item,
+                              style: theme.textTheme.bodyMedium,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          if (!widget.placementDone) ...[
+            const SizedBox(height: 16),
+            _buildCheck(theme),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCheck(ThemeData theme) {
+    final questions = _preview.questions;
+
+    if (!_started) {
+      return OutlinedButton.icon(
+        onPressed: () => setState(() => _started = true),
+        icon: const Icon(Icons.quiz_rounded),
+        label: const Text('4 soruluk kontrolü çöz'),
+      );
+    }
+
+    if (_answers.length < questions.length) {
+      final q = questions[_answers.length];
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Soru ${_answers.length + 1}/${questions.length}',
+                style: theme.textTheme.labelMedium,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                q.prompt,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (var i = 0; i < q.options.length; i++)
+                    ActionChip(
+                      label: Text(q.options[i]),
+                      onPressed: () {
+                        Haptics.tap();
+                        setState(() => _answers.add(i));
+                      },
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final verdict = levelCheckVerdict(widget.level, _correct);
+    final suggested = switch (verdict) {
+      LevelCheckVerdict.lower => widget.level.step(-1),
+      LevelCheckVerdict.higher => widget.level.step(1),
+      LevelCheckVerdict.fits => null,
+    };
+    final message = switch (verdict) {
+      LevelCheckVerdict.fits => 'Bu seviye sana uygun görünüyor.',
+      LevelCheckVerdict.higher =>
+        'Hepsi doğru! ${suggested!.label} seviyesi seni daha çok geliştirebilir.',
+      LevelCheckVerdict.lower =>
+        'Biraz zorlandın; ${suggested!.label} ile başlamak daha rahat olabilir.',
+    };
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              '${questions.length} sorudan $_correct doğru',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(message, style: theme.textTheme.bodyMedium),
+            if (suggested != null) ...[
+              const SizedBox(height: 12),
+              OutlinedButton(
+                onPressed: () => widget.onChangeLevel(suggested),
+                child: Text('${suggested.label} seviyesine geç'),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
