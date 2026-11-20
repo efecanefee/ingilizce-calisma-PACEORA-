@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../app/constants.dart';
+import '../app/error_reporting.dart';
 import 'database.dart';
 import 'gemini_service.dart';
 import 'lesson_models.dart';
@@ -195,6 +196,11 @@ final todayLessonProvider = FutureProvider<Lesson?>((ref) async {
   ref.watch(weekPlanProvider);
   return ref.read(repositoryProvider).lessonFor(clock.now());
 });
+
+/// Cihazdaki hata kaydı (Ayarlar > Hata kaydı).
+final errorLogProvider = Provider<ErrorLog>(
+  (ref) => ErrorLog(ref.watch(sharedPreferencesProvider)),
+);
 
 /// Uygulamanın içinde gelen hazır dersler (Gemini'ye ulaşılamadığında).
 final offlineLessonBankProvider = FutureProvider<OfflineLessonBank>(

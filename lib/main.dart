@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app/celebration.dart';
 import 'app/constants.dart';
+import 'app/error_reporting.dart';
 import 'app/mascot.dart';
 import 'app/router.dart';
 import 'app/theme.dart';
@@ -17,6 +18,7 @@ import 'data/streak_freeze.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final prefs = await SharedPreferences.getInstance();
+  installErrorHandlers(ErrorLog(prefs));
   final onboardingDone = prefs.getBool(AppConstants.prefOnboardingDone) ?? false;
   final reminders = await LocalReminderService.create();
   const storage = FlutterSecureStorage();

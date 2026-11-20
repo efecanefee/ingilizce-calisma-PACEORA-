@@ -56,6 +56,12 @@ Konuşma pratiği mikrofon izni ister. Sesin, telefonunun konuşma tanıma
 servisiyle (Android'de Google, iOS'ta Apple) metne çevrilir. Paceora ses kaydını
 saklamaz; yalnızca tanınan metni puanlamak için kullanır.
 
+## Hata kaydı
+
+Uygulamada beklenmeyen bir hata olursa kısa bir açıklaması (son 20 hata)
+yalnızca cihazında tutulur. Kendiliğinden hiçbir yere gönderilmez; istersen
+**Ayarlar > Hata kaydı**'ndan paylaşabilir ya da temizleyebilirsin.
+
 ## Bildirimler
 
 Günlük hatırlatma, telefonunun yerel bildirim sistemiyle kurulur. Bildirim için
