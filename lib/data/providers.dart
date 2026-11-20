@@ -12,15 +12,15 @@ import 'lesson_models.dart';
 import 'match_game.dart';
 import 'offline_lessons.dart';
 import 'pronunciation.dart';
-import 'roleplay.dart';
-import 'streak_freeze.dart';
 import 'reminder_service.dart';
 import 'repository.dart';
 import 'review_models.dart';
 import 'rewards.dart';
-import 'srs.dart';
+import 'roleplay.dart';
 import 'settings_providers.dart';
+import 'srs.dart';
 import 'story_models.dart';
+import 'streak_freeze.dart';
 import 'wardrobe.dart';
 import 'word_lookup.dart';
 

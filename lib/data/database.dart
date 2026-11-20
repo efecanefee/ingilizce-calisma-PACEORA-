@@ -1,6 +1,6 @@
 import 'package:drift/drift.dart';
-import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:drift_flutter/drift_flutter.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 
 part 'database.g.dart';
 

@@ -11,8 +11,8 @@ import 'app/router.dart';
 import 'app/theme.dart';
 import 'data/providers.dart';
 import 'data/reminder_service.dart';
-import 'data/streak_freeze.dart';
 import 'data/settings_providers.dart';
+import 'data/streak_freeze.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
