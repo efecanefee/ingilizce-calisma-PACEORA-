@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 /// Arayüz vurgu rengi seçenekleri. Her biri üç tondan oluşur:
 /// [spark] koyu zeminde parlayan ana ton, [dim] ara ton, [dark] açık
@@ -78,6 +77,11 @@ extension PaceColorsContext on BuildContext {
       Theme.of(this).extension<PaceColors>() ?? PaceColors.fallback;
 }
 
+/// Uygulamanın yazı tipleri (pubspec.yaml > fonts).
+abstract class AppFonts {
+  static const inter = 'Inter';
+}
+
 /// Paceora renk paleti: Graphite ve sabit marka/durum renkleri. Vurgu
 /// renkleri için [PaceColors] kullanılır.
 abstract class AppColors {
@@ -148,9 +152,11 @@ ThemeData _base(Brightness brightness, AppAccent accent) {
 
   final colorScheme = colorSchemeFor(brightness, accent);
 
-  final textTheme = GoogleFonts.interTextTheme(
-    ThemeData(brightness: brightness).textTheme,
-  );
+  // Inter uygulamanın içinde gelir (assets/fonts); çalışma sırasında
+  // internetten indirilmez, çevrimdışı ilk açılışta da aynı görünür.
+  final textTheme = ThemeData(
+    brightness: brightness,
+  ).textTheme.apply(fontFamily: AppFonts.inter);
 
   return ThemeData(
     useMaterial3: true,
