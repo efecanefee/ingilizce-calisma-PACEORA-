@@ -134,6 +134,12 @@ Anahtarı [Google AI Studio](https://aistudio.google.com/apikey)'dan
 anahtarı** alanına yapıştırabilirsin; oradaki anahtar derlemeye gömülü olana göre
 önceliklidir ve yalnızca o cihazda saklanır.
 
+> **Güvenlik:** `--dart-define` ile verilen anahtar derlenen uygulamanın içine
+> girer ve APK/IPA'dan çıkarılabilir. GitHub iş akışlarını elle çalıştırırken
+> **sürüm** seçeneğini kullan: `kisisel` anahtarı gömer (yalnızca kendi
+> telefonun için), `paylasim` gömmez; başkalarına verilecek sürümde kullanıcı
+> kendi anahtarını Ayarlar'dan girer. `main`'e push'ta kişisel sürüm üretilir.
+
 Hiç anahtar vermezsen haftalık program yerleşik yedek listeden gelir, ancak
 günlük ders üretimi çalışmaz — ders ekranı bunu söyler ve günü elle
 işaretlemene izin verir.

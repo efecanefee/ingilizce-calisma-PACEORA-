@@ -6,6 +6,15 @@ name: Android APK
 
 on:
   workflow_dispatch:
+    inputs:
+      surum:
+        description: >-
+          kisisel: Gemini anahtarı gömülür, kurulur kurulmaz çalışır (yalnızca
+          kendi telefonun için). paylasim: anahtar gömülmez, başkalarına
+          verilebilir; kullanıcı Ayarlar'dan kendi anahtarını girer.
+        type: choice
+        options: [kisisel, paylasim]
+        default: kisisel
   push:
     branches: [main]
 
@@ -55,9 +64,10 @@ jobs:
           keyPassword=$KEY_PASSWORD
           EOF
 
+      # Gömülü anahtar APK'dan çıkarılabilir: paylaşılacak sürümde gömülmez.
       - name: APK derlemesi
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_API_KEY: ${{ (github.event.inputs.surum || 'kisisel') == 'kisisel' && secrets.GEMINI_API_KEY || '' }}
         run: |
           flutter build apk --release \
             --dart-define=GEMINI_API_KEY="$GEMINI_API_KEY"
