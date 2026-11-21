@@ -259,10 +259,7 @@ void main() {
         }),
       );
 
-      await service.generateWeeklyPlan(
-        level: 'B1',
-        dailyMinutes: 10,
-      );
+      await service.generateWeeklyPlan(level: 'B1', dailyMinutes: 10);
       expect(posted, [AppConstants.geminiFallbackModels.first]);
     });
   });
@@ -310,6 +307,115 @@ void main() {
       );
       expect((await service.testConnection()).ok, isFalse);
       expect(calls, 0);
+    });
+  });
+
+  group('Firebase AI Logic', () {
+    GeminiBackend backend({Future<String?> Function()? token}) =>
+        GeminiBackend.firebase(
+          projectId: 'demo-proje',
+          apiKey: 'firebase-key',
+          appCheckToken: token,
+        );
+
+    test('anahtarsız Firebase adresine App Check jetonuyla gider', () async {
+      final requests = <http.Request>[];
+      final service = GeminiService(
+        backend: backend(token: () async => 'jeton-123'),
+        retryDelay: Duration.zero,
+        client: MockClient((r) async {
+          requests.add(r);
+          return http.Response.bytes(utf8.encode(_content(_plan)), 200);
+        }),
+      );
+
+      expect(service.hasApiKey, isTrue);
+      expect(service.viaFirebase, isTrue);
+      final result = await service.generateWeeklyPlan(
+        level: 'B1',
+        dailyMinutes: 15,
+      );
+      expect(result.offline, isFalse);
+      expect(requests, hasLength(1), reason: 'model listesi istenmez');
+      final r = requests.single;
+      expect(r.method, 'POST');
+      expect(r.url.host, 'firebasevertexai.googleapis.com');
+      expect(
+        r.url.path,
+        '/v1beta/projects/demo-proje/models/'
+        '${AppConstants.firebaseModels.first}:generateContent',
+      );
+      expect(r.headers['x-goog-api-key'], 'firebase-key');
+      expect(r.headers['X-Firebase-AppCheck'], 'jeton-123');
+    });
+
+    test('jeton alınamazsa istek jetonsuz gider', () async {
+      for (final token in <Future<String?> Function()>[
+        () async => null,
+        () async => throw Exception('kayıtsız cihaz'),
+      ]) {
+        final headers = <Map<String, String>>[];
+        final service = GeminiService(
+          backend: backend(token: token),
+          retryDelay: Duration.zero,
+          client: MockClient((r) async {
+            headers.add(r.headers);
+            return http.Response.bytes(utf8.encode(_content(_plan)), 200);
+          }),
+        );
+        final result = await service.generateWeeklyPlan(
+          level: 'B1',
+          dailyMinutes: 15,
+        );
+        expect(result.offline, isFalse);
+        expect(headers.single.containsKey('X-Firebase-AppCheck'), isFalse);
+      }
+    });
+
+    test('404 veren model atlanır, sıradaki Firebase modeli denenir', () async {
+      final posted = <String>[];
+      final service = GeminiService(
+        backend: backend(),
+        retryDelay: Duration.zero,
+        client: MockClient((r) async {
+          posted.add(_modelOf(r));
+          return posted.length == 1
+              ? http.Response('gone', 404)
+              : http.Response.bytes(utf8.encode(_content(_plan)), 200);
+        }),
+      );
+      await service.generateWeeklyPlan(level: 'B1', dailyMinutes: 15);
+      expect(posted, AppConstants.firebaseModels.take(2).toList());
+    });
+
+    test('bağlantı testi Firebase yolunu raporlar', () async {
+      final service = GeminiService(
+        backend: backend(),
+        retryDelay: Duration.zero,
+        client: MockClient(
+          (r) async =>
+              http.Response.bytes(utf8.encode(_content({'ok': true})), 200),
+        ),
+      );
+      final report = await service.testConnection();
+      expect(report.ok, isTrue);
+      expect(report.route, 'Firebase (anahtarsız)');
+      expect(report.listedFromApi, isFalse);
+      expect(report.availableModels, AppConstants.firebaseModels);
+    });
+
+    test('App Check reddi anlaşılır mesajla bildirilir', () async {
+      final service = GeminiService(
+        backend: backend(),
+        retryDelay: Duration.zero,
+        client: MockClient((r) async => http.Response('app check', 401)),
+      );
+      final result = await service.generateWeeklyPlan(
+        level: 'B1',
+        dailyMinutes: 15,
+      );
+      expect(result.offline, isTrue);
+      expect(result.error, contains('401'));
     });
   });
 }

@@ -53,9 +53,13 @@ class GeminiConnectionReport {
     this.listedFromApi = false,
     this.elapsed,
     this.error,
+    this.route,
   });
 
   final bool ok;
+
+  /// Bağlantı yolu: "Firebase (anahtarsız)" ya da "Gemini anahtarı".
+  final String? route;
 
   /// Üretimi başaran model.
   final String? model;
@@ -78,12 +82,20 @@ class GeminiService {
   GeminiService({
     http.Client? client,
     String? apiKey,
+    GeminiBackend? backend,
     this.retryDelay = const Duration(milliseconds: 1500),
   }) : _client = client ?? http.Client(),
-       _apiKey = (apiKey ?? AppConstants.geminiApiKey).trim();
+       backend =
+           backend ??
+           GeminiBackend.direct((apiKey ?? AppConstants.geminiApiKey).trim());
 
   final http.Client _client;
-  final String _apiKey;
+
+  /// İsteklerin gittiği yer: doğrudan Gemini (anahtarla) ya da Firebase AI
+  /// Logic (anahtarsız, App Check ile).
+  final GeminiBackend backend;
+
+  String get _apiKey => backend.apiKey;
 
   /// Geçici sunucu hatasından sonra aynı modeli yeniden denemeden önceki
   /// bekleme. Testlerde sıfırlanır.
@@ -99,27 +111,36 @@ class GeminiService {
   /// Düşünme ayarı reddedildiğinde false olur ve bir daha gönderilmez.
   bool _thinkingConfigAccepted = true;
 
+  /// Yapay zeka kullanılabilir mi: Firebase bağlıysa ya da bir anahtar varsa.
   bool get hasApiKey => _apiKey.isNotEmpty;
 
-  Map<String, String> get _headers => {
+  /// İstekler Firebase üzerinden mi gidiyor.
+  bool get viaFirebase => backend.firebase;
+
+  Future<Map<String, String>> _headers() async => {
     'Content-Type': 'application/json',
     // Anahtar URL'de değil başlıkta: adres kayıtlarına düşmez.
     'x-goog-api-key': _apiKey,
+    ...await backend.extraHeaders(),
   };
 
   /// Anahtarın erişebildiği ders üretimine uygun modeller, tercih sırasıyla.
   ///
   /// Liste alınamazsa yerleşik yedek listeye düşer; o durumda önbelleğe
-  /// alınmaz, bir sonraki istekte yeniden sorulur.
+  /// alınmaz, bir sonraki istekte yeniden sorulur. Firebase model listesi
+  /// sunmaz; orada sabit liste kullanılır.
   Future<({List<String> models, int? status, String? error})>
   _availableModels() async {
     final cached = _models;
     if (cached != null) return (models: cached, status: 200, error: null);
+    if (!backend.canListModels) {
+      return (models: backend.fallbackModels, status: 200, error: null);
+    }
     try {
       final response = await _client
           .get(
-            Uri.parse('${AppConstants.geminiBaseUrl}?pageSize=200'),
-            headers: _headers,
+            Uri.parse('${backend.baseUrl}?pageSize=200'),
+            headers: await _headers(),
           )
           .timeout(const Duration(seconds: 15));
       if (response.statusCode == 200) {
@@ -132,7 +153,7 @@ class GeminiService {
         }
       }
       return (
-        models: AppConstants.geminiFallbackModels,
+        models: backend.fallbackModels,
         status: response.statusCode,
         error: response.statusCode == 200
             ? 'Uygun model bulunamadı'
@@ -140,7 +161,7 @@ class GeminiService {
       );
     } catch (e) {
       return (
-        models: AppConstants.geminiFallbackModels,
+        models: backend.fallbackModels,
         status: null,
         error: _networkError(e),
       );
@@ -177,9 +198,10 @@ class GeminiService {
 
     return GeminiConnectionReport(
       ok: response.body != null,
+      route: viaFirebase ? 'Firebase (anahtarsız)' : 'Gemini anahtarı',
       model: _workingModel,
       availableModels: listing.models,
-      listedFromApi: listing.error == null,
+      listedFromApi: backend.canListModels && listing.error == null,
       elapsed: watch.elapsed,
       error: response.error,
     );
@@ -294,10 +316,7 @@ class GeminiService {
         ? null
         : parseDailyStoryResponse(response.body!);
     if (story == null) {
-      return (
-        story: fallbackStory(level, date ?? clock.now()),
-        offline: true,
-      );
+      return (story: fallbackStory(level, date ?? clock.now()), offline: true);
     }
     return (story: story, offline: false);
   }
@@ -388,11 +407,7 @@ Geçtiği cümle: $sentence
     required int levelDelta,
   }) async {
     final response = await _post(
-      prompt: _reportPrompt(
-        level: level,
-        stats: stats,
-        levelDelta: levelDelta,
-      ),
+      prompt: _reportPrompt(level: level, stats: stats, levelDelta: levelDelta),
       schema: _reportSchema,
       timeout: const Duration(seconds: 60),
       temperature: 0.7,
@@ -598,12 +613,12 @@ Verilerde olmayan bir şey uydurma. Veri azsa bunu nazikçe belirt.
       ...listing.models.where((m) => m != _workingModel),
     ].take(3);
 
+    // App Check jetonu istek başına bir kez alınır (SDK önbelleğe alır).
+    final headers = await _headers();
     String? lastError;
     models:
     for (final model in candidates) {
-      final uri = Uri.parse(
-        '${AppConstants.geminiBaseUrl}/$model:generateContent',
-      );
+      final uri = Uri.parse('${backend.baseUrl}/$model:generateContent');
       // Geçici sunucu hatalarında (503 "aşırı yüklü") aynı model bir kez daha
       // denenir, sonra sıradakine geçilir.
       for (var attempt = 0; attempt < 2; attempt++) {
@@ -612,7 +627,7 @@ Verilerde olmayan bir şey uydurma. Veri azsa bunu nazikçe belirt.
           var response = await _client
               .post(
                 uri,
-                headers: _headers,
+                headers: headers,
                 body: bodyFor(lowThinking: _thinkingConfigAccepted),
               )
               .timeout(timeout);
@@ -622,7 +637,7 @@ Verilerde olmayan bir şey uydurma. Veri azsa bunu nazikçe belirt.
               response.body.toLowerCase().contains('thinking')) {
             _thinkingConfigAccepted = false;
             response = await _client
-                .post(uri, headers: _headers, body: bodyFor(lowThinking: false))
+                .post(uri, headers: headers, body: bodyFor(lowThinking: false))
                 .timeout(timeout);
           }
 
@@ -660,16 +675,14 @@ Verilerde olmayan bir şey uydurma. Veri azsa bunu nazikçe belirt.
   static String _errorMessage(int statusCode) => switch (statusCode) {
     404 => 'Model bulunamadı (404)',
     400 => 'İstek reddedildi (400) — API anahtarı geçersiz olabilir',
+    401 => 'Uygulama doğrulanamadı (401) — uygulamayı güncelle',
     403 => 'Erişim reddedildi (403) — anahtarı kontrol et',
     429 => 'Kota doldu (429) — bir süre sonra tekrar dene',
     >= 500 => 'Gemini şu an yanıt vermiyor ($statusCode)',
     _ => 'Gemini $statusCode',
   };
 
-  String _planPrompt({
-    required String level,
-    required int dailyMinutes,
-  }) {
+  String _planPrompt({required String level, required int dailyMinutes}) {
     return '''
 Sen bir İngilizce öğretmenisin. Türkçe konuşan bir öğrenci için haftalık çalışma programı hazırlıyorsun.
 
@@ -902,10 +915,7 @@ const _fallbackC1 = <PlanDaySpec>[
     grammarTopic: 'Inversion for emphasis',
     vocabTheme: 'Liderlik ve yönetim',
   ),
-  PlanDaySpec(
-    grammarTopic: 'Cleft sentences',
-    vocabTheme: 'Medya ve iletişim',
-  ),
+  PlanDaySpec(grammarTopic: 'Cleft sentences', vocabTheme: 'Medya ve iletişim'),
   PlanDaySpec(
     grammarTopic: 'Mixed conditionals',
     vocabTheme: 'Kariyer kararları',
@@ -998,4 +1008,74 @@ Duration lessonTimeout(int dailyMinutes) {
   if (total <= base) return const Duration(seconds: 90);
   final seconds = (90 * total / base).round().clamp(90, 150);
   return Duration(seconds: seconds);
+}
+
+/// Gemini isteklerinin gideceği adres ve kimlik bilgileri.
+///
+/// İki yol vardır:
+/// - [GeminiBackend.direct]: Google AI Studio anahtarıyla doğrudan Gemini.
+///   Kullanıcı Ayarlar > Gelişmiş'ten kendi anahtarını girerse bu kullanılır.
+/// - [GeminiBackend.firebase]: Firebase AI Logic. Gemini anahtarı Firebase
+///   sunucusunda durur; uygulama yalnızca projeyi tanıtan Firebase anahtarını
+///   ve App Check jetonunu gönderir. İstek gövdesi Gemini'yle aynıdır.
+class GeminiBackend {
+  const GeminiBackend._({
+    required this.baseUrl,
+    required this.apiKey,
+    required this.firebase,
+    required this.canListModels,
+    required this.fallbackModels,
+    Future<Map<String, String>> Function()? headers,
+  }) : _headers = headers; // ignore: prefer_initializing_formals
+
+  factory GeminiBackend.direct(String apiKey) => GeminiBackend._(
+    baseUrl: AppConstants.geminiBaseUrl,
+    apiKey: apiKey,
+    firebase: false,
+    canListModels: true,
+    fallbackModels: AppConstants.geminiFallbackModels,
+  );
+
+  /// [appCheckToken] her istekte çağrılır; jeton alınamazsa null döner ve
+  /// istek jetonsuz gider (App Check izleme modundayken kabul edilir).
+  factory GeminiBackend.firebase({
+    required String projectId,
+    required String apiKey,
+    Future<String?> Function()? appCheckToken,
+  }) => GeminiBackend._(
+    baseUrl:
+        'https://firebasevertexai.googleapis.com/v1beta/projects/'
+        '$projectId/models',
+    apiKey: apiKey,
+    firebase: true,
+    canListModels: false,
+    fallbackModels: AppConstants.firebaseModels,
+    headers: () async {
+      String? token;
+      try {
+        token = await appCheckToken?.call();
+      } catch (_) {
+        // Jeton alınamadı (ör. kayıtsız hata ayıklama cihazı); jetonsuz dene.
+      }
+      return {'X-Firebase-AppCheck': ?token};
+    },
+  );
+
+  /// `.../models` ile biten adres; model adı ve `:generateContent` eklenir.
+  final String baseUrl;
+  final String apiKey;
+
+  /// Firebase AI Logic üzerinden mi.
+  final bool firebase;
+
+  /// `models.list` ile anahtarın erişebildiği modeller sorulabilir mi.
+  final bool canListModels;
+
+  /// Liste alınamadığında sırayla denenen modeller.
+  final List<String> fallbackModels;
+
+  final Future<Map<String, String>> Function()? _headers;
+
+  Future<Map<String, String>> extraHeaders() async =>
+      await _headers?.call() ?? const {};
 }

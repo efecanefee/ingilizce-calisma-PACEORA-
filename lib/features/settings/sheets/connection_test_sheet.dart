@@ -75,6 +75,8 @@ class _ConnectionTestState extends ConsumerState<ConnectionTest> {
               ],
             ),
             const SizedBox(height: 16),
+            if (report.route != null)
+              _ReportRow(label: 'Bağlantı yolu', value: report.route!),
             if (report.model != null)
               _ReportRow(label: 'Kullanılan model', value: report.model!),
             if (seconds != null)
@@ -83,6 +85,8 @@ class _ConnectionTestState extends ConsumerState<ConnectionTest> {
               _ReportRow(
                 label: report.listedFromApi
                     ? 'Erişilebilir modeller'
+                    : report.route == 'Firebase (anahtarsız)'
+                    ? 'Denenen modeller'
                     : 'Denenen modeller (liste alınamadı)',
                 value: report.availableModels.take(5).join('\n'),
               ),

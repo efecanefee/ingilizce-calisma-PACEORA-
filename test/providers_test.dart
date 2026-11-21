@@ -10,6 +10,7 @@ import 'package:paceora/data/gemini_service.dart';
 import 'package:paceora/data/lesson_models.dart';
 import 'package:paceora/data/providers.dart';
 import 'package:paceora/data/repository.dart';
+import 'package:paceora/data/settings_providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const _lessonJson = '''
@@ -33,22 +34,22 @@ class _StubGemini {
   int requestCount = 0;
 
   http.Client get client => MockClient((request) async {
-        // Model listesi (GET) içerik üretimi değildir; yalnızca
-        // generateContent çağrıları sayılır.
-        if (request.method == 'POST') requestCount++;
-        final body = jsonEncode({
-          'candidates': [
-            {
-              'content': {
-                'parts': [
-                  {'text': _lessonJson},
-                ],
-              },
-            },
-          ],
-        });
-        return http.Response.bytes(utf8.encode(body), 200);
-      });
+    // Model listesi (GET) içerik üretimi değildir; yalnızca
+    // generateContent çağrıları sayılır.
+    if (request.method == 'POST') requestCount++;
+    final body = jsonEncode({
+      'candidates': [
+        {
+          'content': {
+            'parts': [
+              {'text': _lessonJson},
+            ],
+          },
+        },
+      ],
+    });
+    return http.Response.bytes(utf8.encode(body), 200);
+  });
 }
 
 Future<ProviderContainer> _container({
@@ -191,6 +192,47 @@ void main() {
           ),
         ),
       );
+    });
+  });
+
+  group('geminiServiceProvider', () {
+    Future<GeminiService> serviceWith({
+      String storedKey = '',
+      GeminiBackend? firebase,
+    }) async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final container = ProviderContainer.test(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          databaseProvider.overrideWithValue(db),
+          storedApiKeyProvider.overrideWithValue(storedKey),
+          firebaseBackendProvider.overrideWithValue(firebase),
+        ],
+      );
+      return container.read(geminiServiceProvider);
+    }
+
+    final firebase = GeminiBackend.firebase(
+      projectId: 'demo',
+      apiKey: 'firebase-key',
+    );
+
+    test('Firebase bağlıysa anahtarsız ondan gider', () async {
+      final service = await serviceWith(firebase: firebase);
+      expect(service.viaFirebase, isTrue);
+      expect(service.hasApiKey, isTrue);
+    });
+
+    test('kullanıcının kendi anahtarı Firebase\'den önce gelir', () async {
+      final service = await serviceWith(storedKey: 'kendi', firebase: firebase);
+      expect(service.viaFirebase, isFalse);
+      expect(service.backend.apiKey, 'kendi');
+    });
+
+    test('Firebase yoksa doğrudan Gemini yoluna düşer', () async {
+      final service = await serviceWith();
+      expect(service.viaFirebase, isFalse);
     });
   });
 }

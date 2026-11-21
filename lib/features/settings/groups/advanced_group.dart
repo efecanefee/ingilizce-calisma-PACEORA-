@@ -19,7 +19,8 @@ class AdvancedGroup extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final hasCustomKey = ref.watch(apiKeyProvider).isNotEmpty;
-    final usable = ref.watch(geminiServiceProvider).hasApiKey;
+    final service = ref.watch(geminiServiceProvider);
+    final usable = service.hasApiKey;
 
     return SettingsGroup(
       section: SettingsSection.advanced,
@@ -37,7 +38,9 @@ class AdvancedGroup extends ConsumerWidget {
         SettingsTile(
           icon: Icons.network_check_rounded,
           title: 'Bağlantıyı test et',
-          subtitle: 'Anahtar, model ve yanıt süresini kontrol eder',
+          subtitle: service.viaFirebase
+              ? 'Yapay zeka bağlantısını ve yanıt süresini kontrol eder'
+              : 'Anahtar, model ve yanıt süresini kontrol eder',
           onTap: () => openConnectionTestSheet(context),
         ),
         const ErrorLogTile(),

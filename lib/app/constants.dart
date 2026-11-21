@@ -15,6 +15,15 @@ abstract class AppConstants {
   /// Model listesi alınamazsa (ağ hatası vb.) sırayla denenecek modeller.
   /// Normalde model, anahtarın erişebildikleri arasından otomatik seçilir
   /// (bkz. `gemini_models.dart`).
+  /// Firebase AI Logic'te denenen modeller (Firebase model listesi sunmaz).
+  /// 2026-11-21 ölçümü: 3.5-flash-lite ~5 sn, 3.6-flash ~77 sn, 3.8-flash
+  /// 90 sn'de yanıt vermedi; 2.5 modelleri yeni projelere kapalı.
+  static const firebaseModels = [
+    'gemini-3.5-flash-lite',
+    'gemini-3.1-flash-lite',
+    'gemini-3.6-flash',
+  ];
+
   static const geminiFallbackModels = [
     'gemini-3.5-flash-lite',
     'gemini-3.8-flash',
@@ -94,11 +103,8 @@ enum DifficultyLevel {
   final String code;
   final String label;
 
-  static DifficultyLevel fromCode(String code) =>
-      DifficultyLevel.values.firstWhere(
-        (e) => e.code == code,
-        orElse: () => DifficultyLevel.b1,
-      );
+  static DifficultyLevel fromCode(String code) => DifficultyLevel.values
+      .firstWhere((e) => e.code == code, orElse: () => DifficultyLevel.b1);
 
   DifficultyLevel step(int delta) {
     final i = (index + delta).clamp(0, DifficultyLevel.values.length - 1);

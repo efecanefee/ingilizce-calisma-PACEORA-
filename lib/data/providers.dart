@@ -42,10 +42,20 @@ final repositoryProvider = Provider<Repository>(
   (ref) => Repository(ref.watch(databaseProvider)),
 );
 
+/// Firebase AI Logic bağlantısı; `main()` Firebase'i başlatabildiyse
+/// doldurulur. Testlerde ve Firebase'siz platformlarda null.
+final firebaseBackendProvider = Provider<GeminiBackend?>((ref) => null);
+
 final geminiServiceProvider = Provider<GeminiService>((ref) {
-  // Ayarlar'dan anahtar girildiyse o kullanılır; boşsa derleme zamanı anahtarı.
+  // Sıra: Ayarlar'dan girilen kendi anahtarı → Firebase (anahtarsız) →
+  // derleme zamanı anahtarı.
   final override = ref.watch(apiKeyProvider);
-  final service = GeminiService(apiKey: override.isEmpty ? null : override);
+  final firebase = ref.watch(firebaseBackendProvider);
+  final service = override.isNotEmpty
+      ? GeminiService(apiKey: override)
+      : firebase != null
+      ? GeminiService(backend: firebase)
+      : GeminiService();
   ref.onDispose(service.dispose);
   return service;
 });
@@ -60,22 +70,23 @@ class ProfileNotifier extends AsyncNotifier<UserProfile?> {
     required String level,
     required int dailyMinutes,
   }) async {
-    final profile = await ref.read(repositoryProvider).saveProfile(
-          name: name,
-          level: level,
-          dailyMinutes: dailyMinutes,
-        );
+    final profile = await ref
+        .read(repositoryProvider)
+        .saveProfile(name: name, level: level, dailyMinutes: dailyMinutes);
     state = AsyncValue.data(profile);
     return profile;
   }
 
   Future<void> refresh() async {
-    state = await AsyncValue.guard(() => ref.read(repositoryProvider).profile());
+    state = await AsyncValue.guard(
+      () => ref.read(repositoryProvider).profile(),
+    );
   }
 }
 
-final profileProvider =
-    AsyncNotifierProvider<ProfileNotifier, UserProfile?>(ProfileNotifier.new);
+final profileProvider = AsyncNotifierProvider<ProfileNotifier, UserProfile?>(
+  ProfileNotifier.new,
+);
 
 /// İçinde bulunulan haftanın planı + planın kaynağı.
 class WeekPlan {
@@ -133,7 +144,9 @@ class WeekPlanNotifier extends AsyncNotifier<WeekPlan> {
       '$_offlinePrefix${mondayOf(clock.now()).toIso8601String()}';
 
   Future<WeeklyPlanResult> _generate(UserProfile profile) async {
-    final result = await ref.read(geminiServiceProvider).generateWeeklyPlan(
+    final result = await ref
+        .read(geminiServiceProvider)
+        .generateWeeklyPlan(
           level: profile.level,
           dailyMinutes: profile.dailyMinutes,
         );
@@ -185,8 +198,9 @@ class WeekPlanNotifier extends AsyncNotifier<WeekPlan> {
   }
 }
 
-final weekPlanProvider =
-    AsyncNotifierProvider<WeekPlanNotifier, WeekPlan>(WeekPlanNotifier.new);
+final weekPlanProvider = AsyncNotifierProvider<WeekPlanNotifier, WeekPlan>(
+  WeekPlanNotifier.new,
+);
 
 /// Bugünkü ders kaydı — ana ekranda skor/süre göstermek için.
 ///
@@ -227,8 +241,7 @@ class LessonNotifier extends AsyncNotifier<LessonState> {
   Future<LessonState> build() async {
     _sessionStart = clock.now();
 
-    final existing =
-        await ref.read(repositoryProvider).lessonFor(clock.now());
+    final existing = await ref.read(repositoryProvider).lessonFor(clock.now());
     if (existing != null) {
       final decoded = LessonState.decode(existing.contentJson);
       // Kayıt bozuksa sessizce yeniden üretilir.
@@ -252,7 +265,9 @@ class LessonNotifier extends AsyncNotifier<LessonState> {
       );
     }
 
-    final result = await ref.read(geminiServiceProvider).generateDailyLesson(
+    final result = await ref
+        .read(geminiServiceProvider)
+        .generateDailyLesson(
           level: profile.level,
           dailyMinutes: profile.dailyMinutes,
           grammarTopic: today.grammarTopic,
@@ -313,8 +328,11 @@ class LessonNotifier extends AsyncNotifier<LessonState> {
 
     await _persist(
       current.copyWith(
-        progress:
-            current.progress.withAnswer(key, correct: correct, input: input),
+        progress: current.progress.withAnswer(
+          key,
+          correct: correct,
+          input: input,
+        ),
       ),
     );
   }
@@ -344,8 +362,9 @@ class LessonNotifier extends AsyncNotifier<LessonState> {
 
     // Ders yarıda bırakılıp geri dönülmüş olabilir; süreler toplanır.
     final previous = (await repository.lessonFor(now))?.durationSeconds ?? 0;
-    final elapsed =
-        _sessionStart == null ? 0 : now.difference(_sessionStart!).inSeconds;
+    final elapsed = _sessionStart == null
+        ? 0
+        : now.difference(_sessionStart!).inSeconds;
 
     await repository.saveLesson(
       now,
@@ -401,19 +420,20 @@ final lessonProvider = AsyncNotifierProvider<LessonNotifier, LessonState>(
 // --- Hatırlatma -------------------------------------------------------------
 
 /// main() içinde gerçek servisle override edilir; testlerde sessiz kalır.
-final reminderServiceProvider =
-    Provider<ReminderService>((ref) => const NoopReminderService());
+final reminderServiceProvider = Provider<ReminderService>(
+  (ref) => const NoopReminderService(),
+);
 
 // --- Flash kartlar ----------------------------------------------------------
 
 /// Ana ekrandaki rozet ve kart ekranı başlığı için deste özeti.
 final flashcardSummaryProvider =
     FutureProvider<({int due, int total, int mature})>((ref) async {
-  final repository = ref.read(repositoryProvider);
-  final due = await repository.dueFlashcards();
-  final counts = await repository.flashcardCounts();
-  return (due: due.length, total: counts.total, mature: counts.mature);
-});
+      final repository = ref.read(repositoryProvider);
+      final due = await repository.dueFlashcards();
+      final counts = await repository.flashcardCounts();
+      return (due: due.length, total: counts.total, mature: counts.mature);
+    });
 
 /// Haftalık rapor için bu hafta tekrar edilen kart sayısının anahtarı.
 ///
@@ -438,8 +458,8 @@ class FlashcardSession {
 class FlashcardSessionNotifier extends AsyncNotifier<FlashcardSession> {
   @override
   Future<FlashcardSession> build() async => FlashcardSession(
-        queue: await ref.read(repositoryProvider).dueFlashcards(limit: 50),
-      );
+    queue: await ref.read(repositoryProvider).dueFlashcards(limit: 50),
+  );
 
   Future<void> grade(ReviewGrade grade) async {
     final session = state.value;
@@ -466,9 +486,9 @@ class FlashcardSessionNotifier extends AsyncNotifier<FlashcardSession> {
 
 final flashcardSessionProvider =
     AsyncNotifierProvider<FlashcardSessionNotifier, FlashcardSession>(
-  FlashcardSessionNotifier.new,
-  isAutoDispose: true,
-);
+      FlashcardSessionNotifier.new,
+      isAutoDispose: true,
+    );
 
 // --- Kelime Rallisi ---------------------------------------------------------
 
@@ -779,7 +799,9 @@ class StoryNotifier extends AsyncNotifier<StoryState> {
               v.word,
           ];
 
-    final result = await ref.read(geminiServiceProvider).generateDailyStory(
+    final result = await ref
+        .read(geminiServiceProvider)
+        .generateDailyStory(
           level: profile.level,
           dailyMinutes: profile.dailyMinutes,
           grammarTopic: today?.grammarTopic ?? 'Mixed tenses',
@@ -819,7 +841,9 @@ class StoryNotifier extends AsyncNotifier<StoryState> {
     }
 
     final profile = await ref.read(repositoryProvider).profile();
-    final result = await ref.read(geminiServiceProvider).translateWord(
+    final result = await ref
+        .read(geminiServiceProvider)
+        .translateWord(
           word: word,
           sentence: sentence,
           level: profile?.level ?? 'B1',
@@ -910,8 +934,11 @@ final progressProvider = FutureProvider<ProgressData>((ref) async {
   final weeklyScores = [
     for (var i = weeks - 1; i >= 0; i--)
       () {
-        final start =
-            DateTime(thisMonday.year, thisMonday.month, thisMonday.day - 7 * i);
+        final start = DateTime(
+          thisMonday.year,
+          thisMonday.month,
+          thisMonday.day - 7 * i,
+        );
         final end = DateTime(start.year, start.month, start.day + 7);
         final scores = [
           for (final l in lessons)
@@ -947,7 +974,8 @@ final progressProvider = FutureProvider<ProgressData>((ref) async {
     bestStreak: max(bestStreakOf(days), profile?.streak ?? 0),
     lessonsCompleted: lessons.length,
     totalMinutes:
-        (lessons.fold<int>(0, (sum, l) => sum + l.durationSeconds) / 60).round(),
+        (lessons.fold<int>(0, (sum, l) => sum + l.durationSeconds) / 60)
+            .round(),
     cardsTotal: cards.total,
     cardsMature: cards.mature,
   );
@@ -960,9 +988,7 @@ class WeeklyReportsNotifier extends AsyncNotifier<List<WeeklyReport>> {
   @override
   Future<List<WeeklyReport>> build() async {
     final rows = await ref.read(repositoryProvider).weeklyReviews();
-    return [
-      for (final row in rows) ?WeeklyReport.decode(row.reportJson),
-    ];
+    return [for (final row in rows) ?WeeklyReport.decode(row.reportJson)];
   }
 
   /// [date]'in haftası için raporu üretir (varsa yeniler).
@@ -979,7 +1005,9 @@ class WeeklyReportsNotifier extends AsyncNotifier<List<WeeklyReport>> {
     final stats = await repository.weeklyStats(when, cardsReviewed: reviewed);
     final delta = recommendLevelDelta(stats);
 
-    final result = await ref.read(geminiServiceProvider).generateWeeklyReport(
+    final result = await ref
+        .read(geminiServiceProvider)
+        .generateWeeklyReport(
           level: profile.level,
           stats: stats,
           levelDelta: delta,
@@ -1023,9 +1051,9 @@ class WeeklyReportsNotifier extends AsyncNotifier<List<WeeklyReport>> {
 
 /// Tüm haftalardaki flash kart tekrarlarının toplamı.
 int totalCardsReviewed(SharedPreferences prefs) => [
-      for (final key in prefs.getKeys())
-        if (key.startsWith('cards_reviewed_')) prefs.getInt(key) ?? 0,
-    ].fold(0, (a, b) => a + b);
+  for (final key in prefs.getKeys())
+    if (key.startsWith('cards_reviewed_')) prefs.getInt(key) ?? 0,
+].fold(0, (a, b) => a + b);
 
 /// XP, oyuncu seviyesi ve rozetler.
 ///
@@ -1038,7 +1066,9 @@ final gameProvider = FutureProvider<GameState>((ref) async {
   final match = MatchRecords.read(prefs);
   final speech = SpeechRecords.read(prefs);
   final roleplay = RoleplayRecords.read(prefs);
-  final stats = await ref.read(repositoryProvider).gameStats(
+  final stats = await ref
+      .read(repositoryProvider)
+      .gameStats(
         cardsReviewed: totalCardsReviewed(prefs),
         levelUps: prefs.getInt(levelUpsKey) ?? 0,
         matchXp: match.xp,
@@ -1084,5 +1114,5 @@ final mistakesProvider = FutureProvider<List<Mistake>>((ref) {
 
 final weeklyReportsProvider =
     AsyncNotifierProvider<WeeklyReportsNotifier, List<WeeklyReport>>(
-  WeeklyReportsNotifier.new,
-);
+      WeeklyReportsNotifier.new,
+    );
