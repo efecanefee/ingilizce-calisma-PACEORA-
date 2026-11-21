@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,14 +8,21 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/avatar.dart';
 import '../../app/constants.dart';
+import '../../app/error_view.dart';
 import '../../app/logo.dart';
+import '../../app/mascot.dart';
 import '../../app/motion.dart';
+import '../../app/pace_messages.dart';
 import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../data/profile_style.dart';
 import '../../data/providers.dart';
+import '../../data/repository.dart' show mondayOf;
 import '../../data/rewards.dart';
 import '../../data/streak_freeze.dart';
+import '../program/program_screen.dart';
+import '../settings/settings_screen.dart' show showApiKeySheet;
+import '../wardrobe/wardrobe_sheet.dart';
 
 /// Ana ekran ("Bugün" sekmesi): karşılama, bugünün dersi, günlük hedef,
 /// haftanın özeti ve pratik alanları.
@@ -30,7 +38,12 @@ class HomeScreen extends ConsumerWidget {
       appBar: AppBar(title: const PaceoraWordmark(markSize: 28)),
       body: switch ((profile, plan)) {
         (AsyncError(:final error), _) ||
-        (_, AsyncError(:final error)) => _ErrorView(message: '$error'),
+        (_, AsyncError(:final error)) => ErrorView(
+          error: error,
+          onRetry: () => ref
+            ..invalidate(profileProvider)
+            ..invalidate(weekPlanProvider),
+        ),
         (AsyncData(value: null), _) => const _NoProfileView(),
         (AsyncData(value: final user?), AsyncData(value: final week)) =>
           _HomeBody(user: user, week: week),
@@ -88,6 +101,8 @@ class _HomeBody extends ConsumerWidget {
             ),
           const SizedBox(height: 16),
           item(const _DailyGoalCard()),
+          // Anahtar yoksa kişisel derslerin nasıl açılacağını anlatır.
+          const _ApiKeyHint(),
           const SizedBox(height: 28),
           item(
             Row(
@@ -111,6 +126,85 @@ class _HomeBody extends ConsumerWidget {
   }
 }
 
+/// Gemini anahtarı yokken (paylaşım sürümü) gösterilen, kapatılabilen kart.
+class _ApiKeyHint extends ConsumerStatefulWidget {
+  const _ApiKeyHint();
+
+  static const dismissedKey = 'api_key_hint_dismissed';
+
+  @override
+  ConsumerState<_ApiKeyHint> createState() => _ApiKeyHintState();
+}
+
+class _ApiKeyHintState extends ConsumerState<_ApiKeyHint> {
+  late bool _dismissed =
+      ref.read(sharedPreferencesProvider).getBool(_ApiKeyHint.dismissedKey) ??
+      false;
+
+  Future<void> _dismiss() async {
+    setState(() => _dismissed = true);
+    await ref
+        .read(sharedPreferencesProvider)
+        .setBool(_ApiKeyHint.dismissedKey, true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hasKey = ref.watch(geminiServiceProvider).hasApiKey;
+    if (hasKey || _dismissed) return const SizedBox.shrink();
+
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.auto_awesome_rounded, color: context.pace.accentDark),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Sana özel dersler için anahtar ekle',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Şu an hazır derslerle çalışıyorsun. Google AI Studio\'dan '
+                      'ücretsiz bir Gemini anahtarı alıp eklersen dersler, '
+                      'hikayeler ve sohbet seviyene göre üretilir.',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 8),
+                    FilledButton.tonal(
+                      onPressed: () => showApiKeySheet(context),
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size(0, 40),
+                      ),
+                      child: const Text('Anahtar ekle'),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                tooltip: 'Kapat',
+                onPressed: _dismiss,
+                icon: const Icon(Icons.close_rounded, size: 20),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Hareketli gradyanlı karşılama kartı: selam, seri ve oyuncu seviyesi.
 class _HeroCard extends StatefulWidget {
   const _HeroCard({required this.user, required this.level});
@@ -128,7 +222,18 @@ class _HeroCardState extends State<_HeroCard>
   late final _controller = AnimationController(
     vsync: this,
     duration: const Duration(seconds: 6),
-  )..repeat(reverse: true);
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // "Animasyonları azalt" açıksa gradyan durur.
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _controller.stop();
+    } else if (!_controller.isAnimating) {
+      _controller.repeat(reverse: true);
+    }
+  }
 
   @override
   void dispose() {
@@ -153,16 +258,16 @@ class _HeroCardState extends State<_HeroCard>
             gradient: LinearGradient(
               begin: Alignment(-1 + t, -1),
               end: Alignment(1, 1 - t),
-              colors: const [
+              colors: [
                 AppColors.graphite900,
                 AppColors.graphite700,
-                AppColors.limeDark,
+                context.pace.accentDark,
               ],
               stops: [0, 0.55 + 0.15 * t, 1],
             ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.limeDark.withValues(alpha: 0.25 + 0.15 * t),
+                color: context.pace.accentDark.withValues(alpha: 0.25 + 0.15 * t),
                 blurRadius: 24,
                 offset: const Offset(0, 10),
               ),
@@ -181,9 +286,9 @@ class _HeroCardState extends State<_HeroCard>
                 Icon(
                       Icons.bolt_rounded,
                       size: 140,
-                      color: AppColors.limeSpark.withValues(alpha: 0.08),
+                      color: context.pace.accent.withValues(alpha: 0.08),
                     )
-                    .animate(onPlay: (c) => c.repeat(reverse: true))
+                    .animate(onPlay: Motion.loop(reverse: true))
                     .rotate(begin: -0.03, end: 0.03, duration: 3.seconds),
           ),
           Padding(
@@ -201,27 +306,121 @@ class _HeroCardState extends State<_HeroCard>
                   ],
                 ),
                 const SizedBox(height: 14),
-                Text(
-                  'Merhaba, ${user.name}',
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: onHero,
-                  ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Merhaba, ${user.name}',
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: onHero,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Seviye '
+                            '${DifficultyLevel.fromCode(user.level).label} · '
+                            'günde ${user.dailyMinutes} dk',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: onHero.withValues(alpha: 0.75),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          const _PaceBubble(),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const _HeroPace(),
+                  ],
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  'Seviye ${DifficultyLevel.fromCode(user.level).label} · '
-                  'günde ${user.dailyMinutes} dk',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: onHero.withValues(alpha: 0.75),
-                  ),
-                ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
                 if (level != null) _XpBar(level: level),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Pace'in konuşma balonu: güne ve seriye göre kısa bir mesaj. Kuyruğu
+/// sağdaki Pace'i gösterir.
+class _PaceBubble extends ConsumerWidget {
+  const _PaceBubble();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final display = ref.watch(streakDisplayProvider);
+    final message = paceMessage(
+      status: display.status,
+      streak: display.streak,
+      now: clock.now(),
+    );
+    return Semantics(
+      label: 'Pace diyor ki: $message',
+      excludeSemantics: true,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.12),
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(12),
+            topRight: Radius.circular(12),
+            bottomLeft: Radius.circular(12),
+            bottomRight: Radius.circular(3),
+          ),
+        ),
+        child: Text(
+          message,
+          maxLines: 3,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            color: Colors.white.withValues(alpha: 0.92),
+            height: 1.3,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Karşılama kartındaki Pace: serinin durumuna göre poz değiştirir.
+class _HeroPace extends ConsumerWidget {
+  const _HeroPace();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final status = ref.watch(streakDisplayProvider).status;
+    final mood = switch (status) {
+      StreakStatus.done => PaceMood.cheer,
+      StreakStatus.protected => PaceMood.surprised,
+      _ => PaceMood.run,
+    };
+    // Pace'e dokununca dolabı açılır.
+    return Semantics(
+      button: true,
+      label: "Pace'in dolabını aç",
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => showWardrobeSheet(context),
+        // Sabit kutu: görsel yüklenirken yazılar kaymaz, dokunma alanı
+        // pozdan bağımsız kalır.
+        child: SizedBox(
+          width: 88,
+          height: 80,
+          child: Align(
+            alignment: Alignment.bottomRight,
+            child: ExcludeSemantics(
+              child: EquippedPace(mood: mood, size: 80),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -268,18 +467,26 @@ class _StreakChip extends ConsumerWidget {
       label: 'Seri koruma',
       child: GestureDetector(
         onTap: () => showFreezeSheet(context),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: protected
-                  ? const Color(0xFF7DD3FC)
-                  : Colors.white.withValues(alpha: 0.15),
+        child: _StreakGlow(
+          // Seri yanarken çerçeve döner ve rozet parlar; koptuysa sakin kalır.
+          active: streak > 0 && !protected,
+          protected: protected,
+          child: Container(
+            // Dokunma alanı en az 48 dp (erişilebilirlik yönergesi).
+            constraints: const BoxConstraints(minHeight: 48),
+            alignment: Alignment.center,
+            padding: const EdgeInsets.fromLTRB(14, 9, 14, 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _streakRow(theme, streak, protected, owned),
+                if (streak > 0) ...[
+                  const SizedBox(height: 6),
+                  _MilestoneBar(streak: streak, protected: protected),
+                ],
+              ],
             ),
           ),
-          child: _streakRow(theme, streak, protected, owned),
         ),
       ),
     );
@@ -290,7 +497,7 @@ class _StreakChip extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         if (protected)
-          const Icon(Icons.ac_unit_rounded, color: Color(0xFF7DD3FC))
+          const Icon(Icons.ac_unit_rounded, color: AppColors.ice)
         else
           PulsingFlame(active: streak > 0),
         const SizedBox(width: 6),
@@ -320,10 +527,208 @@ class _StreakChip extends ConsumerWidget {
             child: Icon(
               Icons.ac_unit_rounded,
               size: 14,
-              color: Color(0xFF7DD3FC),
+              color: AppColors.ice,
             ),
           ),
       ],
+    );
+  }
+}
+
+/// Seri rozetinin zemini: yanan seride dönen sıcak renkli çerçeve, nefes
+/// alan ışıltı ve ara ara üstünden geçen parıltı.
+class _StreakGlow extends StatefulWidget {
+  const _StreakGlow({
+    required this.active,
+    required this.protected,
+    required this.child,
+  });
+
+  final bool active;
+  final bool protected;
+  final Widget child;
+
+  @override
+  State<_StreakGlow> createState() => _StreakGlowState();
+}
+
+class _StreakGlowState extends State<_StreakGlow>
+    with SingleTickerProviderStateMixin {
+  static const _radius = 16.0;
+  static const _fire = [
+    AppColors.fire,
+    AppColors.fireLight,
+    AppColors.fireRed,
+    AppColors.fire,
+  ];
+
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    // Seri sönükken de oluşturulur; dispose'da tembel oluşturma hata verir.
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    );
+    if (widget.active) _controller.repeat();
+  }
+
+  @override
+  void didUpdateWidget(_StreakGlow old) {
+    super.didUpdateWidget(old);
+    if (widget.active && !_controller.isAnimating) {
+      _controller.repeat();
+    } else if (!widget.active && _controller.isAnimating) {
+      _controller.stop();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // "Animasyonları azalt" açıksa çerçeve durur, parıltı kapanır.
+    final still = MediaQuery.disableAnimationsOf(context);
+    if (still && _controller.isAnimating) _controller.stop();
+    if (!widget.active) {
+      return Container(
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(_radius),
+          border: Border.all(
+            color: widget.protected
+                ? AppColors.ice
+                : Colors.white.withValues(alpha: 0.15),
+          ),
+        ),
+        child: widget.child,
+      );
+    }
+
+    final glowing = AnimatedBuilder(
+      animation: _controller,
+      child: widget.child,
+      builder: (context, child) {
+        final t = _controller.value;
+        // Işıltı bir turda iki kez nefes alır.
+        final breath = 0.5 + 0.5 * sin(t * 4 * pi);
+        return CustomPaint(
+          foregroundPainter: _RotatingBorderPainter(
+            turn: t,
+            colors: _fire,
+            radius: _radius,
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: AppColors.fire.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(_radius),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(
+                    0xFFFF9F1C,
+                  ).withValues(alpha: 0.18 + 0.22 * breath),
+                  blurRadius: 10 + 8 * breath,
+                ),
+              ],
+            ),
+            child: child,
+          ),
+        );
+      },
+    );
+
+    if (still) return glowing;
+    return glowing
+        .animate(onPlay: Motion.loop())
+        .shimmer(
+          delay: 2.seconds,
+          duration: 1200.ms,
+          color: AppColors.fireGlow.withValues(alpha: 0.35),
+        );
+  }
+}
+
+class _RotatingBorderPainter extends CustomPainter {
+  _RotatingBorderPainter({
+    required this.turn,
+    required this.colors,
+    required this.radius,
+  });
+
+  final double turn;
+  final List<Color> colors;
+  final double radius;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.8
+      ..shader = SweepGradient(
+        colors: colors,
+        transform: GradientRotation(turn * 2 * pi),
+      ).createShader(rect);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(rect.deflate(0.9), Radius.circular(radius)),
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_RotatingBorderPainter old) => old.turn != turn;
+}
+
+/// Sıradaki seri hedefine doğru dolan ince bar.
+class _MilestoneBar extends StatelessWidget {
+  const _MilestoneBar({required this.streak, required this.protected});
+
+  final int streak;
+  final bool protected;
+
+  @override
+  Widget build(BuildContext context) {
+    final m = streakMilestone(streak);
+    final progress = (streak - m.from) / (m.to - m.from);
+    final colors = protected
+        ? const [AppColors.ice, AppColors.iceLight]
+        : const [AppColors.fireRed, AppColors.fireLight];
+
+    return Semantics(
+      label: 'Sıradaki hedef ${m.to} gün',
+      child: SizedBox(
+        width: 72,
+        height: 5,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(3),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              ColoredBox(color: Colors.white.withValues(alpha: 0.15)),
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0, end: progress),
+                duration: Motion.slow,
+                curve: Motion.curve,
+                builder: (context, v, _) => FractionallySizedBox(
+                  alignment: Alignment.centerLeft,
+                  widthFactor: v.clamp(0.0, 1.0),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(colors: colors),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -360,7 +765,7 @@ class _FreezeSheetState extends ConsumerState<_FreezeSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    const ice = Color(0xFF7DD3FC);
+    const ice = AppColors.ice;
     final freeze = ref.watch(freezeProvider);
     final display = ref.watch(streakDisplayProvider);
     final xp = ref.watch(gameProvider).value?.level.xp ?? 0;
@@ -511,7 +916,7 @@ class _XpBar extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.limeSpark,
+                color: context.pace.accent,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
@@ -539,7 +944,7 @@ class _XpBar extends StatelessWidget {
               value: level.xp,
               suffix: ' XP',
               style: theme.textTheme.labelLarge?.copyWith(
-                color: AppColors.limeSpark,
+                color: context.pace.accent,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -562,14 +967,14 @@ class _XpBar extends StatelessWidget {
                       widthFactor: v.clamp(0.02, 1.0),
                       child: Container(
                         height: 10,
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [AppColors.limeDim, AppColors.limeSpark],
+                            colors: [context.pace.accentDim, context.pace.accent],
                           ),
                         ),
                       ),
                     )
-                    .animate(onPlay: (c) => c.repeat())
+                    .animate(onPlay: Motion.loop())
                     .shimmer(
                       delay: 2.seconds,
                       duration: 1200.ms,
@@ -746,7 +1151,7 @@ class _GoalTaskRow extends ConsumerWidget {
 
     return isNext
         ? row
-              .animate(onPlay: (c) => c.repeat(reverse: true))
+              .animate(onPlay: Motion.loop(reverse: true))
               .scaleXY(
                 begin: 1,
                 end: 1.015,
@@ -770,7 +1175,7 @@ class _GoalRing extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final color = complete
         ? AppColors.success
-        : (isDark ? AppColors.limeSpark : AppColors.limeDark);
+        : (isDark ? context.pace.accent : context.pace.accentDark);
 
     final ring = TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: progress),
@@ -805,7 +1210,7 @@ class _GoalRing extends StatelessWidget {
 
     return complete
         ? ring
-              .animate(onPlay: (c) => c.repeat(reverse: true))
+              .animate(onPlay: Motion.loop(reverse: true))
               .scaleXY(begin: 1, end: 1.08, duration: 900.ms)
         : ring;
   }
@@ -870,94 +1275,140 @@ class _WeekStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final accent = isDark ? AppColors.limeSpark : AppColors.limeDark;
-    final todayIndex = DateTime.now().weekday - DateTime.monday;
-    final status = {for (final d in week.days) d.dayIndex: d.status};
+    final accent = isDark ? context.pace.accent : context.pace.accentDark;
+    final now = clock.now();
+    final todayIndex = now.weekday - DateTime.monday;
+    final monday = mondayOf(now);
+    final byIndex = {for (final d in week.days) d.dayIndex: d};
 
-    return PressableScale(
-      onTap: () => context.go('/program'),
-      child: Ink(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainer,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: theme.colorScheme.outlineVariant),
-        ),
-        child: Row(
-          children: [
-            for (var i = 0; i < 7; i++)
-              Expanded(
-                child: Column(
-                  children: [
-                    Text(
-                      _initials[i],
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        fontWeight: i == todayIndex ? FontWeight.w800 : null,
-                        color: i == todayIndex ? accent : null,
-                      ),
+    // Her gün ayrı bir kutucuk: dokununca o günün konusu açılır.
+    return Row(
+      children: [
+        for (var i = 0; i < 7; i++) ...[
+          if (i > 0) const SizedBox(width: 6),
+          Expanded(
+            child:
+                _DayTile(
+                      initial: _initials[i],
+                      dayName: AppConstants.weekdayNames[i],
+                      date: DateTime(
+                        monday.year,
+                        monday.month,
+                        monday.day + i,
+                      ).day,
+                      done: byIndex[i]?.status == 'completed',
+                      today: i == todayIndex,
+                      past: i < todayIndex,
+                      accent: accent,
+                      onTap: byIndex[i] == null
+                          ? null
+                          : () => showPlanDayDetails(context, byIndex[i]!),
+                    )
+                    .animate(delay: (60 * i).ms)
+                    .scale(
+                      begin: const Offset(0.6, 0.6),
+                      duration: Motion.medium,
+                      curve: Curves.easeOutBack,
                     ),
-                    const SizedBox(height: 6),
-                    _DayDot(
-                          done: status[i] == 'completed',
-                          today: i == todayIndex,
-                          past: i < todayIndex,
-                          accent: accent,
-                        )
-                        .animate(delay: (60 * i).ms)
-                        .scale(
-                          begin: const Offset(0.3, 0.3),
-                          duration: Motion.medium,
-                          curve: Curves.easeOutBack,
-                        ),
-                  ],
-                ),
-              ),
-          ],
-        ),
-      ),
+          ),
+        ],
+      ],
     );
   }
 }
 
-class _DayDot extends StatelessWidget {
-  const _DayDot({
+/// Haftanın bir günü: gün kısaltması, tarih ve durum işareti.
+class _DayTile extends StatelessWidget {
+  const _DayTile({
+    required this.initial,
+    required this.dayName,
+    required this.date,
     required this.done,
     required this.today,
     required this.past,
     required this.accent,
+    required this.onTap,
   });
 
+  final String initial;
+  final String dayName;
+  final int date;
   final bool done;
   final bool today;
   final bool past;
   final Color accent;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
-      width: 30,
-      height: 30,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: done
-            ? AppColors.success
-            : today
-            ? accent.withValues(alpha: 0.15)
-            : theme.colorScheme.surfaceContainerHighest.withValues(
-                alpha: past ? 0.9 : 0.4,
+    final muted = theme.colorScheme.onSurface.withValues(alpha: 0.55);
+
+    final Color fill;
+    final Color fg;
+    if (done) {
+      fill = AppColors.success.withValues(alpha: 0.16);
+      fg = theme.brightness == Brightness.dark
+          ? AppColors.success
+          : AppColors.successDark;
+    } else if (today) {
+      fill = accent.withValues(alpha: 0.14);
+      fg = accent;
+    } else {
+      fill = theme.colorScheme.surfaceContainer;
+      fg = past ? muted : theme.colorScheme.onSurface;
+    }
+
+    final icon = done
+        ? Icons.check_rounded
+        : today
+        ? Icons.play_arrow_rounded
+        : past
+        ? Icons.remove_rounded
+        : Icons.circle_outlined;
+
+    return Semantics(
+      button: onTap != null,
+      label:
+          '$dayName $date, '
+          '${done ? 'tamamlandı' : today ? 'bugün' : past ? 'kaçırıldı' : 'yakında'}',
+      excludeSemantics: true,
+      child: PressableScale(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Ink(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: fill,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: today ? accent : theme.colorScheme.outlineVariant,
+              width: today ? 2 : 1,
+            ),
+          ),
+          child: Column(
+            children: [
+              Text(
+                initial,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: today ? accent : muted,
+                  fontWeight: today ? FontWeight.w800 : null,
+                ),
               ),
-        border: today ? Border.all(color: accent, width: 2) : null,
+              const SizedBox(height: 2),
+              Text(
+                '$date',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: fg,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Icon(icon, size: 14, color: fg),
+            ],
+          ),
+        ),
       ),
-      child: done
-          ? const Icon(Icons.check_rounded, size: 18, color: Colors.white)
-          : past
-          ? Icon(
-              Icons.remove_rounded,
-              size: 16,
-              color: theme.colorScheme.outline,
-            )
-          : null,
     );
   }
 }
@@ -1052,7 +1503,7 @@ class _PracticeGrid extends ConsumerWidget {
         for (final (i, banner) in [
           _FeatureBanner(
             icon: Icons.forum_rounded,
-            color: const Color(0xFF38BDF8),
+            color: AppColors.iceDeep,
             title: 'AI ile sohbet',
             subtitle: roleplay.completed > 0
                 ? '${roleplay.completed} sohbet · ${roleplay.goalScenarios.length}'
@@ -1195,7 +1646,7 @@ class _PracticeTile extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: (isDark ? AppColors.limeSpark : AppColors.limeDark)
+                    color: (isDark ? context.pace.accent : context.pace.accentDark)
                         .withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -1220,7 +1671,7 @@ class _PracticeTile extends StatelessWidget {
                           ),
                         ),
                       )
-                      .animate(onPlay: (c) => c.repeat(reverse: true))
+                      .animate(onPlay: Motion.loop(reverse: true))
                       .scaleXY(begin: 1, end: 1.12, duration: 800.ms),
               ],
             ),
@@ -1368,7 +1819,7 @@ class _TodayCard extends StatelessWidget {
             if (done) ...[
               Row(
                 children: [
-                  const Icon(Icons.check_circle, color: Color(0xFF4ADE80))
+                  const Icon(Icons.check_circle, color: AppColors.success)
                       .animate()
                       .scale(duration: Motion.slow, curve: Curves.elasticOut),
                   const SizedBox(width: 10),
@@ -1397,7 +1848,7 @@ class _TodayCard extends StatelessWidget {
                     label: Text(inProgress ? 'Derse devam et' : 'Bugünü çalış'),
                   )
                   // Ara ara geçen parıltı asıl eyleme dikkat çeker.
-                  .animate(onPlay: (c) => c.repeat())
+                  .animate(onPlay: Motion.loop())
                   .shimmer(
                     delay: 2500.ms,
                     duration: 1200.ms,
@@ -1472,33 +1923,6 @@ class _NoProfileView extends StatelessWidget {
               onPressed: () => context.go('/onboarding'),
               child: const Text('Kuruluma başla'),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ErrorView extends StatelessWidget {
-  const _ErrorView({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: 40,
-              color: Theme.of(context).colorScheme.error,
-            ),
-            const SizedBox(height: 16),
-            Text(message, textAlign: TextAlign.center),
           ],
         ),
       ),

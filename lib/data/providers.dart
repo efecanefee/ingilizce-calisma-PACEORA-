@@ -1,23 +1,28 @@
 import 'dart:math';
 
+import 'package:clock/clock.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../app/constants.dart';
+import '../app/error_reporting.dart';
 import 'database.dart';
 import 'gemini_service.dart';
 import 'lesson_models.dart';
 import 'match_game.dart';
+import 'offline_lessons.dart';
 import 'pronunciation.dart';
-import 'roleplay.dart';
-import 'streak_freeze.dart';
 import 'reminder_service.dart';
 import 'repository.dart';
 import 'review_models.dart';
 import 'rewards.dart';
-import 'srs.dart';
+import 'roleplay.dart';
 import 'settings_providers.dart';
+import 'srs.dart';
 import 'story_models.dart';
+import 'streak_freeze.dart';
+import 'wardrobe.dart';
 import 'word_lookup.dart';
 
 /// main() içinde gerçek örnekle override edilir.
@@ -83,7 +88,7 @@ class WeekPlan {
 
   /// Bugüne denk gelen gün; plan boşsa null.
   WeeklyPlanDay? get today {
-    final index = DateTime.now().weekday - DateTime.monday;
+    final index = clock.now().weekday - DateTime.monday;
     for (final day in days) {
       if (day.dayIndex == index) return day;
     }
@@ -101,7 +106,7 @@ class WeekPlanNotifier extends AsyncNotifier<WeekPlan> {
   Future<WeekPlan> build() => _loadOrGenerate();
 
   Future<WeekPlan> _load() async {
-    final now = DateTime.now();
+    final now = clock.now();
     final days = await ref.read(repositoryProvider).planForWeek(now);
     final offline =
         ref.read(sharedPreferencesProvider).getBool(_offlineKey()) ?? false;
@@ -125,17 +130,16 @@ class WeekPlanNotifier extends AsyncNotifier<WeekPlan> {
   }
 
   String _offlineKey() =>
-      '$_offlinePrefix${mondayOf(DateTime.now()).toIso8601String()}';
+      '$_offlinePrefix${mondayOf(clock.now()).toIso8601String()}';
 
   Future<WeeklyPlanResult> _generate(UserProfile profile) async {
     final result = await ref.read(geminiServiceProvider).generateWeeklyPlan(
-          name: profile.name,
           level: profile.level,
           dailyMinutes: profile.dailyMinutes,
         );
     await ref
         .read(repositoryProvider)
-        .replaceWeeklyPlan(DateTime.now(), result.days);
+        .replaceWeeklyPlan(clock.now(), result.days);
     await ref
         .read(sharedPreferencesProvider)
         .setBool(_offlineKey(), result.offline);
@@ -163,7 +167,7 @@ class WeekPlanNotifier extends AsyncNotifier<WeekPlan> {
   /// Uygulama açık bırakılıp gece yarısı geçildiğinde "bugün" dünde takılı
   /// kalıyordu; hafta da değişmişse yeni program burada üretilir.
   Future<void> refreshIfDayChanged() async {
-    if (_loadedDay == dayOf(DateTime.now())) return;
+    if (_loadedDay == dayOf(clock.now())) return;
     state = await AsyncValue.guard(_loadOrGenerate);
   }
 
@@ -189,8 +193,18 @@ final weekPlanProvider =
 /// Plan durumu değiştiğinde (gün tamamlanınca) yeniden okunur.
 final todayLessonProvider = FutureProvider<Lesson?>((ref) async {
   ref.watch(weekPlanProvider);
-  return ref.read(repositoryProvider).lessonFor(DateTime.now());
+  return ref.read(repositoryProvider).lessonFor(clock.now());
 });
+
+/// Cihazdaki hata kaydı (Ayarlar > Hata kaydı).
+final errorLogProvider = Provider<ErrorLog>(
+  (ref) => ErrorLog(ref.watch(sharedPreferencesProvider)),
+);
+
+/// Uygulamanın içinde gelen hazır dersler (Gemini'ye ulaşılamadığında).
+final offlineLessonBankProvider = FutureProvider<OfflineLessonBank>(
+  (ref) => OfflineLessonBank.load(rootBundle),
+);
 
 /// Ders üretilemediğinde fırlatılır.
 ///
@@ -211,10 +225,10 @@ class LessonNotifier extends AsyncNotifier<LessonState> {
 
   @override
   Future<LessonState> build() async {
-    _sessionStart = DateTime.now();
+    _sessionStart = clock.now();
 
     final existing =
-        await ref.read(repositoryProvider).lessonFor(DateTime.now());
+        await ref.read(repositoryProvider).lessonFor(clock.now());
     if (existing != null) {
       final decoded = LessonState.decode(existing.contentJson);
       // Kayıt bozuksa sessizce yeniden üretilir.
@@ -239,7 +253,6 @@ class LessonNotifier extends AsyncNotifier<LessonState> {
     }
 
     final result = await ref.read(geminiServiceProvider).generateDailyLesson(
-          name: profile.name,
           level: profile.level,
           dailyMinutes: profile.dailyMinutes,
           grammarTopic: today.grammarTopic,
@@ -253,8 +266,33 @@ class LessonNotifier extends AsyncNotifier<LessonState> {
     }
 
     final lessonState = LessonState(lesson: lesson);
-    await repository.saveLesson(DateTime.now(), lessonState);
+    await repository.saveLesson(clock.now(), lessonState);
     return lessonState;
+  }
+
+  /// Gemini'ye ulaşılamadığında günün dersini hazır ders havuzundan açar.
+  Future<void> useOfflineLesson() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() async {
+      final repository = ref.read(repositoryProvider);
+      final profile = await repository.profile();
+      final today = (await ref.read(weekPlanProvider.future)).today;
+      if (profile == null || today == null) {
+        throw const LessonUnavailable('Bugün için plan bulunamadı.');
+      }
+      final bank = await ref.read(offlineLessonBankProvider.future);
+      final lesson = bank.lessonFor(
+        level: profile.level,
+        grammarTopic: today.grammarTopic,
+        dayIndex: today.dayIndex,
+      );
+      if (lesson == null) {
+        throw const LessonUnavailable('Hazır ders bulunamadı.');
+      }
+      final lessonState = LessonState(lesson: lesson, offline: true);
+      await repository.saveLesson(clock.now(), lessonState);
+      return lessonState;
+    });
   }
 
   /// Üretim başarısız olduysa yeniden dener.
@@ -292,7 +330,7 @@ class LessonNotifier extends AsyncNotifier<LessonState> {
 
   Future<void> _persist(LessonState next) async {
     state = AsyncValue.data(next);
-    await ref.read(repositoryProvider).saveLesson(DateTime.now(), next);
+    await ref.read(repositoryProvider).saveLesson(clock.now(), next);
   }
 
   /// Dersi bitirir: skoru ve süreyi yazar, hataları deftere işler, günü kapatır.
@@ -301,7 +339,7 @@ class LessonNotifier extends AsyncNotifier<LessonState> {
     if (current == null) return;
 
     final repository = ref.read(repositoryProvider);
-    final now = DateTime.now();
+    final now = clock.now();
 
     // Ders yarıda bırakılıp geri dönülmüş olabilir; süreler toplanır.
     final previous = (await repository.lessonFor(now))?.durationSeconds ?? 0;
@@ -409,7 +447,7 @@ class FlashcardSessionNotifier extends AsyncNotifier<FlashcardSession> {
 
     await ref.read(repositoryProvider).reviewFlashcard(card, grade);
     final prefs = ref.read(sharedPreferencesProvider);
-    final key = cardsReviewedKey(DateTime.now());
+    final key = cardsReviewedKey(clock.now());
     await prefs.setInt(key, (prefs.getInt(key) ?? 0) + 1);
 
     final rest = session.queue.skip(1).toList();
@@ -473,7 +511,7 @@ final practiceSentencesProvider = FutureProvider.autoDispose<List<String>>((
 ) async {
   final repository = ref.read(repositoryProvider);
   final candidates = [...await repository.flashcardExamples()];
-  final story = await repository.storyFor(DateTime.now());
+  final story = await repository.storyFor(clock.now());
   if (story != null) {
     final state = StoryState.decode(story.contentJson);
     for (final p in state?.story.paragraphs ?? const <String>[]) {
@@ -515,7 +553,7 @@ final streakDisplayProvider =
       return displayStreak(
         stored: profile?.streak ?? 0,
         lastStudy: profile?.lastStudyDate,
-        today: DateTime.now(),
+        today: clock.now(),
         freezes: freezes,
       );
     });
@@ -529,6 +567,34 @@ Future<bool> buyFreeze(WidgetRef ref) async {
   );
   if (ok) ref.invalidate(freezeProvider);
   return ok;
+}
+
+/// Pace'in formaları; satın alma ve giydirmede geçersiz kılınır.
+final wardrobeProvider = Provider<WardrobeState>(
+  (ref) => WardrobeState.read(ref.read(sharedPreferencesProvider)),
+);
+
+/// Bir forma satın alıp giydirir; harcanabilir XP yetmezse false.
+Future<bool> buyKit(WidgetRef ref, PaceKit kit) async {
+  final game = await ref.read(gameProvider.future);
+  final ok = await WardrobeState.buy(
+    ref.read(sharedPreferencesProvider),
+    kit,
+    totalXp: game.level.xp,
+  );
+  if (ok) {
+    ref.invalidate(wardrobeProvider);
+    // Bakiye seri dondurma sayacıyla ortak.
+    ref.invalidate(freezeProvider);
+  }
+  return ok;
+}
+
+/// Sahip olunan formayı giydirir.
+Future<void> equipKit(WidgetRef ref, PaceKit kit) async {
+  if (await WardrobeState.equip(ref.read(sharedPreferencesProvider), kit)) {
+    ref.invalidate(wardrobeProvider);
+  }
 }
 
 // --- Rol yapma sohbeti -------------------------------------------------------
@@ -619,7 +685,6 @@ class RoleplayNotifier extends Notifier<RoleplayState> {
         .roleplayTurn(
           scenario: state.scenario,
           level: profile?.level ?? 'B1',
-          name: profile?.name ?? 'Student',
           history: state.messages,
         );
     if (!ref.mounted) return;
@@ -686,7 +751,7 @@ class StoryNotifier extends AsyncNotifier<StoryState> {
   @override
   Future<StoryState> build() async {
     final repository = ref.read(repositoryProvider);
-    final existing = await repository.storyFor(DateTime.now());
+    final existing = await repository.storyFor(clock.now());
     if (existing != null) {
       final decoded = StoryState.decode(existing.contentJson);
       if (decoded != null) return decoded;
@@ -703,7 +768,7 @@ class StoryNotifier extends AsyncNotifier<StoryState> {
     final today = (await ref.read(weekPlanProvider.future)).today;
 
     // Bugünün dersi üretildiyse kelimeleri hikayede de geçsin.
-    final lesson = await repository.lessonFor(DateTime.now());
+    final lesson = await repository.lessonFor(clock.now());
     final words = lesson == null
         ? const <String>[]
         : [
@@ -714,7 +779,6 @@ class StoryNotifier extends AsyncNotifier<StoryState> {
           ];
 
     final result = await ref.read(geminiServiceProvider).generateDailyStory(
-          name: profile.name,
           level: profile.level,
           dailyMinutes: profile.dailyMinutes,
           grammarTopic: today?.grammarTopic ?? 'Mixed tenses',
@@ -723,7 +787,7 @@ class StoryNotifier extends AsyncNotifier<StoryState> {
         );
 
     final state = StoryState(story: result.story, offline: result.offline);
-    await repository.saveStory(DateTime.now(), state);
+    await repository.saveStory(clock.now(), state);
     return state;
   }
 
@@ -765,7 +829,7 @@ class StoryNotifier extends AsyncNotifier<StoryState> {
       final latest = state.value ?? current;
       final next = latest.withLookup(word, meaning);
       state = AsyncValue.data(next);
-      await ref.read(repositoryProvider).saveStory(DateTime.now(), next);
+      await ref.read(repositoryProvider).saveStory(clock.now(), next);
     }
     return result;
   }
@@ -787,7 +851,7 @@ class StoryNotifier extends AsyncNotifier<StoryState> {
     if (current == null || current.answers.containsKey(index)) return;
     final next = current.withAnswer(index, option);
     state = AsyncValue.data(next);
-    await ref.read(repositoryProvider).saveStory(DateTime.now(), next);
+    await ref.read(repositoryProvider).saveStory(clock.now(), next);
     if (next.isFinished) {
       ref.invalidate(progressProvider);
       ref.invalidate(gameProvider);
@@ -841,7 +905,7 @@ final progressProvider = FutureProvider<ProgressData>((ref) async {
   final cards = await repository.flashcardCounts();
 
   const weeks = 8;
-  final thisMonday = mondayOf(DateTime.now());
+  final thisMonday = mondayOf(clock.now());
   final weeklyScores = [
     for (var i = weeks - 1; i >= 0; i--)
       () {
@@ -868,7 +932,7 @@ final progressProvider = FutureProvider<ProgressData>((ref) async {
   final shown = displayStreak(
     stored: profile?.streak ?? 0,
     lastStudy: profile?.lastStudyDate,
-    today: DateTime.now(),
+    today: clock.now(),
     freezes: freeze.owned,
   );
 
@@ -908,14 +972,13 @@ class WeeklyReportsNotifier extends AsyncNotifier<List<WeeklyReport>> {
       throw StateError('Rapor için önce profil oluşturulmalı');
     }
 
-    final when = date ?? DateTime.now();
+    final when = date ?? clock.now();
     final reviewed =
         ref.read(sharedPreferencesProvider).getInt(cardsReviewedKey(when)) ?? 0;
     final stats = await repository.weeklyStats(when, cardsReviewed: reviewed);
     final delta = recommendLevelDelta(stats);
 
     final result = await ref.read(geminiServiceProvider).generateWeeklyReport(
-          name: profile.name,
           level: profile.level,
           stats: stats,
           levelDelta: delta,
@@ -993,7 +1056,7 @@ final dailyGoalProvider = FutureProvider<DailyGoal>((ref) async {
   final week = await ref.watch(weekPlanProvider.future);
   final cards = await ref.watch(flashcardSummaryProvider.future);
   final repository = ref.read(repositoryProvider);
-  final now = DateTime.now();
+  final now = clock.now();
 
   final story = await repository.storyFor(now);
   final lessonDone = week.today?.status == 'completed';

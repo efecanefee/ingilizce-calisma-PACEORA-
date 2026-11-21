@@ -208,7 +208,7 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
   final int id;
   final String name;
 
-  /// DifficultyLevel.code — B1-, B1, B1+, B2-, B2, B2+
+  /// DifficultyLevel.code — A2, B1-, B1, B1+, B2-, B2, B2+, C1
   final String level;
   final int dailyMinutes;
   final int streak;
@@ -3442,7 +3442,16 @@ class $$UserProfilesTableTableManager
                 createdAt: createdAt,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable<$UserProfilesTable, UserProfile>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $UserProfilesTable,
+                    UserProfile
+                  >(db, table, e),
+                ),
+              )
               .toList(),
           prefetchHooksCallback: null,
         ),
@@ -3661,7 +3670,16 @@ class $$WeeklyPlanDaysTableTableManager
                 status: status,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable<$WeeklyPlanDaysTable, WeeklyPlanDay>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $WeeklyPlanDaysTable,
+                    WeeklyPlanDay
+                  >(db, table, e),
+                ),
+              )
               .toList(),
           prefetchHooksCallback: null,
         ),
@@ -3896,7 +3914,16 @@ class $$LessonsTableTableManager
                 createdAt: createdAt,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable<$LessonsTable, Lesson>(table),
+                  BaseReferences<_$AppDatabase, $LessonsTable, Lesson>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
               .toList(),
           prefetchHooksCallback: null,
         ),
@@ -4166,7 +4193,16 @@ class $$MistakesTableTableManager
                 createdAt: createdAt,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable<$MistakesTable, Mistake>(table),
+                  BaseReferences<_$AppDatabase, $MistakesTable, Mistake>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
               .toList(),
           prefetchHooksCallback: null,
         ),
@@ -4456,7 +4492,16 @@ class $$FlashcardsTableTableManager
                 createdAt: createdAt,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable<$FlashcardsTable, Flashcard>(table),
+                  BaseReferences<_$AppDatabase, $FlashcardsTable, Flashcard>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
               .toList(),
           prefetchHooksCallback: null,
         ),
@@ -4665,7 +4710,16 @@ class $$StoriesTableTableManager
                 createdAt: createdAt,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable<$StoriesTable, Story>(table),
+                  BaseReferences<_$AppDatabase, $StoriesTable, Story>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
               .toList(),
           prefetchHooksCallback: null,
         ),
@@ -4839,7 +4893,16 @@ class $$WeeklyReviewsTableTableManager
                 createdAt: createdAt,
               ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map(
+                (e) => (
+                  e.readTable<$WeeklyReviewsTable, WeeklyReview>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $WeeklyReviewsTable,
+                    WeeklyReview
+                  >(db, table, e),
+                ),
+              )
               .toList(),
           prefetchHooksCallback: null,
         ),

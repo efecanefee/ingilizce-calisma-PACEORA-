@@ -5,6 +5,15 @@ name: iOS IPA
 
 on:
   workflow_dispatch:
+    inputs:
+      surum:
+        description: >-
+          kisisel: Gemini anahtarı gömülür, kurulur kurulmaz çalışır (yalnızca
+          kendi telefonun için). paylasim: anahtar gömülmez, başkalarına
+          verilebilir; kullanıcı Ayarlar'dan kendi anahtarını girer.
+        type: choice
+        options: [kisisel, paylasim]
+        default: kisisel
   push:
     branches: [main]
 
@@ -30,9 +39,10 @@ jobs:
       - name: Testler
         run: flutter test
 
+      # Gömülü anahtar uygulamadan çıkarılabilir: paylaşılacak sürümde gömülmez.
       - name: iOS derlemesi (imzasız)
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_API_KEY: ${{ (github.event.inputs.surum || 'kisisel') == 'kisisel' && secrets.GEMINI_API_KEY || '' }}
         run: |
           flutter build ios --release --no-codesign \
             --dart-define=GEMINI_API_KEY="$GEMINI_API_KEY"

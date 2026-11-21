@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:paceora/data/gemini_service.dart';
 import 'package:paceora/data/lesson_models.dart';
 
 /// Gemini `generateContent` yanıtını taklit eder.
@@ -184,7 +185,16 @@ void main() {
       expect(LessonSize.forMinutes(15).vocab, 8);
       expect(LessonSize.forMinutes(20).vocab, 10);
       expect(LessonSize.forMinutes(5).gapFill, 4, reason: 'alt sınıra düşer');
-      expect(LessonSize.forMinutes(60).quiz, 6, reason: 'üst sınıra düşer');
+      expect(LessonSize.forMinutes(30).vocab, 14);
+      expect(LessonSize.forMinutes(45).quiz, 10);
+      expect(LessonSize.forMinutes(60).quiz, 12, reason: 'en büyük kademe');
+      expect(LessonSize.forMinutes(90).quiz, 12, reason: 'üst sınıra düşer');
+    });
+
+    test('büyük derslerde zaman aşımı uzar, üst sınırı aşmaz', () {
+      expect(lessonTimeout(20), const Duration(seconds: 90));
+      expect(lessonTimeout(30).inSeconds, greaterThan(90));
+      expect(lessonTimeout(60), const Duration(seconds: 150));
     });
   });
 }

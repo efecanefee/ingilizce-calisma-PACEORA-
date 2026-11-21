@@ -1,29 +1,67 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../app/constants.dart';
 import '../app/motion.dart';
+import '../app/sounds.dart';
+import '../app/theme.dart';
 import 'providers.dart';
+import 'reminder_service.dart';
+
+/// Anahtarın güvenli kasadaki adı.
+const apiKeyStorageKey = 'gemini_api_key';
+
+/// Telefonun güvenli kasası (Android Keystore / iOS Keychain).
+final secureStorageProvider = Provider<FlutterSecureStorage>(
+  (_) => const FlutterSecureStorage(),
+);
+
+/// Açılışta kasadan okunan anahtar; `main` bunu doldurur.
+final storedApiKeyProvider = Provider<String>((_) => '');
+
+/// Kasadaki anahtarı okur. Eski sürümler anahtarı SharedPreferences'ta düz
+/// metin tutuyordu; bulunursa kasaya taşınır ve eski kayıt silinir.
+Future<String> loadApiKey(
+  SharedPreferences prefs,
+  FlutterSecureStorage storage,
+) async {
+  try {
+    final legacy = prefs.getString(AppConstants.prefApiKey);
+    if (legacy != null) {
+      if (legacy.isNotEmpty) {
+        await storage.write(key: apiKeyStorageKey, value: legacy);
+      }
+      await prefs.remove(AppConstants.prefApiKey);
+      return legacy;
+    }
+    return await storage.read(key: apiKeyStorageKey) ?? '';
+  } catch (e) {
+    // Kasa açılamazsa (bozuk anahtar deposu vb.) uygulama yine açılsın.
+    debugPrint('Güvenli kasa okunamadı: $e');
+    return '';
+  }
+}
 
 /// Kullanıcının Ayarlar'dan girdiği Gemini anahtarı.
 ///
 /// Boş string, "kendi anahtarım yok" demektir; bu durumda derleme zamanında
 /// verilen anahtar (`--dart-define`) kullanılır. Böylece uygulama kendi
 /// telefonunda kurulum istemeden çalışır, başkasına verildiğinde ise karşı
-/// taraf kendi kotasını kullanabilir.
+/// taraf kendi kotasını kullanabilir. Anahtar düz metin olarak değil,
+/// güvenli kasada saklanır.
 class ApiKeyNotifier extends Notifier<String> {
   @override
-  String build() =>
-      ref.watch(sharedPreferencesProvider).getString(AppConstants.prefApiKey) ??
-      '';
+  String build() => ref.watch(storedApiKeyProvider);
 
   Future<void> save(String value) async {
-    final prefs = ref.read(sharedPreferencesProvider);
+    final storage = ref.read(secureStorageProvider);
     final trimmed = value.trim();
     if (trimmed.isEmpty) {
-      await prefs.remove(AppConstants.prefApiKey);
+      await storage.delete(key: apiKeyStorageKey);
     } else {
-      await prefs.setString(AppConstants.prefApiKey, trimmed);
+      await storage.write(key: apiKeyStorageKey, value: trimmed);
     }
     state = trimmed;
   }
@@ -57,6 +95,24 @@ class ThemeModeNotifier extends Notifier<ThemeMode> {
 final themeModeProvider =
     NotifierProvider<ThemeModeNotifier, ThemeMode>(ThemeModeNotifier.new);
 
+/// Arayüz vurgu rengi. Varsayılan marka rengi lime.
+class AccentNotifier extends Notifier<AppAccent> {
+  @override
+  AppAccent build() => AppAccent.fromName(
+    ref.watch(sharedPreferencesProvider).getString(AppConstants.prefAccent),
+  );
+
+  Future<void> save(AppAccent accent) async {
+    await ref
+        .read(sharedPreferencesProvider)
+        .setString(AppConstants.prefAccent, accent.name);
+    state = accent;
+  }
+}
+
+final accentProvider =
+    NotifierProvider<AccentNotifier, AppAccent>(AccentNotifier.new);
+
 /// Dokunsal geri bildirim (titreşim) açık mı.
 class HapticsNotifier extends Notifier<bool> {
   static const _key = 'haptics_enabled';
@@ -76,6 +132,30 @@ class HapticsNotifier extends Notifier<bool> {
     Haptics.tap();
   }
 }
+
+/// Doğru/yanlış cevap sesleri açık mı.
+class SoundsNotifier extends Notifier<bool> {
+  static const key = 'sound_effects_enabled';
+
+  @override
+  bool build() {
+    final enabled = ref.watch(sharedPreferencesProvider).getBool(key) ?? true;
+    Sounds.enabled = enabled;
+    return enabled;
+  }
+
+  Future<void> set(bool enabled) async {
+    await ref.read(sharedPreferencesProvider).setBool(key, enabled);
+    Sounds.enabled = enabled;
+    state = enabled;
+    // Açılınca nasıl duyulduğunu hemen göster.
+    if (enabled) Sounds.correct();
+  }
+}
+
+final soundsProvider = NotifierProvider<SoundsNotifier, bool>(
+  SoundsNotifier.new,
+);
 
 final hapticsProvider =
     NotifierProvider<HapticsNotifier, bool>(HapticsNotifier.new);
@@ -105,7 +185,11 @@ class ReminderNotifier extends Notifier<ReminderSettings> {
     final service = ref.read(reminderServiceProvider);
     if (enabled) {
       if (!await service.requestPermission()) return false;
-      await service.scheduleDaily(state.time);
+      await service.scheduleDaily(
+        state.time,
+        content: _content,
+        skipToday: _skipToday,
+      );
     } else {
       await service.cancel();
     }
@@ -122,7 +206,9 @@ class ReminderNotifier extends Notifier<ReminderSettings> {
           time.hour * 60 + time.minute,
         );
     if (state.enabled) {
-      await ref.read(reminderServiceProvider).scheduleDaily(time);
+      await ref
+          .read(reminderServiceProvider)
+          .scheduleDaily(time, content: _content, skipToday: _skipToday);
     }
     state = ReminderSettings(enabled: state.enabled, time: time);
   }
@@ -130,8 +216,31 @@ class ReminderNotifier extends Notifier<ReminderSettings> {
   /// Açılışta zamanlamayı tazeler (saat dilimi değişmiş olabilir).
   Future<void> resync() async {
     if (state.enabled) {
-      await ref.read(reminderServiceProvider).scheduleDaily(state.time);
+      await ref
+          .read(reminderServiceProvider)
+          .scheduleDaily(state.time, content: _content, skipToday: _skipToday);
     }
+  }
+
+  ReminderContent _content = ReminderContent.fallback;
+  bool _skipToday = false;
+
+  /// Seri değişince bildirim metnini kişiselleştirir; bugün çalışıldıysa
+  /// bugünün hatırlatması atlanır.
+  Future<void> personalize({
+    required int streak,
+    required int nextMilestone,
+    required bool doneToday,
+  }) async {
+    final content = reminderContentFor(streak: streak, next: nextMilestone);
+    if (content.title == _content.title &&
+        content.body == _content.body &&
+        doneToday == _skipToday) {
+      return;
+    }
+    _content = content;
+    _skipToday = doneToday;
+    await resync();
   }
 }
 

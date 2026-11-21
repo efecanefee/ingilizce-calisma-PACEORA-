@@ -1,9 +1,11 @@
+import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/constants.dart';
+import '../../app/error_view.dart';
 import '../../app/motion.dart';
 import '../../app/theme.dart';
 import '../../data/database.dart';
@@ -48,7 +50,10 @@ class ProgramScreen extends ConsumerWidget {
         ],
       ),
       body: switch (plan) {
-        AsyncError(:final error) => Center(child: Text('$error')),
+        AsyncError(:final error) => ErrorView(
+          error: error,
+          onRetry: () => ref.invalidate(weekPlanProvider),
+        ),
         AsyncData(:final value) when value.days.isEmpty => const Center(
           child: Text('Bu hafta için program yok. Yenile düğmesine dokun.'),
         ),
@@ -62,6 +67,27 @@ class ProgramScreen extends ConsumerWidget {
 /// Bir günün takvimdeki konumu.
 enum _DayState { done, today, missed, upcoming }
 
+/// Bir plan gününün ayrıntı sayfasını açar. Ana ekrandaki hafta
+/// kutucukları da bunu kullanır.
+void showPlanDayDetails(BuildContext context, WeeklyPlanDay day) {
+  final todayIndex = clock.now().weekday - DateTime.monday;
+  final monday = mondayOf(clock.now());
+  final state = day.status == 'completed'
+      ? _DayState.done
+      : day.dayIndex == todayIndex
+      ? _DayState.today
+      : day.dayIndex < todayIndex
+      ? _DayState.missed
+      : _DayState.upcoming;
+  final date = DateTime(monday.year, monday.month, monday.day + day.dayIndex);
+  Haptics.tap();
+  showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    builder: (_) => _DayDetails(day: day, date: date, state: state),
+  );
+}
+
 class _Timeline extends StatelessWidget {
   const _Timeline({required this.week});
 
@@ -70,8 +96,8 @@ class _Timeline extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final todayIndex = DateTime.now().weekday - DateTime.monday;
-    final monday = mondayOf(DateTime.now());
+    final todayIndex = clock.now().weekday - DateTime.monday;
+    final monday = mondayOf(clock.now());
     final done = week.days.where((d) => d.status == 'completed').length;
 
     _DayState stateOf(WeeklyPlanDay day) {
@@ -158,8 +184,12 @@ class _WeekHeader extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: isDark
-              ? [AppColors.graphite700, AppColors.limeDark]
-              : [AppColors.limeDark, const Color(0xFF7A9A1E)],
+              ? [AppColors.graphite700, context.pace.accentDark]
+              : [
+                  context.pace.accentDark,
+                  // Beyaz yazı açık zeminde de okunsun diye koyuya kayar.
+                  Color.lerp(context.pace.accentDark, AppColors.graphite900, 0.35)!,
+                ],
         ),
       ),
       child: Column(
@@ -217,7 +247,7 @@ class _WeekHeader extends StatelessWidget {
               builder: (context, v, _) => LinearProgressIndicator(
                 value: v,
                 minHeight: 10,
-                color: AppColors.limeSpark,
+                color: context.pace.accent,
                 backgroundColor: Colors.white.withValues(alpha: 0.2),
               ),
             ),
@@ -257,7 +287,7 @@ class _TimelineRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final accent = isDark ? AppColors.limeSpark : AppColors.limeDark;
+    final accent = isDark ? context.pace.accent : context.pace.accentDark;
 
     final (icon, color, label) = switch (state) {
       _DayState.done => (Icons.check_rounded, AppColors.success, 'Tamamlandı'),
@@ -298,7 +328,7 @@ class _TimelineRow extends StatelessWidget {
     );
     if (isToday) {
       dot = dot
-          .animate(onPlay: (c) => c.repeat(reverse: true))
+          .animate(onPlay: Motion.loop(reverse: true))
           .scaleXY(
             begin: 1,
             end: 1.12,
@@ -476,7 +506,7 @@ class _DayDetails extends StatelessWidget {
             Text(note, style: theme.textTheme.bodyMedium),
             // Ders ekranı her zaman bugünün dersini açar; geçmiş günler için
             // buton gösterilmez.
-            if (date == dayOf(DateTime.now())) ...[
+            if (date == dayOf(clock.now())) ...[
               const SizedBox(height: 20),
               FilledButton(
                 onPressed: () {

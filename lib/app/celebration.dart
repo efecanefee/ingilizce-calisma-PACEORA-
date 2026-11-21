@@ -6,7 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/providers.dart';
+import '../data/review_request.dart';
 import '../data/rewards.dart';
+import '../data/streak_freeze.dart';
+import 'mascot.dart';
 import 'motion.dart';
 import 'theme.dart';
 
@@ -24,21 +27,23 @@ class ConfettiBurst extends StatefulWidget {
 
 class _ConfettiBurstState extends State<ConfettiBurst>
     with SingleTickerProviderStateMixin {
+  // Hareket azaltılmışsa konfeti hiç uçmaz (sona atlanır).
   late final _controller = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 2600),
+    value: Motion.reduced ? 1 : 0,
   )..forward();
 
   late final _pieces = _generate();
 
   List<_Piece> _generate() {
     final random = Random(widget.seed);
-    const colors = [
-      AppColors.limeSpark,
+    final colors = [
+      context.pace.accent,
       AppColors.success,
       AppColors.warning,
-      Color(0xFF60A5FA),
-      Color(0xFFF472B6),
+      AppColors.blue,
+      AppColors.pink,
       Colors.white,
     ];
     return List.generate(widget.particles, (_) {
@@ -146,6 +151,8 @@ class Celebration {
     required this.icon,
     required this.color,
     this.chip,
+    this.art,
+    this.onDismissed,
   });
 
   final String title;
@@ -155,6 +162,12 @@ class Celebration {
 
   /// Kartın altındaki küçük etiket (ör. "Seviye 3").
   final String? chip;
+
+  /// İkon dairesi yerine gösterilecek görsel (ör. Pace).
+  final Widget? art;
+
+  /// Kutlama kapatıldıktan sonra çalışır (ör. puanlama isteği).
+  final VoidCallback? onDismissed;
 }
 
 /// Uygulamanın en üstünde durur; yeni oyuncu seviyesi ya da rozet
@@ -166,6 +179,14 @@ class CelebrationHost extends ConsumerStatefulWidget {
   const CelebrationHost({super.key, required this.child});
 
   final Widget child;
+
+  /// Hangi ekrandan olursa olsun bir kutlama gösterir (ör. forma alındı,
+  /// seri hedefi). Kuyruktaki diğer kutlamalardan sonra sıraya girer.
+  static void show(BuildContext context, Celebration celebration) {
+    context
+        .findAncestorStateOfType<_CelebrationHostState>()
+        ?._enqueue(celebration);
+  }
 
   @override
   ConsumerState<CelebrationHost> createState() => _CelebrationHostState();
@@ -201,7 +222,7 @@ class _CelebrationHostState extends ConsumerState<CelebrationHost> {
           title: 'Seviye atladın!',
           subtitle: 'Artık "${game.level.title}" unvanını taşıyorsun.',
           icon: Icons.military_tech_rounded,
-          color: AppColors.limeSpark,
+          color: context.pace.accent,
           chip: 'Seviye ${game.level.level}',
         ),
       );
@@ -225,17 +246,60 @@ class _CelebrationHostState extends ConsumerState<CelebrationHost> {
     if (fresh.isNotEmpty) setState(() => _queue.addAll(fresh));
   }
 
+  void _enqueue(Celebration c) => setState(() => _queue.add(c));
+
+  /// Seri yeni bir hedefe (3, 7, 14… gün) ulaştıysa kutlar. İlk açılışta
+  /// mevcut durum sessizce kaydedilir.
+  void _checkStreak(int streak) {
+    final prefs = _prefs;
+    final reached = reachedStreakMilestone(streak);
+    final seen = prefs.getInt(seenStreakMilestoneKey);
+    if (seen == null || reached < seen) {
+      // Seri koptuysa sayaç da geri alınır; yeniden ulaşılınca kutlanır.
+      prefs.setInt(seenStreakMilestoneKey, reached);
+      return;
+    }
+    if (reached <= seen) return;
+    prefs.setInt(seenStreakMilestoneKey, reached);
+    final next = streakMilestone(streak).to;
+    final askReview = shouldRequestReview(prefs, reached);
+    _enqueue(
+      Celebration(
+        title: '$reached günlük seri!',
+        subtitle: 'Harika gidiyorsun. Sıradaki hedef: $next gün.',
+        icon: Icons.local_fire_department_rounded,
+        color: AppColors.fire,
+        chip: 'Seri hedefi',
+        art: const EquippedPace(mood: PaceMood.cheer, size: 130),
+        // Kullanıcı seriyle sevinirken, kutlama kapanınca bir kez sorulur.
+        onDismissed: askReview
+            ? () {
+                prefs.setBool(reviewRequestedKey, true);
+                ref.read(reviewRequesterProvider)();
+              }
+            : null,
+      ),
+    );
+  }
+
   void _dismiss() {
+    final done = _queue.first;
     setState(() {
       _queue.removeAt(0);
       _shown++;
     });
+    done.onDismissed?.call();
   }
 
   @override
   Widget build(BuildContext context) {
     ref.listen(gameProvider, (_, next) {
       if (next case AsyncData(:final value)) _check(value);
+    });
+    ref.listen(streakDisplayProvider, (previous, next) {
+      // Profil yüklenmeden gelen 0 değeri hedef sayacını sıfırlamasın.
+      if (ref.read(profileProvider).value == null) return;
+      _checkStreak(next.streak);
     });
     // Profil yoksa (onboarding) ödül de yok; dinlemeyi başlatmak yeterli.
     ref.watch(gameProvider);
@@ -276,9 +340,13 @@ class _CelebrationView extends StatelessWidget {
       child: Stack(
         children: [
           Positioned.fill(
-            child: GestureDetector(
-              onTap: onDismiss,
-              child: const ColoredBox(color: Color(0xB3000000)),
+            child: Semantics(
+              button: true,
+              label: 'Kutlamayı kapat',
+              child: GestureDetector(
+                onTap: onDismiss,
+                child: const ColoredBox(color: AppColors.scrim),
+              ),
             ).animate().fadeIn(duration: Motion.medium),
           ),
           const Positioned.fill(child: ConfettiBurst()),
@@ -301,7 +369,8 @@ class _CelebrationView extends StatelessWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Container(
+                        c.art ??
+                            Container(
                               width: 96,
                               height: 96,
                               decoration: BoxDecoration(

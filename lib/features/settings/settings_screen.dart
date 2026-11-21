@@ -1,18 +1,30 @@
+import 'dart:convert';
+
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../app/constants.dart';
+import '../../app/error_reporting.dart';
 import '../../app/logo.dart';
 import '../../app/motion.dart';
 import '../../app/theme.dart';
+import '../../app/turkish_text.dart';
+import '../../data/backup.dart';
 import '../../data/database.dart';
+import '../../data/feedback.dart';
 import '../../data/gemini_service.dart';
+import '../../data/placement.dart';
 import '../../data/profile_style.dart';
 import '../../data/providers.dart';
 import '../../data/rewards.dart';
 import '../../data/settings_providers.dart';
+import '../placement/placement_screen.dart';
 
 /// Ayarlar: profil kartı ve gruplanmış tercihler.
 class SettingsScreen extends ConsumerWidget {
@@ -116,7 +128,7 @@ class _SettingsTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return ListTile(
+    final tile = ListTile(
       onTap: onTap == null
           ? null
           : () {
@@ -150,8 +162,16 @@ class _SettingsTile extends StatelessWidget {
                   color: theme.colorScheme.outline,
                 )),
     );
+    // Anahtar (Switch) gibi bir kontrol varsa başlıkla tek düğüm olsun;
+    // ekran okuyucu "Titreşim, açık" diye okur.
+    return trailing == null ? tile : MergeSemantics(child: tile);
   }
 }
+
+/// Gemini API anahtarı formunu alt sayfada açar (ana ekrandaki karttan da
+/// kullanılır).
+Future<void> showApiKeySheet(BuildContext context) =>
+    _openSheet(context, 'Gemini API anahtarı', const _ApiKeyForm());
 
 Future<void> _openSheet(BuildContext context, String title, Widget child) {
   return showModalBottomSheet<void>(
@@ -198,24 +218,19 @@ class _ProfileHeader extends ConsumerWidget {
     final game = ref.watch(gameProvider).value;
     final cards = ref.watch(flashcardSummaryProvider).value;
     final first = user.name.isEmpty ? '?' : user.name.characters.first;
-    // Türkçe büyük harf: i → İ, ı → I (toUpperCase "i"yi "I" yapar).
-    final initial = switch (first) {
-      'i' => 'İ',
-      'ı' => 'I',
-      _ => first.toUpperCase(),
-    };
+    final initial = trUpper(first);
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(26),
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
             AppColors.graphite900,
             AppColors.graphite700,
-            AppColors.limeDark,
+            context.pace.accentDark,
           ],
         ),
       ),
@@ -227,10 +242,10 @@ class _ProfileHeader extends ConsumerWidget {
                     width: 64,
                     height: 64,
                     alignment: Alignment.center,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: LinearGradient(
-                        colors: [AppColors.limeSpark, AppColors.limeDim],
+                        colors: [context.pace.accent, context.pace.accentDim],
                       ),
                     ),
                     child: Text(
@@ -241,14 +256,14 @@ class _ProfileHeader extends ConsumerWidget {
                       ),
                     ),
                   )
-                  .animate(onPlay: (c) => c.repeat(reverse: true))
+                  .animate(onPlay: Motion.loop(reverse: true))
                   .boxShadow(
                     begin: const BoxShadow(
                       color: Colors.transparent,
                       blurRadius: 0,
                     ),
                     end: BoxShadow(
-                      color: AppColors.limeSpark.withValues(alpha: 0.5),
+                      color: context.pace.accent.withValues(alpha: 0.5),
                       blurRadius: 18,
                     ),
                     borderRadius: BorderRadius.circular(32),
@@ -271,7 +286,7 @@ class _ProfileHeader extends ConsumerWidget {
                       '${DifficultyLevel.fromCode(user.level).code} · '
                       '${game == null ? '' : 'Lv ${game.level.level} ${game.level.title}'}',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: AppColors.limeSpark,
+                        color: context.pace.accent,
                       ),
                     ),
                   ],
@@ -353,6 +368,26 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
   late int _minutes = widget.user.dailyMinutes;
   bool _saving = false;
 
+  /// Seviye testi daha önce çözüldü mü; çözülmediyse seviye kilitli.
+  late bool _tested =
+      PlacementRecord.read(ref.read(sharedPreferencesProvider)) != null;
+
+  @override
+  void initState() {
+    super.initState();
+    // Klavyeden de Türkçe harf tuşlarından da yazılınca Kaydet güncellensin.
+    _nameController.addListener(() => setState(() {}));
+  }
+
+  Future<void> _takeTest() async {
+    final level = await openPlacementTest(context);
+    if (level == null || !mounted) return;
+    setState(() {
+      _tested = true;
+      _level = level;
+    });
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -413,7 +448,6 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
         TextField(
           controller: _nameController,
           textCapitalization: TextCapitalization.words,
-          onChanged: (_) => setState(() {}),
           decoration: const InputDecoration(labelText: 'Adın'),
         ),
         const SizedBox(height: 20),
@@ -427,23 +461,51 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
               ChoiceChip(
                 label: Text(level.label),
                 selected: level == _level,
-                onSelected: (_) => setState(() => _level = level),
+                // Seviye testi çözülmeden seviye elle değiştirilemez.
+                onSelected: _tested
+                    ? (_) => setState(() => _level = level)
+                    : null,
               ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                _tested
+                    ? 'Seviye testi sonucun: '
+                          '${PlacementRecord.read(ref.read(sharedPreferencesProvider))?.label}'
+                    : 'Seviyeni değiştirmek için önce kısa seviye testini çöz.',
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
+            TextButton.icon(
+              onPressed: _saving ? null : _takeTest,
+              icon: const Icon(Icons.quiz_rounded, size: 18),
+              label: Text(_tested ? 'Tekrar çöz' : 'Testi çöz'),
+            ),
           ],
         ),
         const SizedBox(height: 20),
         Text('Günlük çalışma süresi', style: theme.textTheme.labelLarge),
         const SizedBox(height: 10),
-        Wrap(
-          spacing: 10,
-          children: [
-            for (final minutes in AppConstants.dailyMinuteOptions)
-              ChoiceChip(
-                label: Text('$minutes dk'),
-                selected: minutes == _minutes,
-                onSelected: (_) => setState(() => _minutes = minutes),
-              ),
-          ],
+        // Seçenekler çoğaldı; form uzamasın diye tek satırda kaydırılır.
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (final minutes in AppConstants.dailyMinuteOptions)
+                Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: ChoiceChip(
+                    label: Text('$minutes dk'),
+                    selected: minutes == _minutes,
+                    onSelected: (_) => setState(() => _minutes = minutes),
+                  ),
+                ),
+            ],
+          ),
         ),
         const SizedBox(height: 24),
         FilledButton(
@@ -538,7 +600,7 @@ class _StudyGroup extends ConsumerWidget {
         ),
         _SettingsTile(
           icon: Icons.timer_rounded,
-          color: const Color(0xFF60A5FA),
+          color: AppColors.blue,
           title: 'Günlük süre',
           subtitle: 'Günde ${user.dailyMinutes} dakika',
           onTap: editProfile,
@@ -576,7 +638,7 @@ class _StudyGroup extends ConsumerWidget {
         ),
         _SettingsTile(
           icon: Icons.autorenew_rounded,
-          color: const Color(0xFFA78BFA),
+          color: AppColors.violet,
           title: 'Haftalık programı yenile',
           subtitle: 'Seviyene göre yeni konular üretir; ilerlemen korunur',
           onTap: () => _regenerate(context, ref),
@@ -588,6 +650,67 @@ class _StudyGroup extends ConsumerWidget {
 
 // --- Görünüm ve his ----------------------------------------------------------
 
+/// Vurgu rengi seçici: her seçenek için renk yuvarlağı, seçili olan tikli.
+class _AccentPicker extends ConsumerWidget {
+  const _AccentPicker();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selected = ref.watch(accentProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      children: [
+        for (final accent in AppAccent.values)
+          Semantics(
+            button: true,
+            selected: accent == selected,
+            label: '${accent.label} vurgu rengi',
+            child: Tooltip(
+              message: accent.label,
+              child: GestureDetector(
+                onTap: () {
+                  Haptics.tap();
+                  ref.read(accentProvider.notifier).save(accent);
+                },
+                child: AnimatedContainer(
+                  duration: Motion.fast,
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: isDark
+                          ? [accent.spark, accent.dim]
+                          : [accent.dim, accent.dark],
+                    ),
+                    border: Border.all(
+                      color: accent == selected
+                          ? Theme.of(context).colorScheme.onSurface
+                          : Colors.transparent,
+                      width: 2.5,
+                    ),
+                  ),
+                  child: accent == selected
+                      ? Icon(
+                          Icons.check_rounded,
+                          size: 20,
+                          color: isDark ? AppColors.graphite900 : Colors.white,
+                        )
+                      : null,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
 class _AppearanceGroup extends ConsumerWidget {
   const _AppearanceGroup();
 
@@ -595,6 +718,7 @@ class _AppearanceGroup extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final mode = ref.watch(themeModeProvider);
     final haptics = ref.watch(hapticsProvider);
+    final sounds = ref.watch(soundsProvider);
 
     return _SettingsGroup(
       title: 'GÖRÜNÜM VE HİS',
@@ -610,13 +734,13 @@ class _AppearanceGroup extends ConsumerWidget {
                     width: 36,
                     height: 36,
                     decoration: BoxDecoration(
-                      color: AppColors.limeDim.withValues(alpha: 0.16),
+                      color: context.pace.accentDim.withValues(alpha: 0.16),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.palette_rounded,
                       size: 20,
-                      color: AppColors.limeDim,
+                      color: context.pace.accentDim,
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -657,17 +781,36 @@ class _AppearanceGroup extends ConsumerWidget {
                   },
                 ),
               ),
+              const SizedBox(height: 16),
+              Text(
+                'Vurgu rengi',
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 10),
+              const _AccentPicker(),
             ],
           ),
         ),
         _SettingsTile(
           icon: Icons.vibration_rounded,
-          color: const Color(0xFFF472B6),
+          color: AppColors.pink,
           title: 'Titreşim',
           subtitle: 'Dokunuşlarda hafif titreşim',
           trailing: Switch(
             value: haptics,
             onChanged: (v) => ref.read(hapticsProvider.notifier).set(v),
+          ),
+        ),
+        _SettingsTile(
+          icon: Icons.volume_up_rounded,
+          color: AppColors.mint,
+          title: 'Ses efektleri',
+          subtitle: 'Doğru ve yanlış cevapta kısa ses',
+          trailing: Switch(
+            value: sounds,
+            onChanged: (v) => ref.read(soundsProvider.notifier).set(v),
           ),
         ),
       ],
@@ -690,7 +833,7 @@ class _AiGroup extends ConsumerWidget {
       children: [
         _SettingsTile(
           icon: Icons.auto_awesome_rounded,
-          color: const Color(0xFF8E75B2),
+          color: AppColors.gemini,
           title: 'Gemini API anahtarı',
           subtitle: hasCustomKey
               ? 'Kendi anahtarın kullanılıyor'
@@ -712,12 +855,11 @@ class _AiGroup extends ConsumerWidget {
               ),
             ],
           ),
-          onTap: () =>
-              _openSheet(context, 'Gemini API anahtarı', const _ApiKeyForm()),
+          onTap: () => showApiKeySheet(context),
         ),
         _SettingsTile(
           icon: Icons.network_check_rounded,
-          color: const Color(0xFF60A5FA),
+          color: AppColors.blue,
           title: 'Bağlantıyı test et',
           subtitle: 'Anahtar, model ve yanıt süresini kontrol eder',
           onTap: () =>
@@ -867,15 +1009,18 @@ class _ApiKeyFormState extends ConsumerState<_ApiKeyForm> {
     await ref.read(apiKeyProvider.notifier).save(_controller.text);
     if (!mounted) return;
     navigator.pop();
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(
-          _controller.text.trim().isEmpty
-              ? 'Kendi anahtarın silindi; uygulamayla gelen anahtar kullanılacak.'
-              : 'Anahtar kaydedildi.',
+    // Önceki kayıt mesajı hâlâ görünüyorsa sırada beklemesin.
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            _controller.text.trim().isEmpty
+                ? 'Kendi anahtarın silindi; uygulamayla gelen anahtar kullanılacak.'
+                : 'Anahtar kaydedildi.',
+          ),
         ),
-      ),
-    );
+      );
   }
 
   @override
@@ -912,7 +1057,7 @@ class _ApiKeyFormState extends ConsumerState<_ApiKeyForm> {
         const SizedBox(height: 8),
         Text(
           'Anahtarı aistudio.google.com/apikey adresinden ücretsiz alabilirsin. '
-          'Anahtar yalnızca bu cihazda saklanır.',
+          'Anahtar bu cihazın güvenli kasasında şifreli saklanır.',
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
           ),
@@ -1005,6 +1150,8 @@ class _DataGroupState extends ConsumerState<_DataGroup> {
             key.startsWith('roleplay_') ||
             key.startsWith('streak_') ||
             key.startsWith('profile_') ||
+            key.startsWith('wardrobe_') ||
+            key == PlacementRecord.levelKey ||
             key == levelUpsKey ||
             key == 'seen_player_level' ||
             key == 'seen_badges') {
@@ -1013,17 +1160,113 @@ class _DataGroupState extends ConsumerState<_DataGroup> {
       }
 
       // Bellekteki durum da sıfırlanmalı; aksi halde silinen profil ekranda kalır.
-      ref.invalidate(profileProvider);
-      ref.invalidate(weekPlanProvider);
-      ref.invalidate(todayLessonProvider);
-      ref.invalidate(flashcardSummaryProvider);
-      ref.invalidate(progressProvider);
-      ref.invalidate(weeklyReportsProvider);
-      ref.invalidate(gameProvider);
-      ref.invalidate(profileStyleProvider);
-      ref.invalidate(freezeProvider);
+      _invalidateData();
 
       router.go('/onboarding');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  /// Veritabanı ya da ayarlar dışarıdan değiştiğinde bellekteki durumu
+  /// tazeler (sıfırlama, yedekten geri yükleme).
+  void _invalidateData() {
+    ref.invalidate(profileProvider);
+    ref.invalidate(wardrobeProvider);
+    ref.invalidate(weekPlanProvider);
+    ref.invalidate(todayLessonProvider);
+    ref.invalidate(flashcardSummaryProvider);
+    ref.invalidate(progressProvider);
+    ref.invalidate(weeklyReportsProvider);
+    ref.invalidate(gameProvider);
+    ref.invalidate(profileStyleProvider);
+    ref.invalidate(freezeProvider);
+  }
+
+  /// Tüm ilerlemeyi JSON dosyası olarak paylaşır (Drive, Dosyalar, e-posta…).
+  Future<void> _export() async {
+    setState(() => _busy = true);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final json = await Backup.export(
+        ref.read(databaseProvider),
+        ref.read(sharedPreferencesProvider),
+      );
+      final name = Backup.fileName();
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [
+            XFile.fromData(
+              utf8.encode(json),
+              mimeType: 'application/json',
+              name: name,
+            ),
+          ],
+          fileNameOverrides: [name],
+          subject: 'Paceora yedeği',
+        ),
+      );
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('Yedek alınamadı: $e')));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  /// Seçilen yedek dosyasını geri yükler; mevcut veriler yerini alır.
+  Future<void> _restore() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final router = GoRouter.of(context);
+    final picked = await FilePicker.pickFile(
+      type: FileType.custom,
+      allowedExtensions: ['json'],
+    );
+    if (picked == null || !mounted) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        icon: const Icon(Icons.restore_rounded),
+        title: const Text('Yedek geri yüklensin mi?'),
+        content: Text(
+          '"${picked.name}" yüklenecek. Bu cihazdaki mevcut ilerlemen yedekteki '
+          'verilerle değiştirilir.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Vazgeç'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(minimumSize: const Size(0, 44)),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Geri yükle'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _busy = true);
+    try {
+      await Backup.restore(
+        await picked.xFile.readAsString(),
+        ref.read(databaseProvider),
+        ref.read(sharedPreferencesProvider),
+      );
+      _invalidateData();
+      ref.invalidate(themeModeProvider);
+      ref.invalidate(accentProvider);
+      ref.invalidate(hapticsProvider);
+      ref.invalidate(reminderProvider);
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Yedek geri yüklendi.')),
+      );
+      router.go('/');
+    } on FormatException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('Geri yüklenemedi: $e')));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -1043,10 +1286,24 @@ class _DataGroupState extends ConsumerState<_DataGroup> {
         ),
         _SettingsTile(
           icon: Icons.assessment_rounded,
-          color: const Color(0xFF34D399),
+          color: AppColors.mint,
           title: 'Haftalık rapor',
           subtitle: 'Değerlendirme ve seviye önerisi',
           onTap: () => context.push('/review'),
+        ),
+        _SettingsTile(
+          icon: Icons.upload_file_rounded,
+          color: AppColors.blue,
+          title: 'Verileri dışa aktar',
+          subtitle: 'Tüm ilerlemeni bir dosyaya yedekle',
+          onTap: _busy ? null : _export,
+        ),
+        _SettingsTile(
+          icon: Icons.restore_rounded,
+          color: AppColors.violet,
+          title: 'Yedekten geri yükle',
+          subtitle: 'Başka cihazdan aldığın yedeği yükle',
+          onTap: _busy ? null : _restore,
         ),
         _SettingsTile(
           icon: Icons.delete_forever_rounded,
@@ -1076,7 +1333,7 @@ class _AboutGroup extends StatelessWidget {
           children: [
             const _SettingsTile(
               icon: Icons.info_rounded,
-              color: Color(0xFF60A5FA),
+              color: AppColors.blue,
               title: 'Sürüm',
               trailing: Text(AppConstants.appVersion),
             ),
@@ -1085,8 +1342,13 @@ class _AboutGroup extends StatelessWidget {
               color: AppColors.success,
               title: 'Gizlilik',
               subtitle:
-                  'Tüm veriler yalnızca bu cihazda; hesap yok, sunucu yok',
+                  'İlerlemen cihazda; dersler için konu ve cevaplar '
+                  'Google Gemini\'ye gider, adın gitmez',
+              onTap: () =>
+                  _openSheet(context, 'Gizlilik', const _PrivacyDetails()),
             ),
+            const _FeedbackTile(),
+            const _ErrorLogTile(),
             _SettingsTile(
               icon: Icons.description_rounded,
               color: AppColors.graphite400,
@@ -1105,7 +1367,7 @@ class _AboutGroup extends StatelessWidget {
         ),
         const SizedBox(height: 28),
         const PaceoraMark(size: 44)
-            .animate(onPlay: (c) => c.repeat(reverse: true))
+            .animate(onPlay: Motion.loop(reverse: true))
             .moveY(
               begin: -3,
               end: 3,
@@ -1121,5 +1383,234 @@ class _AboutGroup extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+/// Hangi verinin nerede durduğu ve Gemini'ye ne gittiği.
+class _PrivacyDetails extends StatelessWidget {
+  const _PrivacyDetails();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    Widget section(IconData icon, String title, String body) => Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: theme.colorScheme.primary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(body, style: theme.textTheme.bodyMedium),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        section(
+          Icons.phone_android_rounded,
+          'Cihazında kalanlar',
+          'Profilin, ilerlemen, serin, hata defterin, kartların ve '
+              'ayarların yalnızca bu telefonda saklanır. Hesap ya da Paceora '
+              'sunucusu yoktur.',
+        ),
+        section(
+          Icons.auto_awesome_rounded,
+          'Google Gemini\'ye gidenler',
+          'Program, ders, hikaye, rapor ve sohbet üretmek için seviyen, '
+              'günlük süren, günün konusu, tekrar edilecek ifadeler ve sohbet '
+              'mesajların Google\'ın Gemini API\'sine gönderilir. Adın '
+              'gönderilmez. Ücretsiz Gemini anahtarlarında Google bu içerikleri '
+              'ürünlerini geliştirmek için kullanabilir.',
+        ),
+        section(
+          Icons.mic_rounded,
+          'Mikrofon',
+          'Konuşma pratiğinde sesin telefonun konuşma tanıma servisiyle '
+              'metne çevrilir; ses kaydı Paceora tarafından saklanmaz.',
+        ),
+        section(
+          Icons.key_rounded,
+          'API anahtarın',
+          'Kendi anahtarını girersen telefonun güvenli kasasında şifreli '
+              'saklanır ve yedeklere girmez.',
+        ),
+        section(
+          Icons.delete_outline_rounded,
+          'Silme',
+          'Ayarlar > Verileri sıfırla her şeyi bu cihazdan siler.',
+        ),
+      ],
+    );
+  }
+}
+
+/// E-posta ile geri bildirim: sürüm ve platform hazır gelir, hata kaydı
+/// yalnızca kullanıcı isterse eklenir.
+class _FeedbackTile extends ConsumerWidget {
+  const _FeedbackTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return _SettingsTile(
+      icon: Icons.mail_rounded,
+      color: AppColors.violet,
+      title: 'Geri bildirim gönder',
+      subtitle: 'Öneri, hata ya da soru: e-posta ile yaz',
+      onTap: () => _send(context, ref),
+    );
+  }
+
+  Future<void> _send(BuildContext context, WidgetRef ref) async {
+    final log = ref.read(errorLogProvider);
+    final messenger = ScaffoldMessenger.of(context);
+    var attachLog = false;
+    if (log.entries.isNotEmpty) {
+      final choice = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => StatefulBuilder(
+          builder: (dialogContext, setState) => AlertDialog(
+            title: const Text('Geri bildirim gönder'),
+            content: CheckboxListTile(
+              contentPadding: EdgeInsets.zero,
+              value: attachLog,
+              onChanged: (v) => setState(() => attachLog = v ?? false),
+              title: Text('Hata kaydını ekle (${log.entries.length})'),
+              subtitle: const Text(
+                'Sorunu bulmamıza yardım eder; kişisel bilgi içermez.',
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Vazgeç'),
+              ),
+              FilledButton(
+                style: FilledButton.styleFrom(minimumSize: const Size(0, 44)),
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+                child: const Text('E-postayı aç'),
+              ),
+            ],
+          ),
+        ),
+      );
+      if (choice != true) return;
+    }
+    final uri = feedbackMailUri(
+      platform: defaultTargetPlatform.name,
+      errorReport: attachLog
+          ? log.report(appVersion: AppConstants.appVersion)
+          : null,
+    );
+    final opened = await ref.read(mailLauncherProvider)(uri);
+    if (opened) return;
+    // E-posta uygulaması yoksa adres panoya kopyalanır.
+    await Clipboard.setData(
+      const ClipboardData(text: AppConstants.supportEmail),
+    );
+    messenger.showSnackBar(
+      const SnackBar(
+        content: Text(
+          'E-posta uygulaması açılamadı. Adres kopyalandı: '
+          '${AppConstants.supportEmail}',
+        ),
+      ),
+    );
+  }
+}
+
+/// Cihazdaki hata kaydı: kaç hata olduğu, paylaşma ve temizleme.
+class _ErrorLogTile extends ConsumerStatefulWidget {
+  const _ErrorLogTile();
+
+  @override
+  ConsumerState<_ErrorLogTile> createState() => _ErrorLogTileState();
+}
+
+class _ErrorLogTileState extends ConsumerState<_ErrorLogTile> {
+  @override
+  Widget build(BuildContext context) {
+    final log = ref.watch(errorLogProvider);
+    final count = log.entries.length;
+    return _SettingsTile(
+      icon: Icons.bug_report_rounded,
+      color: AppColors.graphite400,
+      title: 'Hata kaydı',
+      subtitle: count == 0
+          ? 'Kayıtlı hata yok'
+          : '$count hata kaydı · yalnızca bu cihazda',
+      onTap: count == 0 ? null : () => _open(log),
+    );
+  }
+
+  Future<void> _open(ErrorLog log) async {
+    final action = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Hata kaydı'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              const Text(
+                'Bu kayıt yalnızca bu cihazda tutulur ve kendiliğinden hiçbir '
+                'yere gönderilmez. Bir sorunu bildirmek istersen paylaşabilirsin.',
+              ),
+              const SizedBox(height: 12),
+              for (final e in log.entries.take(5))
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    e.message,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(dialogContext).textTheme.bodySmall,
+                  ),
+                ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop('clear'),
+            child: const Text('Temizle'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(minimumSize: const Size(0, 44)),
+            onPressed: () => Navigator.of(dialogContext).pop('share'),
+            child: const Text('Paylaş'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted) return;
+    switch (action) {
+      case 'share':
+        await SharePlus.instance.share(
+          ShareParams(
+            text: log.report(appVersion: AppConstants.appVersion),
+            subject: 'Paceora hata kaydı',
+          ),
+        );
+      case 'clear':
+        await log.clear();
+        setState(() {});
+    }
   }
 }

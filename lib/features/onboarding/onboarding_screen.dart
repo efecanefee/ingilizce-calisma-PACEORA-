@@ -3,12 +3,18 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/answer_option.dart';
 import '../../app/constants.dart';
 import '../../app/logo.dart';
+import '../../app/mascot.dart';
 import '../../app/motion.dart';
+import '../../app/sounds.dart';
+import '../../data/level_check.dart';
+import '../../data/placement.dart';
 import '../../data/providers.dart';
+import '../placement/placement_screen.dart';
 
-/// Üç adımlı onboarding: isim → seviye → günlük süre.
+/// Dört adımlı onboarding: isim → seviye → seviye önizlemesi → günlük süre.
 ///
 /// Son adımda profil kaydedilir ve Gemini'den haftalık plan üretilir.
 class OnboardingScreen extends ConsumerStatefulWidget {
@@ -19,14 +25,17 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 }
 
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
-  static const _stepCount = 3;
+  static const _stepCount = 4;
 
   final _pageController = PageController();
   final _nameController = TextEditingController();
 
   int _step = 0;
   DifficultyLevel _level = DifficultyLevel.b1;
-  int _dailyMinutes = AppConstants.dailyMinuteOptions[1];
+
+  /// Seviye testten geldiyse önizleme adımında kontrol soruları sorulmaz.
+  bool _placementDone = false;
+  int _dailyMinutes = AppConstants.defaultDailyMinutes;
   bool _submitting = false;
 
   @override
@@ -55,6 +64,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       );
     } else {
       _finish();
+    }
+  }
+
+  Future<void> _takePlacementTest() async {
+    final level = await openPlacementTest(context);
+    if (level != null && mounted) {
+      setState(() {
+        _level = level;
+        _placementDone = true;
+      });
     }
   }
 
@@ -144,7 +163,18 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                     _NameStep(controller: _nameController),
                     _LevelStep(
                       selected: _level,
-                      onChanged: (l) => setState(() => _level = l),
+                      onChanged: (l) => setState(() {
+                        _level = l;
+                        _placementDone = false;
+                      }),
+                      onTest: _takePlacementTest,
+                    ),
+                    _LevelCheckStep(
+                      // Seviye değişince kontrol baştan başlar.
+                      key: ValueKey(_level),
+                      level: _level,
+                      placementDone: _placementDone,
+                      onChangeLevel: (l) => setState(() => _level = l),
                     ),
                     _MinutesStep(
                       selected: _dailyMinutes,
@@ -247,7 +277,7 @@ class _NameStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _StepScaffold(
-      header: const Center(child: PaceoraLockup()),
+      header: const Center(child: AnimatedPaceoraLockup()),
       title: 'Merhaba! Sana nasıl hitap edelim?',
       subtitle: 'Günlük derslerinde ve raporlarında bu ismi kullanacağız.',
       child: TextField(
@@ -262,28 +292,255 @@ class _NameStep extends StatelessWidget {
 }
 
 class _LevelStep extends StatelessWidget {
-  const _LevelStep({required this.selected, required this.onChanged});
+  const _LevelStep({
+    required this.selected,
+    required this.onChanged,
+    required this.onTest,
+  });
 
   final DifficultyLevel selected;
   final ValueChanged<DifficultyLevel> onChanged;
+  final VoidCallback onTest;
 
   @override
   Widget build(BuildContext context) {
     return _StepScaffold(
       title: 'Seviyen ne durumda?',
       subtitle:
-          'Emin değilsen B1 ile başla — uygulama ilerledikçe zorluğu kendisi ayarlıyor.',
-      child: Wrap(
-        spacing: 10,
-        runSpacing: 10,
+          'Emin değilsen kısa testi çöz ya da B1 ile başla — uygulama ilerledikçe zorluğu kendisi ayarlıyor.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          for (final level in DifficultyLevel.values)
-            ChoiceChip(
-              label: Text(level.label),
-              selected: level == selected,
-              onSelected: (_) => onChanged(level),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              for (final level in DifficultyLevel.values)
+                ChoiceChip(
+                  label: Text(level.label),
+                  selected: level == selected,
+                  onSelected: (_) => onChanged(level),
+                ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Card(
+            child: ListTile(
+              contentPadding: const EdgeInsets.fromLTRB(8, 4, 16, 4),
+              leading: const PaceMascot(
+                mood: PaceMood.study,
+                size: 52,
+                animate: false,
+              ),
+              title: const Text('Kısa seviye testi'),
+              subtitle: Text('$placementQuestionCount soru, yaklaşık 3 dakika'),
+              trailing: const Icon(Icons.chevron_right_rounded),
+              onTap: onTest,
             ),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+/// Seçilen seviyenin önizlemesi ve isteğe bağlı 4 soruluk kontrol.
+class _LevelCheckStep extends StatefulWidget {
+  const _LevelCheckStep({
+    super.key,
+    required this.level,
+    required this.placementDone,
+    required this.onChangeLevel,
+  });
+
+  final DifficultyLevel level;
+  final bool placementDone;
+  final ValueChanged<DifficultyLevel> onChangeLevel;
+
+  @override
+  State<_LevelCheckStep> createState() => _LevelCheckStepState();
+}
+
+class _LevelCheckStepState extends State<_LevelCheckStep> {
+  final _answers = <int>[];
+  bool _started = false;
+
+  /// Seçildi, renkli geri bildirim gösteriliyor.
+  int? _picked;
+
+  Future<void> _choose(int option) async {
+    if (_picked != null) return;
+    Haptics.tap();
+    final question = _preview.questions[_answers.length];
+    Sounds.answer(correct: question.isCorrect(option));
+    setState(() => _picked = option);
+    await Future<void>.delayed(const Duration(milliseconds: 900));
+    if (!mounted) return;
+    setState(() {
+      _answers.add(option);
+      _picked = null;
+    });
+  }
+
+  LevelPreview get _preview => LevelPreview.of(widget.level);
+
+  int get _correct => [
+    for (var i = 0; i < _answers.length; i++)
+      if (_preview.questions[i].isCorrect(_answers[i])) i,
+  ].length;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final preview = _preview;
+
+    return _StepScaffold(
+      title: '${widget.level.label} seviyesinde neler var?',
+      subtitle: widget.placementDone
+          ? 'Seviye testine göre programın bu konular üzerine kurulacak.'
+          : 'Programın bu konular üzerine kurulacak. İstersen 4 soruluk kısa '
+                'kontrolle seviyenin sana uygun olup olmadığını gör.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Nelere odaklanacağız',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  for (final item in preview.focus)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.check_circle_rounded,
+                            size: 18,
+                            color: theme.colorScheme.primary,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              item,
+                              style: theme.textTheme.bodyMedium,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          if (!widget.placementDone) ...[
+            const SizedBox(height: 16),
+            _buildCheck(theme),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCheck(ThemeData theme) {
+    final questions = _preview.questions;
+
+    if (!_started) {
+      return OutlinedButton.icon(
+        onPressed: () => setState(() => _started = true),
+        icon: const Icon(Icons.quiz_rounded),
+        label: const Text('4 soruluk kontrolü çöz'),
+      );
+    }
+
+    if (_answers.length < questions.length) {
+      final q = questions[_answers.length];
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Soru ${_answers.length + 1}/${questions.length}',
+                style: theme.textTheme.labelMedium,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                q.prompt,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (var i = 0; i < q.options.length; i++)
+                    AnswerOption(
+                      label: q.options[i],
+                      expand: false,
+                      state: answerStateFor(
+                        option: i,
+                        correct: q.answer,
+                        picked: _picked,
+                      ),
+                      onPressed: _picked == null ? () => _choose(i) : null,
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final verdict = levelCheckVerdict(widget.level, _correct);
+    final suggested = switch (verdict) {
+      LevelCheckVerdict.lower => widget.level.step(-1),
+      LevelCheckVerdict.higher => widget.level.step(1),
+      LevelCheckVerdict.fits => null,
+    };
+    final message = switch (verdict) {
+      LevelCheckVerdict.fits => 'Bu seviye sana uygun görünüyor.',
+      LevelCheckVerdict.higher =>
+        'Hepsi doğru! ${suggested!.label} seviyesi seni daha çok geliştirebilir.',
+      LevelCheckVerdict.lower =>
+        'Biraz zorlandın; ${suggested!.label} ile başlamak daha rahat olabilir.',
+    };
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              '${questions.length} sorudan $_correct doğru',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(message, style: theme.textTheme.bodyMedium),
+            if (suggested != null) ...[
+              const SizedBox(height: 12),
+              OutlinedButton(
+                onPressed: () => widget.onChangeLevel(suggested),
+                child: Text('${suggested.label} seviyesine geç'),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -303,6 +560,33 @@ class _MinutesStep extends StatelessWidget {
       subtitle: 'Kısa ve düzenli çalışmak, uzun ve seyrek çalışmaktan iyidir.',
       child: Column(
         children: [
+          // Ders üretimi öncesi açık bilgilendirme.
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.lock_outline_rounded,
+                  size: 18,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Programın ve derslerin Google Gemini ile hazırlanır. '
+                    'Seviyen ve konular paylaşılır, adın paylaşılmaz. '
+                    'Ayrıntılar: Ayarlar > Gizlilik.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.65,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
           for (final minutes in AppConstants.dailyMinuteOptions)
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
@@ -322,7 +606,7 @@ class _MinutesStep extends StatelessWidget {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 20,
-                      vertical: 18,
+                      vertical: 14,
                     ),
                     child: Row(
                       children: [
@@ -335,10 +619,24 @@ class _MinutesStep extends StatelessWidget {
                               : theme.colorScheme.outline,
                         ),
                         const SizedBox(width: 16),
-                        Text(
-                          'Günde $minutes dakika',
-                          style: theme.textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.w600),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Günde $minutes dakika',
+                                style: theme.textTheme.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.w600),
+                              ),
+                              Text(
+                                AppConstants.dailyMinuteHint(minutes),
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurface
+                                      .withValues(alpha: 0.65),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),

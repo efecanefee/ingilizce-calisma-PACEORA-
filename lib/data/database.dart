@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 
 part 'database.g.dart';
 
@@ -8,7 +9,7 @@ class UserProfiles extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get name => text()();
 
-  /// DifficultyLevel.code — B1-, B1, B1+, B2-, B2, B2+
+  /// DifficultyLevel.code — A2, B1-, B1, B1+, B2-, B2, B2+, C1
   TextColumn get level => text()();
   IntColumn get dailyMinutes => integer()();
   IntColumn get streak => integer().withDefault(const Constant(0))();
@@ -132,8 +133,30 @@ class AppDatabase extends _$AppDatabase {
 
   AppDatabase.forTesting(super.e);
 
+  /// Şema sürümü. Bir tabloya sütun/tablo eklerken:
+  /// 1. Bu sayıyı bir artır.
+  /// 2. [migration] içindeki `onUpgrade`'e `from < yeniSürüm` adımını ekle.
+  /// 3. `test/database_migration_test.dart`'a eski sürümden göç testi ekle.
+  /// Adım atlanırsa güncelleme alan kullanıcıların uygulaması açılışta çöker.
   @override
   int get schemaVersion => 1;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (m) => m.createAll(),
+    onUpgrade: (m, from, to) async {
+      // Sürüm adımları buraya, sırayla eklenir. Örnek:
+      // if (from < 2) await m.addColumn(lessons, lessons.yeniSutun);
+    },
+    beforeOpen: (details) async {
+      if (details.hadUpgrade) {
+        debugPrint(
+          'Veritabanı ${details.versionBefore} → ${details.versionNow} '
+          'sürümüne güncellendi',
+        );
+      }
+    },
+  );
 
   static QueryExecutor _openConnection() {
     return driftDatabase(

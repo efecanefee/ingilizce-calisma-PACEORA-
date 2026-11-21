@@ -39,8 +39,16 @@ class LessonSize {
   static LessonSize forMinutes(int minutes) => switch (minutes) {
         <= 10 => const LessonSize(vocab: 5, gapFill: 4, translate: 2, quiz: 4),
         <= 15 => const LessonSize(vocab: 8, gapFill: 5, translate: 3, quiz: 5),
-        _ => const LessonSize(vocab: 10, gapFill: 6, translate: 4, quiz: 6),
+        <= 20 => const LessonSize(vocab: 10, gapFill: 6, translate: 4, quiz: 6),
+        <= 30 => const LessonSize(vocab: 14, gapFill: 8, translate: 5, quiz: 8),
+        <= 45 =>
+          const LessonSize(vocab: 18, gapFill: 10, translate: 6, quiz: 10),
+        _ => const LessonSize(vocab: 20, gapFill: 12, translate: 8, quiz: 12),
       };
+
+  /// Toplam soru ve kart sayısı; büyük derslerde Gemini'ye daha uzun süre
+  /// tanımak için kullanılır.
+  int get total => vocab + gapFill + translate + quiz;
 }
 
 /// Öğretilen kelime/kalıp. Puanlanmaz, ders başında tanıtım için gösterilir.
@@ -367,15 +375,23 @@ class AnswerOutcome {
 /// yarıda bırakılıp geri dönüldüğünde kaldığı adımdan devam eder ve bunun için
 /// şemaya yeni kolon eklemek gerekmez.
 class LessonState {
-  const LessonState({required this.lesson, this.progress = const LessonProgress()});
+  const LessonState({
+    required this.lesson,
+    this.progress = const LessonProgress(),
+    this.offline = false,
+  });
 
   final DailyLesson lesson;
   final LessonProgress progress;
+
+  /// Ders Gemini yerine uygulamadaki hazır ders havuzundan geldi.
+  final bool offline;
 
   LessonState copyWith({DailyLesson? lesson, LessonProgress? progress}) =>
       LessonState(
         lesson: lesson ?? this.lesson,
         progress: progress ?? this.progress,
+        offline: offline,
       );
 
   int get answeredCount => progress.answers.length;
@@ -433,6 +449,7 @@ class LessonState {
   String encode() => jsonEncode({
         'lesson': lesson.toJson(),
         'progress': progress.toJson(),
+        if (offline) 'offline': true,
       });
 
   /// `Lessons.contentJson` içeriğini geri okur; bozuksa null.
@@ -445,6 +462,7 @@ class LessonState {
       return LessonState(
         lesson: lesson,
         progress: LessonProgress.fromJson(raw['progress']),
+        offline: raw['offline'] == true,
       );
     } catch (_) {
       return null;

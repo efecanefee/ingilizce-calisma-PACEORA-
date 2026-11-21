@@ -1,0 +1,88 @@
+name: Kontrol
+
+# Pull request'lerde ve elle tetiklendiğinde: analiz, testler (ekran
+# görüntüsü testleri dahil), kapsam raporu ve Android derleme kontrolü.
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+# Aynı PR'a yeni commit gelince eski çalışma iptal edilir.
+concurrency:
+  group: kontrol-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  kontrol:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.7
+          channel: stable
+          cache: true
+
+      - name: Bağımlılıklar
+        run: flutter pub get
+
+      - name: Drift kod üretimi
+        run: dart run build_runner build
+
+      # Kod analizde temiz; bilgi düzeyindeki uyarılar da hata sayılır.
+      - name: Analiz
+        run: flutter analyze
+
+      - name: Testler ve kapsam
+        run: flutter test --coverage
+
+      - name: Kapsam özeti
+        run: |
+          python3 - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          total = hit = 0
+          for line in open('coverage/lcov.info'):
+              if line.startswith('LF:'): total += int(line[3:])
+              elif line.startswith('LH:'): hit += int(line[3:])
+          pct = 100 * hit / total if total else 0
+          print(f'### Test kapsamı: %{pct:.1f} ({hit}/{total} satır)')
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kapsam
+          path: coverage/lcov.info
+
+      # Ekran görüntüsü testi düşerse farkı gösteren görseller.
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: golden-farklari
+          path: test/failures/
+          if-no-files-found: ignore
+
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.7
+          channel: stable
+          cache: true
+
+      - name: Bağımlılıklar
+        run: flutter pub get
+
+      - name: Drift kod üretimi
+        run: dart run build_runner build
+
+      # Manifest, ikon ve kaynak dosyalarının derlendiğini doğrular.
+      - name: Android derleme kontrolü
+        run: flutter build apk --debug

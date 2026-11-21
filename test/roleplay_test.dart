@@ -148,7 +148,6 @@ void main() {
     final result = await service.roleplayTurn(
       scenario: scenario,
       level: 'B1',
-      name: 'Efe',
       history: [
         ChatMessage(Speaker.ai, scenario.opening),
         const ChatMessage(Speaker.user, 'A latte please'),

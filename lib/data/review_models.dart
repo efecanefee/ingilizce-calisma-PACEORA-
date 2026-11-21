@@ -261,6 +261,6 @@ ReportCommentary localCommentary(WeeklyStats stats, int levelDelta) {
   );
 }
 
-/// [code] seviyesinden [delta] kademe ötedeki seviye kodu (B1- ile B2+ arası).
+/// [code] seviyesinden [delta] kademe ötedeki seviye kodu (A2 ile C1 arası).
 String shiftLevel(String code, int delta) =>
     DifficultyLevel.fromCode(code).step(delta).code;

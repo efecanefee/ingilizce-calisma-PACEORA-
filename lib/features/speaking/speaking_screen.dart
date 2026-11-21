@@ -3,7 +3,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/error_view.dart';
 import '../../app/motion.dart';
+import '../../app/speak_button.dart';
 import '../../app/theme.dart';
 import '../../data/pronunciation.dart';
 import '../../data/providers.dart';
@@ -34,7 +36,10 @@ class SpeakingScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text(mode.title)),
       body: switch (sentences) {
-        AsyncError(:final error) => Center(child: Text('$error')),
+        AsyncError(:final error) => ErrorView(
+          error: error,
+          onRetry: () => ref.invalidate(practiceSentencesProvider),
+        ),
         AsyncData(:final value) => _Session(mode: mode, sentences: value),
         _ => const Center(child: CircularProgressIndicator()),
       },
@@ -91,7 +96,7 @@ class _SessionState extends ConsumerState<_Session> {
   }
 
   Future<void> _play({bool slow = false}) =>
-      _speech.speak(_sentence, slow: slow);
+      speakWithNotice(context, _speech, _sentence, slow: slow);
 
   Future<void> _listen() async {
     if (_stage == _Stage.listening) {
@@ -362,7 +367,7 @@ class _MicButton extends StatelessWidget {
     );
     if (listening) {
       button = button
-          .animate(onPlay: (c) => c.repeat(reverse: true))
+          .animate(onPlay: Motion.loop(reverse: true))
           .scale(
             begin: const Offset(1, 1),
             end: const Offset(1.08, 1.08),

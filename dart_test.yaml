@@ -1,0 +1,9 @@
+tags:
+  # Ekran görüntüsü karşılaştırmaları. Görüntüler Linux'ta üretildi; yazı
+  # tipi yumuşatması işletim sistemine göre değiştiği için başka sistemlerde
+  # atlanır. Güncellemek için: flutter test --tags golden --update-goldens
+  golden:
+  # Mağaza ekran görüntüleri: elle üretilir, normal çalıştırmada atlanır.
+  # Üretmek için: flutter test --tags magaza --run-skipped
+  magaza:
+    skip: "Mağaza görüntüleri yalnızca istenince üretilir."

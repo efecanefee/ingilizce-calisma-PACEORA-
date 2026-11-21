@@ -503,7 +503,7 @@ class _TypingBubble extends StatelessWidget {
                     ),
                   )
                   .animate(
-                    onPlay: (c) => c.repeat(reverse: true),
+                    onPlay: Motion.loop(reverse: true),
                     delay: (150 * i).ms,
                   )
                   .fadeOut(duration: 450.ms),

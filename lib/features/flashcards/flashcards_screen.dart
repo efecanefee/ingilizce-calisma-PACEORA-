@@ -1,9 +1,11 @@
 import 'dart:math';
 
+import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/error_view.dart';
 import '../../app/motion.dart';
 import '../../app/speak_button.dart';
 import '../../app/theme.dart';
@@ -38,7 +40,10 @@ class FlashcardsScreen extends ConsumerWidget {
         ],
       ),
       body: switch (session) {
-        AsyncError(:final error) => Center(child: Text('$error')),
+        AsyncError(:final error) => ErrorView(
+          error: error,
+          onRetry: () => ref.invalidate(flashcardSessionProvider),
+        ),
         AsyncData(:final value) when value.isDone => _DoneView(
           reviewed: value.reviewed,
           total: summary?.total ?? 0,
@@ -125,10 +130,14 @@ class _SessionViewState extends ConsumerState<_SessionView> {
                     child: child,
                   ),
                 ),
-                child: GestureDetector(
+                child: Semantics(
                   key: ValueKey('${card.id}-$done'),
-                  onTap: () => setState(() => _flipped = !_flipped),
-                  child: _FlipCard(card: card, flipped: _flipped),
+                  button: true,
+                  hint: _flipped ? 'Ön yüze dön' : 'Anlamını görmek için çevir',
+                  child: GestureDetector(
+                    onTap: () => setState(() => _flipped = !_flipped),
+                    child: _FlipCard(card: card, flipped: _flipped),
+                  ),
                 ),
               ),
             ),
@@ -218,8 +227,8 @@ class _CardFace extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: isDark
-                    ? [AppColors.limeDark, AppColors.graphite800]
-                    : [AppColors.limeSpark, AppColors.limeDim],
+                    ? [context.pace.accentDark, AppColors.graphite800]
+                    : [context.pace.accent, context.pace.accentDim],
               ),
         border: Border.all(color: theme.colorScheme.outlineVariant),
         boxShadow: [
@@ -316,7 +325,7 @@ class _GradeButtons extends StatelessWidget {
       intervalDays: card.intervalDays,
       reps: card.reps,
       grade: grade,
-      today: DateTime.now(),
+      today: clock.now(),
     );
     return switch (next.intervalDays) {
       1 => 'yarın',

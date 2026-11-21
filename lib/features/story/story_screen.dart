@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/error_view.dart';
 import '../../app/motion.dart';
 import '../../app/speak_button.dart';
 import '../../app/theme.dart';
@@ -23,11 +24,9 @@ class StoryScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Günün hikayesi')),
       body: switch (story) {
-        AsyncError(:final error) => Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Text('$error', textAlign: TextAlign.center),
-          ),
+        AsyncError(:final error) => ErrorView(
+          error: error,
+          onRetry: () => ref.invalidate(storyProvider),
         ),
         AsyncData(:final value) => _StoryBody(state: value),
         _ => const _LoadingView(),
@@ -47,7 +46,7 @@ class _LoadingView extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(Icons.auto_stories, size: 48, color: theme.colorScheme.primary)
-              .animate(onPlay: (c) => c.repeat(reverse: true))
+              .animate(onPlay: Motion.loop(reverse: true))
               .moveY(
                 begin: -4,
                 end: 4,
@@ -202,7 +201,7 @@ class _ListenStoryButtonState extends ConsumerState<_ListenStoryButton> {
       return;
     }
     setState(() => _playing = true);
-    await _speech.speak(widget.text);
+    await speakWithNotice(context, _speech, widget.text);
     if (mounted) setState(() => _playing = false);
   }
 

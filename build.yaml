@@ -1,0 +1,11 @@
+targets:
+  $default:
+    builders:
+      drift_dev:
+        options:
+          databases:
+            # Şema geçmişi drift_schemas/ altında tutulur; göç testleri
+            # test/drift/ altında üretilir (dart run drift_dev make-migrations).
+            default: lib/data/database.dart
+          test_dir: test/drift/
+          schema_dir: drift_schemas/

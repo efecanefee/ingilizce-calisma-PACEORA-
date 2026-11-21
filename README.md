@@ -9,7 +9,7 @@ serini (streak) takip eder. Veriler tamamen cihazında kalır.
 
 ![Flutter](https://img.shields.io/badge/Flutter-3.44-02569B?logo=flutter&logoColor=white)
 ![Dart](https://img.shields.io/badge/Dart-3-0175C2?logo=dart&logoColor=white)
-![Gemini](https://img.shields.io/badge/Gemini-2.0%20Flash-8E75B2?logo=googlegemini&logoColor=white)
+![Gemini](https://img.shields.io/badge/Gemini-Flash-8E75B2?logo=googlegemini&logoColor=white)
 ![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS%20%7C%20Web%20%7C%20Windows-informational)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -26,7 +26,7 @@ dilbilgisi konusu ve bir kelime teması olur; pazar günü haftanın tekrarına 
 
 ## Öne çıkanlar
 
-- **Kişiye özel haftalık program** — Gemini 2.0 Flash, seviyene ve süreni göre
+- **Kişiye özel haftalık program** — Gemini (Flash), seviyene ve süreni göre
   7 günlük konu akışı üretir; konular kolaydan zora ilerler ve tekrar etmez.
 - **Çok adımlı günlük ders** — o günün konusundan kelime kartları → boşluk
   doldurma → Türkçe'den İngilizce'ye çeviri → çoktan seçmeli test üretilir.
@@ -47,11 +47,23 @@ dilbilgisi konusu ve bir kelime teması olur; pazar günü haftanın tekrarına 
 - **İlerlemen korunur** — programı yenilediğinde çalıştığın günlerin durumu
   silinmez, dolayısıyla serin de bozulmaz. Yeni haftaya geçtiğinde program
   kendiliğinden üretilir.
+- **Yedekleme** — Ayarlar'dan tüm ilerlemeyi tek bir JSON dosyasına dışa aktar,
+  yeni telefonda geri yükle (hesap gerekmez).
 - **Tamamen yerel veri** — her şey cihazdaki SQLite'ta (drift). Hesap yok,
   sunucu yok; Gemini'ye yalnızca içerik üretirken istek gider.
-- **6 kademeli seviye** — B1-, B1, B1+, B2-, B2, B2+ (adaptif zorluk için ara
-  kademeler).
-- **Açık/koyu tema** — "Lime Spark + Graphite" paleti, Ayarlar'dan seçilebilir.
+- **8 kademeli seviye** — A2, B1-, B1, B1+, B2-, B2, B2+, C1 (B1 ve B2'de
+  adaptif zorluk için ara kademeler).
+- **Açık/koyu tema ve vurgu rengi** — "Lime Spark + Graphite" paleti; Ayarlar'dan
+  açık/koyu mod ve 6 vurgu rengi (Lime, Okyanus, Gökyüzü, Gün batımı, Lavanta,
+  Gül) seçilebilir. Tüm vurgular WCAG AA kontrast testinden geçer.
+- **Maskot Pace** — çita Pace koşar, kutlar, ders çalışır ya da şaşırır; ana
+  ekranda serinin durumuna göre poz değiştirir. Dokununca dolabı açılır.
+- **Pace'in dolabı** — harcanabilir XP ile 6 forma; çizim aynı kalır, forma
+  renkleri değişir. Bakiye seri dondurma haklarıyla ortaktır.
+- **Seviye testi ve önizleme** — onboarding'de kısa test (her
+  seferinde havuzdan karışık 16 soru, sonunda yanlışların incelemesi) ya da
+  elle seçim; seçilen seviyenin odak konuları ve 4 soruluk kontrol. Ayarlar'dan
+  seviye, test çözülmeden değiştirilemez.
 - **SM-2 flash kartlar** — dersi bitirince o günün kelimeleri ve yanlış yaptığın
   ifadeler desteye girer. Kart çevrilir, "Tekrar / Zor / İyi / Kolay" ile
   notlanır; her düğmenin altında kartın ne zaman yeniden geleceği yazar.
@@ -72,10 +84,14 @@ dilbilgisi konusu ve bir kelime teması olur; pazar günü haftanın tekrarına 
 - **Bugünkü hedef ve yönlendirme** — ders, hikaye ve kart tekrarından oluşan
   günlük hedef halkası; "sıradaki" adım işaretlenir ve tek dokunuşla açılır.
 - **Program sekmesi** — haftanın zaman çizelgesi: tamamlanan, kaçırılan,
-  bugünkü ve yaklaşan günler; güne dokununca ayrıntılar.
+  bugünkü ve yaklaşan günler; güne dokununca ayrıntılar. Ana ekrandaki "Bu
+  hafta" kutucukları da aynı ayrıntıyı açar.
+- **Seri hedefleri** — seri rozetinde dönen alev çerçevesi ve 3, 7, 14, 30…
+  güne doğru dolan bar; hedefe ulaşınca kutlama.
 - **Animasyonlu arayüz** — alt gezinme çubuğu, hareketli gradyanlı karşılama
   kartı, sayfa geçişleri, sırayla beliren kartlar, dönen flash kart, sayarak
   artan skorlar ve XP, "nefes alan" seri alevi, titreşimli dokunuşlar.
+  Sistemde "animasyonları azalt" açıksa Pace ve seri animasyonları durur.
 
 ## Ekranlar
 
@@ -119,6 +135,12 @@ Anahtarı [Google AI Studio](https://aistudio.google.com/apikey)'dan
 ücretsiz alabilirsin. Alternatif olarak uygulama içinden **Ayarlar → Gemini API
 anahtarı** alanına yapıştırabilirsin; oradaki anahtar derlemeye gömülü olana göre
 önceliklidir ve yalnızca o cihazda saklanır.
+
+> **Güvenlik:** `--dart-define` ile verilen anahtar derlenen uygulamanın içine
+> girer ve APK/IPA'dan çıkarılabilir. GitHub iş akışlarını elle çalıştırırken
+> **sürüm** seçeneğini kullan: `kisisel` anahtarı gömer (yalnızca kendi
+> telefonun için), `paylasim` gömmez; başkalarına verilecek sürümde kullanıcı
+> kendi anahtarını Ayarlar'dan girer. `main`'e push'ta kişisel sürüm üretilir.
 
 Hiç anahtar vermezsen haftalık program yerleşik yedek listeden gelir, ancak
 günlük ders üretimi çalışmaz — ders ekranı bunu söyler ve günü elle
@@ -201,10 +223,20 @@ flutter build apk --release --dart-define-from-file=env.json
 ## Testler
 
 ```bash
-flutter test
+flutter test                                   # birim + widget testleri
+flutter test --tags golden                     # ekran görüntüsü testleri (Linux)
+flutter test --tags golden --update-goldens    # görüntüleri yenile
+flutter test integration_test -d <cihaz>       # uçtan uca, temiz kurulumda
 ```
 
-108 test. Kapsam: Gemini yanıt ayrıştırma ve yedek plana düşme, ders JSON'unun
+275+ test, tamamı geçer. Ekran görüntüsü testleri Linux'ta üretildiği için
+diğer sistemlerde atlanır; uçtan uca test GitHub Actions'ta "Entegrasyon testi"
+iş akışıyla Android emülatöründe elle çalıştırılır. Ek kapsam: erişilebilirlik
+yönergeleri (etiket, 48 dp dokunma alanı, WCAG kontrastı), vurgu renkleri
+kontrastı, yedekleme/geri yükleme, veritabanı şeması, gizlilik (adın Gemini'ye
+gitmemesi), hazır ders havuzu, saat sabitlenerek haftanın her günü.
+
+Kapsam: Gemini yanıt ayrıştırma ve yedek plana düşme, ders JSON'unun
 bozuk öğelere dayanıklı okunması, çeviri puanlaması (noktalama, büyük/küçük harf,
 kısaltmalar), hata defteri kuralları, repository (streak, plan yenilerken
 ilerlemenin korunması, ders önbelleği), SM-2 aralık hesabı, flash kart destesi,
@@ -232,6 +264,7 @@ lib/
     review/     haftalık rapor ve adaptif seviye
     settings/   profil, API anahtarı, hatırlatma, tema, veri sıfırlama
 assets/images/  paceora_mark.png (amblem), paceora_logo.png (tam logo)
+assets/mascot/  pace_*.png (maskot Pace pozları), pace_badge.png (logo rozeti)
 ```
 
 **Teknolojiler:** Flutter · Riverpod (durum yönetimi) · drift + SQLite
@@ -265,13 +298,17 @@ devam edebiliyor.
 - [x] Günün hikayesi + okuduğunu anlama testi
 - [x] Haftalık değerlendirme raporu ve adaptif seviye ayarı (B1- ↔ B2+)
 - [x] Animasyonlu arayüz ve Türkçe sistem metinleri
+- [x] Maskot Pace, forma dolabı ve seri hedefi kutlamaları
+- [x] Seviye testi, seviye önizlemesi ve vurgu rengi seçimi
 
 ## Logo
 
-Uygulama içi görseller `assets/images/` altında; platform ikonları
-(`web/icons`, `android/.../mipmap-*`, `ios/.../AppIcon.appiconset`) ve Android
-açılış ekranı görselleri (`android/.../drawable-*/launch_logo.png`) aynı
-kaynaktan üretildi. Logo yenilenirse bu üretilmiş dosyaların da
+Logo, lime halka içindeki Pace rozetidir (`assets/mascot/pace_badge.png`).
+Maskot pozları ve forma maskeleri `assets/mascot/` altında 1x/2x/3x
+çözünürlükte durur. Platform ikonları (`web/icons`, `android/.../mipmap-*`,
+Android 8+ uyarlanabilir ikon `mipmap-anydpi-v26`, `ios/.../AppIcon.appiconset`)
+ve açılış ekranı görselleri (`drawable-*/launch_logo.png`, Android 12+
+`drawable-xxhdpi/splash_icon.png`) aynı rozetten üretildi. Logo yenilenirse bu üretilmiş dosyaların da
 güncellenmesi gerekir.
 
 Palet: `#C6F432` (Lime Spark) · `#15171A` (Graphite 900)

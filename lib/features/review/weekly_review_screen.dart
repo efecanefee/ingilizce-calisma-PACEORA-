@@ -1,8 +1,10 @@
+import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/constants.dart';
+import '../../app/error_view.dart';
 import '../../app/motion.dart';
 import '../../app/theme.dart';
 import '../../data/providers.dart';
@@ -46,12 +48,15 @@ class _WeeklyReviewScreenState extends ConsumerState<WeeklyReviewScreen> {
   @override
   Widget build(BuildContext context) {
     final reports = ref.watch(weeklyReportsProvider);
-    final thisWeek = mondayOf(DateTime.now());
+    final thisWeek = mondayOf(clock.now());
 
     return Scaffold(
       appBar: AppBar(title: const Text('Haftalık rapor')),
       body: switch (reports) {
-        AsyncError(:final error) => Center(child: Text('$error')),
+        AsyncError(:final error) => ErrorView(
+          error: error,
+          onRetry: () => ref.invalidate(weeklyReportsProvider),
+        ),
         AsyncData(:final value) => ListView(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
           children: [
@@ -397,7 +402,7 @@ class _LevelSuggestion extends ConsumerWidget {
                           color: color,
                           size: 28,
                         )
-                        .animate(onPlay: (c) => c.repeat(reverse: true))
+                        .animate(onPlay: Motion.loop(reverse: true))
                         .moveX(begin: -3, end: 3, duration: 700.ms),
               ),
               _LevelChip(code: to.code, muted: false),

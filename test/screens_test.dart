@@ -1,13 +1,19 @@
+import 'package:clock/clock.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paceora/data/database.dart';
+import 'package:paceora/data/placement.dart';
 import 'package:paceora/data/providers.dart';
 import 'package:paceora/data/repository.dart';
 import 'package:paceora/data/review_models.dart';
+import 'package:paceora/data/review_request.dart';
 import 'package:paceora/data/rewards.dart';
+import 'package:paceora/data/streak_freeze.dart';
+import 'package:paceora/data/wardrobe.dart';
 import 'package:paceora/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -40,6 +46,7 @@ void main() {
   Future<SharedPreferences> pumpApp(
     WidgetTester tester, [
     Map<String, Object> prefs = const {},
+    List<Override> overrides = const [],
   ]) async {
     SharedPreferences.setMockInitialValues(prefs);
     final instance = await SharedPreferences.getInstance();
@@ -48,6 +55,7 @@ void main() {
         overrides: [
           sharedPreferencesProvider.overrideWithValue(instance),
           databaseProvider.overrideWithValue(db),
+          ...overrides,
         ],
         child: const PaceoraApp(onboardingDone: true),
       ),
@@ -56,33 +64,170 @@ void main() {
     return instance;
   }
 
-  testWidgets('Program sekmesi haftayı ve gün ayrıntısını gösterir', (
+  // Haftanın her günü için: test eskiden gerçek tarihe bağlıydı ve cuma ile
+  // sonrasında satır ekranın altında kaldığı için dokunma ıskalıyordu.
+  for (var weekday = 0; weekday < 7; weekday++) {
+    testWidgets(
+      'Program sekmesi haftayı ve gün ayrıntısını gösterir (gün $weekday)',
+      (tester) async {
+        final day = mondayOf(
+          DateTime.now(),
+        ).add(Duration(days: weekday, hours: 10));
+        await withClock(Clock.fixed(day), () async {
+          await pumpApp(tester);
+
+          await tester.tap(find.text('Program'));
+          await _advance(tester);
+
+          expect(find.text('Haftalık program'), findsOneWidget);
+          expect(find.text('/ 7 gün tamam'), findsOneWidget);
+
+          final row = find.text('Konu $weekday');
+          await tester.scrollUntilVisible(
+            row,
+            200,
+            scrollable: find.byType(Scrollable).first,
+          );
+          // Satır yarım görünür kalmasın; tamamen ekrana getir.
+          await tester.ensureVisible(row);
+          await _advance(tester);
+          await tester.tap(row);
+          await _advance(tester);
+
+          // Alt sayfa: konu ayrıntısı ve bugünün dersine giden düğme.
+          expect(find.text('Dilbilgisi'), findsOneWidget);
+          expect(find.text('Kelime teması'), findsOneWidget);
+          expect(find.text('Derse başla'), findsOneWidget);
+        });
+      },
+    );
+  }
+
+  testWidgets('ana ekrandaki gün kutucuğu o günün konusunu açar', (
     tester,
   ) async {
     await pumpApp(tester);
 
-    await tester.tap(find.text('Program'));
-    await _advance(tester);
-
-    expect(find.text('Haftalık program'), findsOneWidget);
-    expect(find.text('/ 7 gün tamam'), findsOneWidget);
-
     final today = DateTime.now().weekday - DateTime.monday;
+    const initials = ['Pt', 'Sa', 'Ça', 'Pe', 'Cu', 'Ct', 'Pz'];
     await tester.scrollUntilVisible(
-      find.text('Konu $today'),
+      find.text(initials[today]),
       200,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.tap(find.text('Konu $today'));
+    await tester.tap(find.text(initials[today]));
     await _advance(tester);
 
-    // Alt sayfa: konu ayrıntısı ve bugünün dersine giden düğme.
     expect(find.text('Dilbilgisi'), findsOneWidget);
-    expect(find.text('Kelime teması'), findsOneWidget);
     expect(find.text('Derse başla'), findsOneWidget);
   });
 
-  testWidgets('profil kaydı sonrası snackbardan program yenilemek çökmez', (
+  testWidgets('Pace\'e dokununca dolap açılır, forma onayla alınır', (
+    tester,
+  ) async {
+    // 100 kart tekrarı = 200 XP; kutlamalar önceden görülmüş sayılır.
+    final prefs = await pumpApp(tester, {
+      'seen_player_level': 99,
+      'seen_badges': [for (final b in badges) b.id],
+      cardsReviewedKey(DateTime.now()): 100,
+    });
+
+    await tester.tap(find.bySemanticsLabel("Pace'in dolabını aç"));
+    await _advance(tester);
+    expect(find.text("Pace'in dolabı"), findsOneWidget);
+
+    await tester.tap(find.text('Kırmızı Şimşek'));
+    await tester.pump();
+    final buy = find.text('Kırmızı Şimşek al · 150 XP');
+    await tester.ensureVisible(buy);
+    await tester.tap(buy);
+    await _advance(tester);
+
+    // Onay penceresi: vazgeçince hiçbir şey alınmaz.
+    expect(find.text('Kırmızı Şimşek alınsın mı?'), findsOneWidget);
+    await tester.tap(find.text('Vazgeç'));
+    await _advance(tester);
+    expect(WardrobeState.read(prefs).owns(PaceKit.crimson), isFalse);
+
+    await tester.tap(buy);
+    await _advance(tester);
+    await tester.tap(find.text('150 XP harca'));
+    await _advance(tester);
+
+    expect(find.text('Yeni forma: Kırmızı Şimşek'), findsOneWidget);
+    final wardrobe = WardrobeState.read(prefs);
+    expect(wardrobe.owns(PaceKit.crimson), isTrue);
+    expect(wardrobe.equipped, PaceKit.crimson);
+  });
+
+  testWidgets('seri yeni hedefe ulaşınca kutlanır, kapanınca bir kez puanlama '
+      'istenir', (tester) async {
+    var reviewRequests = 0;
+    await db.update(db.userProfiles).write(
+      UserProfilesCompanion(
+        streak: const Value(6),
+        lastStudyDate: Value(
+          DateTime.now().subtract(const Duration(days: 1)),
+        ),
+      ),
+    );
+    await pumpApp(tester, {
+      'seen_player_level': 99,
+      'seen_badges': [for (final b in badges) b.id],
+      seenStreakMilestoneKey: 3,
+    }, [
+      reviewRequesterProvider.overrideWithValue(() async => reviewRequests++),
+    ]);
+    expect(find.text('7 günlük seri!'), findsNothing);
+
+    // Bugünü tamamla (dersi bitirmekle aynı yol).
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(PaceoraApp)),
+    );
+    final week = await container.read(weekPlanProvider.future);
+    await tester.runAsync(
+      () => container.read(weekPlanProvider.notifier).completeDay(week.today!),
+    );
+    await _advance(tester);
+
+    expect(find.text('7 günlük seri!'), findsOneWidget);
+    expect(reviewRequests, 0);
+
+    await tester.tap(find.text('Harika!'));
+    await _advance(tester);
+    expect(reviewRequests, 1);
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getBool(reviewRequestedKey), isTrue);
+  });
+
+  testWidgets('anahtar yokken ana ekranda kapatılabilen anahtar kartı', (
+    tester,
+  ) async {
+    // Kart listenin altında; telefona yakın, uzun bir ekran.
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 2.5;
+    addTearDown(tester.view.reset);
+    final prefs = await pumpApp(tester);
+    final hint = find.text('Sana özel dersler için anahtar ekle');
+    await tester.scrollUntilVisible(
+      hint,
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(hint, findsOneWidget);
+
+    final close = find.descendant(
+      of: find.ancestor(of: hint, matching: find.byType(Card)),
+      matching: find.byTooltip('Kapat'),
+    );
+    await tester.ensureVisible(close);
+    await tester.tap(close);
+    await _advance(tester);
+    expect(hint, findsNothing);
+    expect(prefs.getBool('api_key_hint_dismissed'), isTrue);
+  });
+
+  testWidgets('seviye testi çözülmeden ayarlardan seviye seçilemez', (
     tester,
   ) async {
     await pumpApp(tester);
@@ -92,7 +237,27 @@ void main() {
     await tester.tap(find.byTooltip('Profili düzenle'));
     await _advance(tester);
 
+    final chip = tester.widget<ChoiceChip>(
+      find.widgetWithText(ChoiceChip, 'B2'),
+    );
+    expect(chip.onSelected, isNull);
+    expect(find.text('Testi çöz'), findsOneWidget);
+  });
+
+  testWidgets('profil kaydı sonrası snackbardan program yenilemek çökmez', (
+    tester,
+  ) async {
+    // Seviye testi daha önce çözülmüş: seviye seçimi açık.
+    await pumpApp(tester, {PlacementRecord.levelKey: 'B1'});
+
+    await tester.tap(find.text('Ayarlar'));
+    await _advance(tester);
+    await tester.tap(find.byTooltip('Profili düzenle'));
+    await _advance(tester);
+
     await tester.tap(find.widgetWithText(ChoiceChip, 'B2'));
+    await tester.pump();
+    await tester.ensureVisible(find.widgetWithText(FilledButton, 'Kaydet'));
     await tester.pump();
     await tester.tap(find.widgetWithText(FilledButton, 'Kaydet'));
     await _advance(tester);

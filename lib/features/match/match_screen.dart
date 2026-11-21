@@ -5,7 +5,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/error_view.dart';
 import '../../app/motion.dart';
+import '../../app/sounds.dart';
 import '../../app/theme.dart';
 import '../../data/match_game.dart';
 import '../../data/providers.dart';
@@ -20,7 +22,10 @@ class MatchScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Kelime Rallisi')),
       body: switch (deck) {
-        AsyncError(:final error) => Center(child: Text('$error')),
+        AsyncError(:final error) => ErrorView(
+          error: error,
+          onRetry: () => ref.invalidate(matchDeckProvider),
+        ),
         AsyncData(:final value) when value.length < matchMinPairs =>
           _NotEnoughCards(count: value.length),
         AsyncData(:final value) => _MatchGame(deck: value),
@@ -151,6 +156,7 @@ class _MatchGameState extends ConsumerState<_MatchGame> {
     switch (outcome) {
       case MatchOutcome.correct:
         Haptics.success();
+        Sounds.correct();
         setState(() {});
         Future<void>.delayed(const Duration(milliseconds: 220), () {
           if (!mounted || _phase != _Phase.playing) return;
@@ -158,6 +164,7 @@ class _MatchGameState extends ConsumerState<_MatchGame> {
         });
       case MatchOutcome.wrong:
         Haptics.tap();
+        Sounds.wrong();
         final cells = {cell, ?selectedBefore};
         setState(() {
           _wrong.addAll(cells);
@@ -381,6 +388,20 @@ class _Tile extends StatelessWidget {
           ),
         ),
       ),
+    );
+
+    // Ekran okuyucu: metin, durum ve dokunma eylemi tek düğüm olarak.
+    tile = Semantics(
+      button: true,
+      selected: state == _TileState.selected,
+      label: switch (state) {
+        _TileState.correct => '$text, doğru',
+        _TileState.wrong => '$text, yanlış',
+        _ => text,
+      },
+      onTap: onTap,
+      excludeSemantics: true,
+      child: tile,
     );
 
     // Ağaç yapısı hep aynı kalır; yalnızca yanlışta sarsıntı oynar. Yapı

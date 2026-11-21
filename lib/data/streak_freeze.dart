@@ -155,3 +155,26 @@ enum StreakStatus {
   }
   return (streak: 0, status: StreakStatus.broken, freezesNeeded: missed);
 }
+
+/// Seri hedefleri: ana ekrandaki bar bir sonrakine doğru dolar, hedefe
+/// ulaşılınca kutlanır.
+const streakMilestones = [3, 7, 14, 30, 50, 100, 200, 365];
+
+/// [streak] için önceki ve sıradaki hedef; son hedef aşıldıysa her 100 günde
+/// bir yeni hedef.
+({int from, int to}) streakMilestone(int streak) {
+  var from = 0;
+  for (final m in streakMilestones) {
+    if (streak < m) return (from: from, to: m);
+    from = m;
+  }
+  final to = (streak ~/ 100 + 1) * 100;
+  return (from: max(from, to - 100), to: to);
+}
+
+/// [streak] ile ulaşılmış en büyük hedef; hiçbirine ulaşılmadıysa 0.
+int reachedStreakMilestone(int streak) => streakMilestone(streak).from;
+
+/// Kutlaması gösterilmiş son seri hedefi (sıfırlamada `streak_` önekiyle
+/// silinir).
+const seenStreakMilestoneKey = 'streak_seen_milestone';

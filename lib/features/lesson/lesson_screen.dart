@@ -8,6 +8,7 @@ import '../../app/theme.dart';
 import '../../data/lesson_models.dart';
 import '../../data/providers.dart';
 import '../../data/rewards.dart';
+import '../settings/settings_screen.dart' show showApiKeySheet;
 import 'lesson_steps.dart';
 
 /// Günün dersi: kelimeler → boşluk doldurma → çeviri → test → sonuç.
@@ -21,9 +22,11 @@ class LessonScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final lesson = ref.watch(lessonProvider);
 
+    final offline = lesson.value?.offline ?? false;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Bugünün dersi'),
+        title: Text(offline ? 'Bugünün dersi · hazır ders' : 'Bugünün dersi'),
         leading: IconButton(
           tooltip: 'Kapat',
           icon: const Icon(Icons.close),
@@ -75,9 +78,8 @@ class _PreparingView extends StatelessWidget {
 
 /// Ders üretilemediğinde çıkış yolu bırakan ekran.
 ///
-/// Çevrimdışıyken haftalık plandaki gibi hazır bir yedek ders veremiyoruz;
-/// bunun yerine kullanıcı yeniden deneyebilir ya da günü elle işaretleyerek
-/// serisini koruyabilir.
+/// Kullanıcı uygulamadaki hazır dersle çalışabilir, yeniden deneyebilir ya da
+/// günü elle işaretleyerek serisini koruyabilir.
 class _UnavailableView extends ConsumerStatefulWidget {
   const _UnavailableView({required this.message});
 
@@ -130,12 +132,29 @@ class _UnavailableViewState extends ConsumerState<_UnavailableView> {
               ),
             ),
             const SizedBox(height: 24),
-            FilledButton(
+            // Anahtar ya da ağ yoksa bile gün boşa geçmesin.
+            FilledButton.icon(
+              onPressed: _busy
+                  ? null
+                  : () => ref.read(lessonProvider.notifier).useOfflineLesson(),
+              icon: const Icon(Icons.menu_book_rounded),
+              label: const Text('Hazır dersle çalış'),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton(
               onPressed: _busy
                   ? null
                   : () => ref.read(lessonProvider.notifier).retry(),
               child: const Text('Tekrar dene'),
             ),
+            if (!ref.watch(geminiServiceProvider).hasApiKey) ...[
+              const SizedBox(height: 8),
+              TextButton.icon(
+                onPressed: () => showApiKeySheet(context),
+                icon: const Icon(Icons.key_rounded),
+                label: const Text('Gemini anahtarı ekle'),
+              ),
+            ],
             const SizedBox(height: 8),
             TextButton(
               onPressed: _busy ? null : _markDone,
@@ -435,6 +454,10 @@ class _ResultViewState extends ConsumerState<_ResultView> {
     // XP ders başına bir kez verilir; zaten bitmiş ders tekrar açıldıysa
     // "+XP" gösterilmez.
     final earnsXp = !(ref.watch(todayLessonProvider).value?.completed ?? false);
+    // Ara ton açık zeminde soluk kalıyor; açık temada koyu tonu kullan.
+    final xpTone = theme.brightness == Brightness.dark
+        ? context.pace.accentDim
+        : context.pace.accentDark;
 
     final (color, message) = switch (score) {
       >= 85 => (AppColors.success, 'Harika gidiyorsun!'),
@@ -493,15 +516,15 @@ class _ResultViewState extends ConsumerState<_ResultView> {
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.limeSpark.withValues(alpha: 0.18),
+                        color: context.pace.accent.withValues(alpha: 0.18),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: AppColors.limeDim),
+                        border: Border.all(color: xpTone),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.bolt_rounded,
-                              size: 20, color: AppColors.limeDim),
+                          Icon(Icons.bolt_rounded,
+                              size: 20, color: xpTone),
                           const SizedBox(width: 6),
                           CountUpText(
                             value: lessonXp(state.scorePercent),

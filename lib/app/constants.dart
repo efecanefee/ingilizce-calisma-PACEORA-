@@ -3,7 +3,10 @@ abstract class AppConstants {
   static const appName = 'Paceora';
 
   /// pubspec.yaml'daki sürümle aynı tutulur.
-  static const appVersion = '1.1.0';
+  static const appVersion = '1.2.0';
+
+  /// Ayarlar > Geri bildirim gönder'in alıcısı.
+  static const supportEmail = 'paceora.app@gmail.com';
 
   /// Gemini API anahtarı derleme zamanında verilir:
   /// flutter run --dart-define=GEMINI_API_KEY=xxxx
@@ -21,7 +24,21 @@ abstract class AppConstants {
       'https://generativelanguage.googleapis.com/v1beta/models';
 
   /// Günlük çalışma süresi seçenekleri (dakika)
-  static const dailyMinuteOptions = [10, 15, 20];
+  static const dailyMinuteOptions = [5, 10, 15, 20, 30, 45, 60];
+
+  /// Onboarding'de önceden seçili gelen süre.
+  static const defaultDailyMinutes = 15;
+
+  /// Süre seçeneklerinin kısa açıklaması.
+  static String dailyMinuteHint(int minutes) => switch (minutes) {
+    <= 5 => 'Hızlı tekrar, yoğun günler için',
+    <= 10 => 'Kısa ve düzenli',
+    <= 15 => 'Dengeli tempo, önerilen',
+    <= 20 => 'Rahat tempo, bol pratik',
+    <= 30 => 'Derinlemesine çalışma',
+    <= 45 => 'Yoğun program',
+    _ => 'Tam gaz, sınav hazırlığı',
+  };
 
   /// Onboarding tamamlandı bayrağı (SharedPreferences anahtarı).
   static const prefOnboardingDone = 'onboarding_done';
@@ -32,6 +49,7 @@ abstract class AppConstants {
 
   /// Tema tercihi: system | light | dark
   static const prefThemeMode = 'theme_mode';
+  static const prefAccent = 'accent_color';
 
   /// Günlük hatırlatma açık mı ve hangi saatte (dakika cinsinden, 0-1439).
   static const prefReminderEnabled = 'reminder_enabled';
@@ -57,12 +75,14 @@ abstract class AppConstants {
 
 /// CEFR tabanlı zorluk kademeleri (adaptif zorluk için).
 enum DifficultyLevel {
+  a2('A2', 'A2'),
   b1Minus('B1-', 'B1 (kolay)'),
   b1('B1', 'B1'),
   b1Plus('B1+', 'B1 (zor)'),
   b2Minus('B2-', 'B2 (kolay)'),
   b2('B2', 'B2'),
-  b2Plus('B2+', 'B2 (zor)');
+  b2Plus('B2+', 'B2 (zor)'),
+  c1('C1', 'C1');
 
   const DifficultyLevel(this.code, this.label);
   final String code;

@@ -123,7 +123,6 @@ void main() {
         );
 
         final result = await service.generateWeeklyPlan(
-          name: 'Efe',
           level: 'B1',
           dailyMinutes: 10,
         );
@@ -159,7 +158,6 @@ void main() {
       );
 
       final result = await service.generateWeeklyPlan(
-        name: 'Efe',
         level: 'B1',
         dailyMinutes: 10,
       );
@@ -193,7 +191,6 @@ void main() {
       );
 
       final result = await service.generateWeeklyPlan(
-        name: 'Efe',
         level: 'B1',
         dailyMinutes: 10,
       );
@@ -221,7 +218,6 @@ void main() {
       );
 
       final result = await service.generateWeeklyPlan(
-        name: 'Efe',
         level: 'B1',
         dailyMinutes: 10,
       );
@@ -243,7 +239,6 @@ void main() {
       );
 
       final result = await service.generateWeeklyPlan(
-        name: 'Efe',
         level: 'B1',
         dailyMinutes: 10,
       );
@@ -265,7 +260,6 @@ void main() {
       );
 
       await service.generateWeeklyPlan(
-        name: 'Efe',
         level: 'B1',
         dailyMinutes: 10,
       );

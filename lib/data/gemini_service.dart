@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:clock/clock.dart';
 import 'package:http/http.dart' as http;
 
 import '../app/constants.dart';
@@ -198,13 +199,14 @@ class GeminiService {
   ///
   /// Hiçbir koşulda hata fırlatmaz — başarısızlıkta [fallbackWeeklyPlan]
   /// döner, böylece onboarding akışı kilitlenmez.
+  // Gizlilik: kullanıcının adı Gemini'ye (Google) gönderilmez; servisin ad
+  // diye bir girdisi yoktur, istemlerde yalnızca seviye ve konu yer alır.
   Future<WeeklyPlanResult> generateWeeklyPlan({
-    required String name,
     required String level,
     required int dailyMinutes,
   }) async {
     final response = await _post(
-      prompt: _planPrompt(name: name, level: level, dailyMinutes: dailyMinutes),
+      prompt: _planPrompt(level: level, dailyMinutes: dailyMinutes),
       schema: _planSchema,
       timeout: const Duration(seconds: 60),
     );
@@ -233,7 +235,6 @@ class GeminiService {
   /// [reviewItems] daha önce yanlış yapılıp henüz çözülmemiş kelime/kalıplardır;
   /// modele verilerek dersin bir kısmının bunların tekrarına ayrılması sağlanır.
   Future<DailyLessonResult> generateDailyLesson({
-    required String name,
     required String level,
     required int dailyMinutes,
     required String grammarTopic,
@@ -242,7 +243,6 @@ class GeminiService {
   }) async {
     final response = await _post(
       prompt: _lessonPrompt(
-        name: name,
         level: level,
         dailyMinutes: dailyMinutes,
         grammarTopic: grammarTopic,
@@ -251,7 +251,8 @@ class GeminiService {
       ),
       schema: _lessonSchema,
       // Ders plandan çok daha büyük bir yanıt; daha uzun süre tanınıyor.
-      timeout: const Duration(seconds: 90),
+      // 30 dakika ve üstündeki büyük dersler için süre ölçeklenir.
+      timeout: lessonTimeout(dailyMinutes),
       temperature: 0.9,
     );
 
@@ -269,7 +270,6 @@ class GeminiService {
   /// Hiçbir koşulda hata fırlatmaz: üretilemezse yerleşik yedek hikaye döner
   /// ve `offline` true olur, böylece çevrimdışıyken de okuma yapılabilir.
   Future<({DailyStory story, bool offline})> generateDailyStory({
-    required String name,
     required String level,
     required int dailyMinutes,
     required String grammarTopic,
@@ -279,7 +279,6 @@ class GeminiService {
   }) async {
     final response = await _post(
       prompt: _storyPrompt(
-        name: name,
         level: level,
         dailyMinutes: dailyMinutes,
         grammarTopic: grammarTopic,
@@ -296,7 +295,7 @@ class GeminiService {
         : parseDailyStoryResponse(response.body!);
     if (story == null) {
       return (
-        story: fallbackStory(level, date ?? DateTime.now()),
+        story: fallbackStory(level, date ?? clock.now()),
         offline: true,
       );
     }
@@ -310,7 +309,6 @@ class GeminiService {
   Future<({RoleplayTurn? turn, String? error})> roleplayTurn({
     required RoleplayScenario scenario,
     required String level,
-    required String name,
     required List<ChatMessage> history,
   }) async {
     final transcript = [
@@ -322,7 +320,7 @@ class GeminiService {
       prompt:
           '''
 You are role-playing as ${scenario.aiRole} in an English speaking practice app.
-The student is $name, a Turkish native speaker at CEFR level $level.
+The student is a Turkish native speaker at CEFR level $level.
 The student's task (in Turkish): "${scenario.task}"
 
 Conversation so far:
@@ -385,14 +383,12 @@ Geçtiği cümle: $sentence
   /// Seviye önerisi burada verilmez; [recommendLevelDelta] cihazda hesaplar ve
   /// modele yalnızca bilgi olarak geçilir. Ulaşılamazsa yerel şablon kullanılır.
   Future<({ReportCommentary commentary, bool offline})> generateWeeklyReport({
-    required String name,
     required String level,
     required WeeklyStats stats,
     required int levelDelta,
   }) async {
     final response = await _post(
       prompt: _reportPrompt(
-        name: name,
         level: level,
         stats: stats,
         levelDelta: levelDelta,
@@ -412,7 +408,6 @@ Geçtiği cümle: $sentence
   }
 
   String _storyPrompt({
-    required String name,
     required String level,
     required int dailyMinutes,
     required String grammarTopic,
@@ -422,7 +417,9 @@ Geçtiği cümle: $sentence
     final length = switch (dailyMinutes) {
       <= 10 => '120-170',
       <= 15 => '170-230',
-      _ => '230-300',
+      <= 20 => '230-300',
+      <= 30 => '300-380',
+      _ => '380-450',
     };
     final words = targetWords.isEmpty
         ? ''
@@ -432,7 +429,6 @@ Geçtiği cümle: $sentence
     return '''
 Sen bir İngilizce öğretmenisin. Türkçe konuşan bir öğrenci için kısa bir okuma parçası hazırlıyorsun.
 
-Öğrenci: $name
 CEFR seviyesi: $level
 Tema: $vocabTheme
 Dilbilgisi konusu: $grammarTopic
@@ -455,7 +451,6 @@ Kurallar:
   }
 
   String _reportPrompt({
-    required String name,
     required String level,
     required WeeklyStats stats,
     required int levelDelta,
@@ -469,7 +464,6 @@ Kurallar:
     return '''
 Sen destekleyici bir İngilizce koçusun. Öğrencinin haftalık çalışma verisini değerlendir.
 
-Öğrenci: $name
 CEFR seviyesi: $level
 Çalışılan gün: ${stats.daysCompleted}/7
 Bitirilen ders: ${stats.lessonsCompleted}
@@ -673,14 +667,12 @@ Verilerde olmayan bir şey uydurma. Veri azsa bunu nazikçe belirt.
   };
 
   String _planPrompt({
-    required String name,
     required String level,
     required int dailyMinutes,
   }) {
     return '''
 Sen bir İngilizce öğretmenisin. Türkçe konuşan bir öğrenci için haftalık çalışma programı hazırlıyorsun.
 
-Öğrenci: $name
 CEFR seviyesi: $level
 Günlük çalışma süresi: $dailyMinutes dakika
 
@@ -697,7 +689,6 @@ Kurallar:
   }
 
   String _lessonPrompt({
-    required String name,
     required String level,
     required int dailyMinutes,
     required String grammarTopic,
@@ -714,7 +705,6 @@ Kurallar:
     return '''
 Sen bir İngilizce öğretmenisin. Türkçe konuşan bir öğrenci için bugünkü dersi hazırlıyorsun.
 
-Öğrenci: $name
 CEFR seviyesi: $level
 Bugünün dilbilgisi konusu: $grammarTopic
 Bugünün kelime teması: $vocabTheme
@@ -868,11 +858,75 @@ List<PlanDaySpec> parseWeeklyPlanResponse(String responseBody) {
 
 /// API erişimi olmadığında kullanılan yerleşik haftalık program.
 ///
-/// B1 ve B2 için ayrı iki set; ara kademeler (B1-, B1+) en yakın sete düşer.
+/// A2, B1, B2 ve C1 için ayrı setler; ara kademeler (B1-, B1+) en yakın
+/// sete düşer.
 List<PlanDaySpec> fallbackWeeklyPlan(String levelCode) {
-  final isB2 = levelCode.startsWith('B2');
-  return isB2 ? _fallbackB2 : _fallbackB1;
+  if (levelCode.startsWith('A')) return _fallbackA2;
+  if (levelCode.startsWith('C')) return _fallbackC1;
+  return levelCode.startsWith('B2') ? _fallbackB2 : _fallbackB1;
 }
+
+const _fallbackA2 = <PlanDaySpec>[
+  PlanDaySpec(
+    grammarTopic: 'to be and have got',
+    vocabTheme: 'Aile ve arkadaşlar',
+  ),
+  PlanDaySpec(
+    grammarTopic: 'Present Simple: daily routines',
+    vocabTheme: 'Günlük rutin',
+  ),
+  PlanDaySpec(
+    grammarTopic: 'There is / there are, some / any',
+    vocabTheme: 'Ev ve eşyalar',
+  ),
+  PlanDaySpec(
+    grammarTopic: 'Past Simple of to be and regular verbs',
+    vocabTheme: 'Hafta sonu ve boş zaman',
+  ),
+  PlanDaySpec(
+    grammarTopic: 'can / can\'t for ability and requests',
+    vocabTheme: 'Yetenekler ve spor',
+  ),
+  PlanDaySpec(
+    grammarTopic: 'Countable and uncountable nouns',
+    vocabTheme: 'Yemek ve alışveriş',
+  ),
+  PlanDaySpec(
+    grammarTopic: 'Haftanın tekrarı: temel yapılar',
+    vocabTheme: 'Hafta boyunca öğrenilen kelimeler',
+  ),
+];
+
+const _fallbackC1 = <PlanDaySpec>[
+  PlanDaySpec(
+    grammarTopic: 'Inversion for emphasis',
+    vocabTheme: 'Liderlik ve yönetim',
+  ),
+  PlanDaySpec(
+    grammarTopic: 'Cleft sentences',
+    vocabTheme: 'Medya ve iletişim',
+  ),
+  PlanDaySpec(
+    grammarTopic: 'Mixed conditionals',
+    vocabTheme: 'Kariyer kararları',
+  ),
+  PlanDaySpec(
+    grammarTopic: 'Advanced passive structures',
+    vocabTheme: 'Akademik araştırma',
+  ),
+  PlanDaySpec(
+    grammarTopic: 'Discourse markers and linking',
+    vocabTheme: 'Tartışma ve ikna',
+  ),
+  PlanDaySpec(
+    grammarTopic: 'Subjunctive and formal register',
+    vocabTheme: 'Hukuk ve toplum',
+  ),
+  PlanDaySpec(
+    grammarTopic: 'Haftanın tekrarı: ileri yapılar',
+    vocabTheme: 'Hafta boyunca öğrenilen kelimeler',
+  ),
+];
 
 const _fallbackB1 = <PlanDaySpec>[
   PlanDaySpec(
@@ -935,3 +989,13 @@ const _fallbackB2 = <PlanDaySpec>[
     vocabTheme: 'Hafta boyunca öğrenilen kelimeler',
   ),
 ];
+
+/// Günlük ders isteği için zaman aşımı: 20 dakikaya kadar 90 sn, daha
+/// büyük derslerde soru sayısıyla orantılı olarak en fazla 150 sn.
+Duration lessonTimeout(int dailyMinutes) {
+  final total = LessonSize.forMinutes(dailyMinutes).total;
+  const base = 26; // 20 dakikalık dersin toplamı (10+6+4+6)
+  if (total <= base) return const Duration(seconds: 90);
+  final seconds = (90 * total / base).round().clamp(90, 150);
+  return Duration(seconds: seconds);
+}
