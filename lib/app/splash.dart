@@ -166,6 +166,15 @@ class _SplashViewState extends State<_SplashView>
                       delay: 250.ms,
                     ),
                   ),
+                  // Sistem açılış ekranının alttaki marka görseliyle aynı
+                  // yazı: ilk karede orada durur, üstteki harf harf yazı
+                  // gelirken söner.
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 60,
+                    child: _systemBranding(),
+                  ),
                   Align(
                     alignment: const Alignment(0, 0.55),
                     child: _late(
@@ -213,6 +222,55 @@ class _SplashViewState extends State<_SplashView>
         child: child,
       ),
       child: child,
+    );
+  }
+
+  /// android/…/splash_branding.png ile aynı ölçüler (200x80 dp).
+  Widget _systemBranding() {
+    final branding = SizedBox(
+      height: 80,
+      child: Column(
+        children: [
+          const SizedBox(height: 10),
+          Text.rich(
+            const TextSpan(
+              children: [
+                TextSpan(
+                  text: 'PACE',
+                  style: TextStyle(color: AppColors.brandLime),
+                ),
+                TextSpan(text: 'ORA', style: TextStyle(color: Colors.white)),
+              ],
+            ),
+            style: const TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 38,
+              fontWeight: FontWeight.w900,
+              fontStyle: FontStyle.italic,
+              height: 1.2,
+            ),
+          ),
+          const Spacer(),
+          Text(
+            LogoAssets.slogan,
+            style: TextStyle(
+              fontFamily: AppFonts.inter,
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: Colors.white.withValues(alpha: 0.67),
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
+      ),
+    );
+    // Hareket azaltılmışsa sabit kalır (açılış zaten kısa).
+    if (_reduced) return ExcludeSemantics(child: branding);
+    return ExcludeSemantics(
+      child: branding
+          .animate()
+          .fadeOut(delay: 150.ms, duration: 500.ms)
+          .slideY(end: 0.3, duration: 500.ms, curve: Curves.easeIn),
     );
   }
 

@@ -14,6 +14,7 @@ import '../../app/error_reporting.dart';
 import '../../app/logo.dart';
 import '../../app/motion.dart';
 import '../../app/theme.dart';
+import '../../app/turkish_letters.dart';
 import '../../data/backup.dart';
 import '../../data/database.dart';
 import '../../data/feedback.dart';
@@ -217,12 +218,7 @@ class _ProfileHeader extends ConsumerWidget {
     final game = ref.watch(gameProvider).value;
     final cards = ref.watch(flashcardSummaryProvider).value;
     final first = user.name.isEmpty ? '?' : user.name.characters.first;
-    // Türkçe büyük harf: i → İ, ı → I (toUpperCase "i"yi "I" yapar).
-    final initial = switch (first) {
-      'i' => 'İ',
-      'ı' => 'I',
-      _ => first.toUpperCase(),
-    };
+    final initial = trUpper(first);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -376,6 +372,13 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
   late bool _tested =
       PlacementRecord.read(ref.read(sharedPreferencesProvider)) != null;
 
+  @override
+  void initState() {
+    super.initState();
+    // Klavyeden de Türkçe harf tuşlarından da yazılınca Kaydet güncellensin.
+    _nameController.addListener(() => setState(() {}));
+  }
+
   Future<void> _takeTest() async {
     final level = await openPlacementTest(context);
     if (level == null || !mounted) return;
@@ -445,9 +448,10 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
         TextField(
           controller: _nameController,
           textCapitalization: TextCapitalization.words,
-          onChanged: (_) => setState(() {}),
           decoration: const InputDecoration(labelText: 'Adın'),
         ),
+        const SizedBox(height: 10),
+        TurkishLetterBar(controller: _nameController),
         const SizedBox(height: 20),
         Text('Seviye', style: theme.textTheme.labelLarge),
         const SizedBox(height: 10),

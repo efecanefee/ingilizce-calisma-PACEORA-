@@ -257,6 +257,8 @@ void main() {
 
     await tester.tap(find.widgetWithText(ChoiceChip, 'B2'));
     await tester.pump();
+    await tester.ensureVisible(find.widgetWithText(FilledButton, 'Kaydet'));
+    await tester.pump();
     await tester.tap(find.widgetWithText(FilledButton, 'Kaydet'));
     await _advance(tester);
 

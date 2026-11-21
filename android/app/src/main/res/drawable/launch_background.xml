@@ -8,4 +8,10 @@
             android:gravity="center"
             android:src="@drawable/launch_logo" />
     </item>
+    <!-- Altta PACEORA yazısı ve slogan. -->
+    <item android:bottom="60dp">
+        <bitmap
+            android:gravity="bottom|center_horizontal"
+            android:src="@drawable/splash_branding" />
+    </item>
 </layer-list>
