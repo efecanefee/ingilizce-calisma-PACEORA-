@@ -71,17 +71,32 @@ void main() {
       await advance(tester);
       expect(tester.takeException(), isNull);
 
-      for (final tab in ['Bugün', 'Program', 'İlerleme', 'Ayarlar']) {
-        await tester.tap(find.text(tab));
+      Future<void> tapTab(String tab) async {
+        await tester.tap(
+          find.descendant(
+            of: find.byType(NavigationBar),
+            matching: find.text(tab),
+          ),
+        );
         await advance(tester);
+      }
+
+      for (final tab in ['Bugün', 'Pratik', 'Program', 'İlerleme', 'Ayarlar']) {
+        await tapTab(tab);
         expect(tester.takeException(), isNull, reason: tab);
         await scrollThrough(tester);
       }
 
-      // Pratik ekranları.
-      await tester.tap(find.text('Bugün'));
+      // Pratik ekranları (sekme daha önce sonuna kaydırıldı; başa dön).
+      await tapTab('Pratik');
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, 4000));
       await advance(tester);
-      for (final tile in ['Konuşma', 'Dinle ve yaz', 'Kelime Rallisi']) {
+      for (final tile in [
+        'AI ile sohbet',
+        'Kelime Rallisi',
+        'Konuşma',
+        'Dinle ve yaz',
+      ]) {
         await tester.scrollUntilVisible(
           find.text(tile),
           300,
@@ -96,6 +111,7 @@ void main() {
       }
 
       // Profil ve görünüm düzenleyici.
+      await tapTab('Bugün');
       await tester.drag(find.byType(Scrollable).first, const Offset(0, 4000));
       await advance(tester);
       await tester.tap(find.byType(PlayerAvatar).first);

@@ -179,7 +179,8 @@ void main() {
     );
     await _advance(tester);
 
-    // Ana ekrandaki pratik alanı vadesi gelen kartı rozetle gösterir.
+    // Pratik sekmesi vadesi gelen kartı rozetle gösterir.
+    await openPracticeTab(tester);
     await scrollIntoView(tester, find.text('1 kart seni bekliyor'));
     await _advance(tester);
     expect(find.text('1 kart seni bekliyor'), findsOneWidget);

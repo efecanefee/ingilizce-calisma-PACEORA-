@@ -15,6 +15,8 @@ import 'package:paceora/data/roleplay.dart';
 import 'package:paceora/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'scroll_helper.dart';
+
 String _content(Object json) => jsonEncode({
   'candidates': [
     {
@@ -205,6 +207,7 @@ void main() {
         ),
       );
       await _advance(tester);
+      await openPracticeTab(tester);
       await tester.scrollUntilVisible(
         find.text('AI ile sohbet'),
         300,

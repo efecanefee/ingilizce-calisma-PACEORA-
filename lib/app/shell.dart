@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import 'motion.dart';
 
-/// Alt gezinme çubuklu ana iskelet: Bugün · Program · İlerleme · Ayarlar.
+/// Alt gezinme çubuklu ana iskelet: Bugün · Pratik · Program · İlerleme · Ayarlar.
 ///
 /// Sekmeler `IndexedStack` ile tutulur, böylece kaydırma konumu ve durum
 /// korunur; sekme değişince içerik hafifçe yükselerek belirir.
@@ -31,6 +31,11 @@ class AppShell extends StatelessWidget {
             icon: Icon(Icons.wb_sunny_outlined),
             selectedIcon: Icon(Icons.wb_sunny_rounded),
             label: 'Bugün',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.fitness_center_outlined),
+            selectedIcon: Icon(Icons.fitness_center_rounded),
+            label: 'Pratik',
           ),
           NavigationDestination(
             icon: Icon(Icons.calendar_month_outlined),

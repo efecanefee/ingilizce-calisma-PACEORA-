@@ -163,21 +163,25 @@ void main() {
   testWidgets('seri yeni hedefe ulaşınca kutlanır, kapanınca bir kez puanlama '
       'istenir', (tester) async {
     var reviewRequests = 0;
-    await db.update(db.userProfiles).write(
-      UserProfilesCompanion(
-        streak: const Value(6),
-        lastStudyDate: Value(
-          DateTime.now().subtract(const Duration(days: 1)),
-        ),
-      ),
+    await db
+        .update(db.userProfiles)
+        .write(
+          UserProfilesCompanion(
+            streak: const Value(6),
+            lastStudyDate: Value(
+              DateTime.now().subtract(const Duration(days: 1)),
+            ),
+          ),
+        );
+    await pumpApp(
+      tester,
+      {
+        'seen_player_level': 99,
+        'seen_badges': [for (final b in badges) b.id],
+        seenStreakMilestoneKey: 3,
+      },
+      [reviewRequesterProvider.overrideWithValue(() async => reviewRequests++)],
     );
-    await pumpApp(tester, {
-      'seen_player_level': 99,
-      'seen_badges': [for (final b in badges) b.id],
-      seenStreakMilestoneKey: 3,
-    }, [
-      reviewRequesterProvider.overrideWithValue(() async => reviewRequests++),
-    ]);
     expect(find.text('7 günlük seri!'), findsNothing);
 
     // Bugünü tamamla (dersi bitirmekle aynı yol).
@@ -198,33 +202,6 @@ void main() {
     expect(reviewRequests, 1);
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getBool(reviewRequestedKey), isTrue);
-  });
-
-  testWidgets('anahtar yokken ana ekranda kapatılabilen anahtar kartı', (
-    tester,
-  ) async {
-    // Kart listenin altında; telefona yakın, uzun bir ekran.
-    tester.view.physicalSize = const Size(1080, 2400);
-    tester.view.devicePixelRatio = 2.5;
-    addTearDown(tester.view.reset);
-    final prefs = await pumpApp(tester);
-    final hint = find.text('Sana özel dersler için anahtar ekle');
-    await tester.scrollUntilVisible(
-      hint,
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
-    expect(hint, findsOneWidget);
-
-    final close = find.descendant(
-      of: find.ancestor(of: hint, matching: find.byType(Card)),
-      matching: find.byTooltip('Kapat'),
-    );
-    await tester.ensureVisible(close);
-    await tester.tap(close);
-    await _advance(tester);
-    expect(hint, findsNothing);
-    expect(prefs.getBool('api_key_hint_dismissed'), isTrue);
   });
 
   testWidgets('seviye testi çözülmeden ayarlardan seviye seçilemez', (

@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/avatar.dart';
 import '../../app/constants.dart';
 import '../../app/error_view.dart';
+import '../../app/feature_colors.dart';
 import '../../app/logo.dart';
 import '../../app/mascot.dart';
 import '../../app/motion.dart';
@@ -21,11 +22,10 @@ import '../../data/repository.dart' show mondayOf;
 import '../../data/rewards.dart';
 import '../../data/streak_freeze.dart';
 import '../program/program_screen.dart';
-import '../settings/settings_screen.dart' show showApiKeySheet;
 import '../wardrobe/wardrobe_sheet.dart';
 
-/// Ana ekran ("Bugün" sekmesi): karşılama, bugünün dersi, günlük hedef,
-/// haftanın özeti ve pratik alanları.
+/// Ana ekran ("Bugün" sekmesi): karşılama, bugünün dersi, günlük hedef ve
+/// haftanın özeti. Pratik alanları kendi sekmesinde ("Pratik").
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
@@ -101,8 +101,6 @@ class _HomeBody extends ConsumerWidget {
             ),
           const SizedBox(height: 16),
           item(const _DailyGoalCard()),
-          // Anahtar yoksa kişisel derslerin nasıl açılacağını anlatır.
-          const _ApiKeyHint(),
           const SizedBox(height: 28),
           item(
             Row(
@@ -116,90 +114,9 @@ class _HomeBody extends ConsumerWidget {
             ),
           ),
           item(_WeekStrip(week: week)),
-          const SizedBox(height: 28),
-          item(Text('Pratik alanı', style: sectionStyle)),
-          const SizedBox(height: 12),
-          item(const _PracticeGrid()),
+          const SizedBox(height: 20),
+          item(const _PracticeLink()),
         ],
-      ),
-    );
-  }
-}
-
-/// Gemini anahtarı yokken (paylaşım sürümü) gösterilen, kapatılabilen kart.
-class _ApiKeyHint extends ConsumerStatefulWidget {
-  const _ApiKeyHint();
-
-  static const dismissedKey = 'api_key_hint_dismissed';
-
-  @override
-  ConsumerState<_ApiKeyHint> createState() => _ApiKeyHintState();
-}
-
-class _ApiKeyHintState extends ConsumerState<_ApiKeyHint> {
-  late bool _dismissed =
-      ref.read(sharedPreferencesProvider).getBool(_ApiKeyHint.dismissedKey) ??
-      false;
-
-  Future<void> _dismiss() async {
-    setState(() => _dismissed = true);
-    await ref
-        .read(sharedPreferencesProvider)
-        .setBool(_ApiKeyHint.dismissedKey, true);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final hasKey = ref.watch(geminiServiceProvider).hasApiKey;
-    if (hasKey || _dismissed) return const SizedBox.shrink();
-
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(top: 16),
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(Icons.auto_awesome_rounded, color: context.pace.accentDark),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Sana özel dersler için anahtar ekle',
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Şu an hazır derslerle çalışıyorsun. Google AI Studio\'dan '
-                      'ücretsiz bir Gemini anahtarı alıp eklersen dersler, '
-                      'hikayeler ve sohbet seviyene göre üretilir.',
-                      style: theme.textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: 8),
-                    FilledButton.tonal(
-                      onPressed: () => showApiKeySheet(context),
-                      style: FilledButton.styleFrom(
-                        minimumSize: const Size(0, 40),
-                      ),
-                      child: const Text('Anahtar ekle'),
-                    ),
-                  ],
-                ),
-              ),
-              IconButton(
-                tooltip: 'Kapat',
-                onPressed: _dismiss,
-                icon: const Icon(Icons.close_rounded, size: 20),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -267,7 +184,9 @@ class _HeroCardState extends State<_HeroCard>
             ),
             boxShadow: [
               BoxShadow(
-                color: context.pace.accentDark.withValues(alpha: 0.25 + 0.15 * t),
+                color: context.pace.accentDark.withValues(
+                  alpha: 0.25 + 0.15 * t,
+                ),
                 blurRadius: 24,
                 offset: const Offset(0, 10),
               ),
@@ -416,9 +335,7 @@ class _HeroPace extends ConsumerWidget {
           height: 80,
           child: Align(
             alignment: Alignment.bottomRight,
-            child: ExcludeSemantics(
-              child: EquippedPace(mood: mood, size: 80),
-            ),
+            child: ExcludeSemantics(child: EquippedPace(mood: mood, size: 80)),
           ),
         ),
       ),
@@ -524,11 +441,7 @@ class _StreakChip extends ConsumerWidget {
         for (var i = 0; i < owned; i++)
           const Padding(
             padding: EdgeInsets.only(left: 4),
-            child: Icon(
-              Icons.ac_unit_rounded,
-              size: 14,
-              color: AppColors.ice,
-            ),
+            child: Icon(Icons.ac_unit_rounded, size: 14, color: AppColors.ice),
           ),
       ],
     );
@@ -969,7 +882,10 @@ class _XpBar extends StatelessWidget {
                         height: 10,
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [context.pace.accentDim, context.pace.accent],
+                            colors: [
+                              context.pace.accentDim,
+                              context.pace.accent,
+                            ],
                           ),
                         ),
                       ),
@@ -1061,6 +977,13 @@ class _DailyGoalCard extends ConsumerWidget {
   }
 }
 
+/// Günlük hedef adımının bölümü (rengi ve tonu için).
+Feature _featureOf(DailyTask task) => switch (task) {
+  DailyTask.lesson => Feature.lesson,
+  DailyTask.story => Feature.story,
+  DailyTask.cards => Feature.flashcards,
+};
+
 class _GoalTaskRow extends ConsumerWidget {
   const _GoalTaskRow({
     required this.task,
@@ -1075,7 +998,12 @@ class _GoalTaskRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final accent = theme.colorScheme.primary;
+    // Her iş türü kendi bölüm renginde: ders, hikaye ve kartlar ayırt edilir.
+    final feature = _featureOf(task);
+    final accent = feature.color(context);
+    final onAccent = theme.brightness == Brightness.dark
+        ? AppColors.graphite900
+        : Colors.white;
 
     final row = PressableScale(
       borderRadius: BorderRadius.circular(14),
@@ -1093,7 +1021,7 @@ class _GoalTaskRow extends ConsumerWidget {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
           color: isNext
-              ? accent.withValues(alpha: 0.1)
+              ? feature.tint(context)
               : theme.colorScheme.surfaceContainerHighest.withValues(
                   alpha: 0.4,
                 ),
@@ -1104,7 +1032,14 @@ class _GoalTaskRow extends ConsumerWidget {
         ),
         child: Row(
           children: [
-            Icon(task.icon, size: 20, color: done ? AppColors.success : accent),
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: feature.tint(context),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(task.icon, size: 18, color: accent),
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
@@ -1128,7 +1063,7 @@ class _GoalTaskRow extends ConsumerWidget {
                 child: Text(
                   'SIRADAKİ',
                   style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.onPrimary,
+                    color: onAccent,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -1371,7 +1306,13 @@ class _DayTile extends StatelessWidget {
       button: onTap != null,
       label:
           '$dayName $date, '
-          '${done ? 'tamamlandı' : today ? 'bugün' : past ? 'kaçırıldı' : 'yakında'}',
+          '${done
+              ? 'tamamlandı'
+              : today
+              ? 'bugün'
+              : past
+              ? 'kaçırıldı'
+              : 'yakında'}',
       excludeSemantics: true,
       child: PressableScale(
         onTap: onTap,
@@ -1413,288 +1354,24 @@ class _DayTile extends StatelessWidget {
   }
 }
 
-/// Dersin dışındaki çalışma alanlarına kısayollar.
-class _PracticeGrid extends ConsumerWidget {
-  const _PracticeGrid();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final cards = ref.watch(flashcardSummaryProvider).value;
-    final rally = ref.watch(matchRecordsProvider);
-    final roleplay = ref.watch(roleplayRecordsProvider);
-    final due = cards?.due ?? 0;
-
-    Future<void> open(String route) async {
-      await context.push(route);
-      if (!context.mounted) return;
-      ref.invalidate(flashcardSummaryProvider);
-      ref.invalidate(gameProvider);
-    }
-
-    final tiles = [
-      _PracticeTile(
-        icon: Icons.style_rounded,
-        title: 'Flash kartlar',
-        subtitle: due > 0
-            ? '$due kart seni bekliyor'
-            : cards == null || cards.total == 0
-            ? 'Ders bitirince dolar'
-            : 'Bugünlük tamam',
-        badge: due > 0 ? '$due' : null,
-        onTap: () => open('/flashcards'),
-      ),
-      _PracticeTile(
-        icon: Icons.auto_stories_rounded,
-        title: 'Günün hikayesi',
-        subtitle: 'Oku ve anla',
-        onTap: () => open('/story'),
-      ),
-      _PracticeTile(
-        icon: Icons.record_voice_over_rounded,
-        title: 'Konuşma',
-        subtitle: 'Söyle, puanını gör',
-        onTap: () => open('/speaking'),
-      ),
-      _PracticeTile(
-        icon: Icons.hearing_rounded,
-        title: 'Dinle ve yaz',
-        subtitle: 'Kulağını eğit',
-        onTap: () => open('/dictation'),
-      ),
-      _PracticeTile(
-        icon: Icons.edit_note_rounded,
-        title: 'Hata defterim',
-        subtitle: 'Pekişmeyenler',
-        onTap: () => open('/mistakes'),
-      ),
-      _PracticeTile(
-        icon: Icons.assessment_rounded,
-        title: 'Haftalık rapor',
-        subtitle: 'Seviye önerisi',
-        onTap: () => open('/review'),
-      ),
-    ];
-
-    // Sabit en-boy oranı büyük yazı boyutunda kutucuğu taşırıyordu;
-    // yükseklik yazı ölçeğiyle birlikte büyür.
-    final scaler = MediaQuery.textScalerOf(context);
-    return Column(
-      children: [
-        GridView(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            mainAxisExtent: 84 + scaler.scale(56),
-          ),
-          children: [
-            for (final (i, tile) in tiles.indexed)
-              tile
-                  .animate(delay: Motion.stagger * i)
-                  .fadeIn(duration: Motion.medium)
-                  .scale(
-                    begin: const Offset(0.9, 0.9),
-                    curve: Curves.easeOutBack,
-                  ),
-          ],
-        ),
-        for (final (i, banner) in [
-          _FeatureBanner(
-            icon: Icons.forum_rounded,
-            color: AppColors.iceDeep,
-            title: 'AI ile sohbet',
-            subtitle: roleplay.completed > 0
-                ? '${roleplay.completed} sohbet · ${roleplay.goalScenarios.length}'
-                      ' görev başarıldı'
-                : 'Kafede, otelde, iş görüşmesinde konuş',
-            onTap: () => open('/roleplay'),
-          ),
-          _FeatureBanner(
-            icon: Icons.bolt_rounded,
-            color: AppColors.warning,
-            title: 'Kelime Rallisi',
-            subtitle: rally.games > 0
-                ? 'Rekorun: ${rally.bestScore} puan'
-                : '60 saniyede eşleştir, rekor kır',
-            onTap: () => open('/match'),
-          ),
-        ].indexed) ...[
-          const SizedBox(height: 12),
-          banner
-              .animate(delay: Motion.stagger * (tiles.length + i))
-              .fadeIn(duration: Motion.medium)
-              .slideY(begin: 0.15, curve: Motion.curve),
-        ],
-      ],
-    );
-  }
-}
-
-/// Öne çıkan pratik girişi (sohbet, ralli): renkli, tam genişlikte kart.
-class _FeatureBanner extends StatelessWidget {
-  const _FeatureBanner({
-    required this.icon,
-    required this.color,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final Color color;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
+/// Ana ekranın sonunda sade bir geçiş: "Pratik" sekmesini açar.
+class _PracticeLink extends StatelessWidget {
+  const _PracticeLink();
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
-    return PressableScale(
-      onTap: onTap,
-      child: Ink(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
-          gradient: LinearGradient(
-            colors: [
-              color.withValues(alpha: 0.22),
-              theme.colorScheme.surfaceContainer,
-            ],
-          ),
-          border: Border.all(color: color.withValues(alpha: 0.5)),
+    final muted = theme.colorScheme.onSurface.withValues(alpha: 0.7);
+    return Center(
+      child: TextButton.icon(
+        // Sekme dalına geçer; Pratik sekmesinin durumu korunur.
+        onPressed: () => context.go('/practice'),
+        style: TextButton.styleFrom(
+          minimumSize: const Size(48, 48),
+          foregroundColor: muted,
         ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, size: 22, color: color),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  Text(
-                    subtitle,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(
-                        alpha: 0.65,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PracticeTile extends StatelessWidget {
-  const _PracticeTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-    this.badge,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-  final String? badge;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    return PressableScale(
-      onTap: onTap,
-      child: Ink(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainer,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: theme.colorScheme.outlineVariant),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: (isDark ? context.pace.accent : context.pace.accentDark)
-                        .withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(icon, size: 20, color: theme.colorScheme.primary),
-                ),
-                const Spacer(),
-                if (badge != null)
-                  Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          badge!,
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: theme.colorScheme.onPrimary,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      )
-                      .animate(onPlay: Motion.loop(reverse: true))
-                      .scaleXY(begin: 1, end: 1.12, duration: 800.ms),
-              ],
-            ),
-            const Spacer(),
-            Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              subtitle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
-              ),
-            ),
-          ],
-        ),
+        icon: const Icon(Icons.fitness_center_rounded, size: 18),
+        label: const Text('Pratik alanına git'),
       ),
     );
   }
@@ -1765,8 +1442,15 @@ class _TodayCard extends StatelessWidget {
     final done = day.status == 'completed';
     // Ders başlanmış ama bitmemişse buton "devam et" der.
     final inProgress = lesson != null && !lesson!.completed;
+    // Günün dersi kendi bölüm renginde (vurgu rengi).
+    const feature = Feature.lesson;
+    final color = feature.color(context);
 
     return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: feature.border(context), width: 1.5),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -1774,12 +1458,21 @@ class _TodayCard extends StatelessWidget {
           children: [
             Row(
               children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: feature.tint(context),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(feature.icon, size: 18, color: color),
+                ),
+                const SizedBox(width: 10),
                 Text(
                   'BUGÜN',
                   style: theme.textTheme.labelMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                     letterSpacing: 1.2,
-                    color: theme.colorScheme.primary,
+                    color: color,
                   ),
                 ),
                 const Spacer(),

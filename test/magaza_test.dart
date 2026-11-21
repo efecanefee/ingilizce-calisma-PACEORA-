@@ -48,8 +48,9 @@ void main() {
     final emoji = _emojiFont();
     if (emoji != null) {
       final bytes = ByteData.sublistView(emoji.readAsBytesSync());
-      await (FontLoader('Noto Color Emoji')..addFont(Future.value(bytes)))
-          .load();
+      await (FontLoader(
+        'Noto Color Emoji',
+      )..addFont(Future.value(bytes))).load();
     }
   });
 
@@ -73,10 +74,7 @@ void main() {
       addTearDown(tester.view.reset);
       final db = await _seededDatabase();
       addTearDown(db.close);
-      SharedPreferences.setMockInitialValues({
-        'theme_mode': mode,
-        'api_key_hint_dismissed': true,
-      });
+      SharedPreferences.setMockInitialValues({'theme_mode': mode});
       final prefs = await SharedPreferences.getInstance();
       await tester.pumpWidget(
         ProviderScope(
@@ -260,45 +258,57 @@ Future<AppDatabase> _seededDatabase() async {
     await (db.update(db.weeklyPlanDays)..where((t) => t.id.equals(day.id)))
         .write(const WeeklyPlanDaysCompanion(status: Value('completed')));
   }
-  await db.update(db.userProfiles).write(
-    UserProfilesCompanion(
-      streak: const Value(14),
-      lastStudyDate: Value(_now.subtract(const Duration(days: 1))),
-    ),
-  );
+  await db
+      .update(db.userProfiles)
+      .write(
+        UserProfilesCompanion(
+          streak: const Value(14),
+          lastStudyDate: Value(_now.subtract(const Duration(days: 1))),
+        ),
+      );
   // Geçmiş günlerde bitmiş dersler ve öğrenilmiş kartlar: ilerleme ekranı
   // gerçek bir kullanıcınınki gibi dolu görünsün.
   for (var i = 1; i <= 14; i++) {
-    await db.into(db.lessons).insert(
-      LessonsCompanion.insert(
-        lessonDate: _now.subtract(Duration(days: i)),
-        contentJson: '{}',
-        score: Value(0.7 + (i % 4) * 0.08),
-        durationSeconds: const Value(1200),
-        completed: const Value(true),
-      ),
-    );
+    await db
+        .into(db.lessons)
+        .insert(
+          LessonsCompanion.insert(
+            lessonDate: _now.subtract(Duration(days: i)),
+            contentJson: '{}',
+            score: Value(0.7 + (i % 4) * 0.08),
+            durationSeconds: const Value(1200),
+            completed: const Value(true),
+          ),
+        );
   }
   const words = [
-    ('journey', 'yolculuk'), ('borrow', 'ödünç almak'),
-    ('crowded', 'kalabalık'), ('schedule', 'program'),
-    ('improve', 'geliştirmek'), ('neighbour', 'komşu'),
-    ('forecast', 'tahmin'), ('experience', 'deneyim'),
-    ('suburb', 'banliyö'), ('decide', 'karar vermek'),
-    ('remember', 'hatırlamak'), ('cheap', 'ucuz'),
+    ('journey', 'yolculuk'),
+    ('borrow', 'ödünç almak'),
+    ('crowded', 'kalabalık'),
+    ('schedule', 'program'),
+    ('improve', 'geliştirmek'),
+    ('neighbour', 'komşu'),
+    ('forecast', 'tahmin'),
+    ('experience', 'deneyim'),
+    ('suburb', 'banliyö'),
+    ('decide', 'karar vermek'),
+    ('remember', 'hatırlamak'),
+    ('cheap', 'ucuz'),
   ];
   for (final (i, (word, meaning)) in words.indexed) {
-    await db.into(db.flashcards).insert(
-      FlashcardsCompanion.insert(
-        word: word,
-        meaning: meaning,
-        exampleSentence: '',
-        source: 'lesson',
-        reps: const Value(4),
-        intervalDays: Value(i.isEven ? 24 : 9),
-        dueDate: _now.add(const Duration(days: 5)),
-      ),
-    );
+    await db
+        .into(db.flashcards)
+        .insert(
+          FlashcardsCompanion.insert(
+            word: word,
+            meaning: meaning,
+            exampleSentence: '',
+            source: 'lesson',
+            reps: const Value(4),
+            intervalDays: Value(i.isEven ? 24 : 9),
+            dueDate: _now.add(const Duration(days: 5)),
+          ),
+        );
   }
   return db;
 }

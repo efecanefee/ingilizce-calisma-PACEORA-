@@ -15,6 +15,8 @@ import 'package:paceora/data/word_lookup.dart';
 import 'package:paceora/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'scroll_helper.dart';
+
 /// Cihaz servisleri yerine: okunanları kaydeder, söylenecek metni verir.
 class FakeSpeech implements SpeechService {
   final spoken = <String>[];
@@ -193,6 +195,7 @@ void main() {
         ),
       );
       await _advance(tester);
+      await openPracticeTab(tester);
       await tester.scrollUntilVisible(
         find.text(tile),
         300,

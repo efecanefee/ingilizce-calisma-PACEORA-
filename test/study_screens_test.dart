@@ -81,8 +81,9 @@ void main() {
     );
     await pumpApp(tester);
 
-    // "Günün hikayesi" hem hedef listesinde hem kutucukta geçer; kutucuğun
+    // "Günün hikayesi" Bugün'deki hedef listesinde de geçer; kutucuğun
     // alt başlığı tekildir.
+    await openPracticeTab(tester);
     await _scrollTo(tester, find.text('Oku ve anla'));
     await tester.tap(find.text('Oku ve anla'));
     await _advance(tester);
@@ -131,6 +132,7 @@ void main() {
         ),
       );
       await pumpApp(tester);
+      await openPracticeTab(tester);
       await _scrollTo(tester, find.text('Oku ve anla'));
       await tester.tap(find.text('Oku ve anla'));
       await _advance(tester);
@@ -204,6 +206,7 @@ void main() {
 
     Future<void> openRally(WidgetTester tester) async {
       await pumpApp(tester);
+      await openPracticeTab(tester);
       await _scrollTo(tester, find.text('Kelime Rallisi'));
       await tester.tap(find.text('Kelime Rallisi'));
       await _advance(tester);
@@ -324,6 +327,7 @@ void main() {
   ) async {
     await pumpApp(tester);
 
+    await openPracticeTab(tester);
     await _scrollTo(tester, find.text('Ders bitirince dolar'));
     await tester.tap(find.text('Ders bitirince dolar'));
     await _advance(tester);

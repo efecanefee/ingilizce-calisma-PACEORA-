@@ -6,6 +6,7 @@ import '../features/lesson/lesson_screen.dart';
 import '../features/match/match_screen.dart';
 import '../features/mistakes/mistakes_screen.dart';
 import '../features/onboarding/onboarding_screen.dart';
+import '../features/practice/practice_screen.dart';
 import '../features/profile/profile_screen.dart';
 import '../features/program/program_screen.dart';
 import '../features/progress/progress_screen.dart';
@@ -19,10 +20,9 @@ import 'shell.dart';
 
 GoRouter createRouter({required bool onboardingDone}) {
   GoRoute fullScreen(String path, GoRouterWidgetBuilder builder) => GoRoute(
-        path: path,
-        pageBuilder: (context, state) =>
-            motionPage(state, builder(context, state)),
-      );
+    path: path,
+    pageBuilder: (context, state) => motionPage(state, builder(context, state)),
+  );
 
   return GoRouter(
     initialLocation: onboardingDone ? '/' : '/onboarding',
@@ -32,24 +32,41 @@ GoRouter createRouter({required bool onboardingDone}) {
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => AppShell(shell: shell),
         branches: [
-          StatefulShellBranch(routes: [
-            GoRoute(path: '/', builder: (_, _) => const HomeScreen()),
-          ]),
-          StatefulShellBranch(routes: [
-            GoRoute(path: '/program', builder: (_, _) => const ProgramScreen()),
-          ]),
-          StatefulShellBranch(routes: [
-            GoRoute(
-              path: '/progress',
-              builder: (_, _) => const ProgressScreen(),
-            ),
-          ]),
-          StatefulShellBranch(routes: [
-            GoRoute(
-              path: '/settings',
-              builder: (_, _) => const SettingsScreen(),
-            ),
-          ]),
+          StatefulShellBranch(
+            routes: [GoRoute(path: '/', builder: (_, _) => const HomeScreen())],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/practice',
+                builder: (_, _) => const PracticeScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/program',
+                builder: (_, _) => const ProgramScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/progress',
+                builder: (_, _) => const ProgressScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/settings',
+                builder: (_, _) => const SettingsScreen(),
+              ),
+            ],
+          ),
         ],
       ),
       // Çalışma ekranları sekmelerin üstünde tam ekran açılır.

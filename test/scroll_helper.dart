@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// [finder]'ı ilk kaydırılabilir listede görünür yapar ve dokunulabilir
@@ -29,4 +29,15 @@ Future<void> _settle(WidgetTester tester) async {
   for (var i = 0; i < 15; i++) {
     await tester.pump(const Duration(milliseconds: 100));
   }
+}
+
+/// Alt gezinme çubuğundan "Pratik" sekmesini açar.
+Future<void> openPracticeTab(WidgetTester tester) async {
+  await tester.tap(
+    find.descendant(
+      of: find.byType(NavigationBar),
+      matching: find.text('Pratik'),
+    ),
+  );
+  await _settle(tester);
 }

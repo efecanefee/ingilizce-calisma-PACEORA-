@@ -55,18 +55,16 @@ void main() {
       await (db.update(db.weeklyPlanDays)..where((t) => t.id.equals(day.id)))
           .write(const WeeklyPlanDaysCompanion(status: Value('completed')));
     }
-    await db.update(db.userProfiles).write(
-      UserProfilesCompanion(
-        streak: const Value(6),
-        lastStudyDate: Value(_now.subtract(const Duration(days: 1))),
-      ),
-    );
+    await db
+        .update(db.userProfiles)
+        .write(
+          UserProfilesCompanion(
+            streak: const Value(6),
+            lastStudyDate: Value(_now.subtract(const Duration(days: 1))),
+          ),
+        );
 
-    SharedPreferences.setMockInitialValues({
-      'theme_mode': mode,
-      'api_key_hint_dismissed': true,
-      ...prefs,
-    });
+    SharedPreferences.setMockInitialValues({'theme_mode': mode, ...prefs});
     final sharedPrefs = await SharedPreferences.getInstance();
 
     await tester.pumpWidget(

@@ -15,6 +15,7 @@ void main() {
   for (final mode in ['light', 'dark']) {
     for (final tab in [
       'Bugün',
+      'Pratik',
       'Program',
       'İlerleme',
       'Ayarlar',
