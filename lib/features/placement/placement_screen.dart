@@ -337,9 +337,14 @@ class _ListenCardState extends ConsumerState<_ListenCard> {
 
   Future<void> _play({bool slow = false}) async {
     setState(() => _playing = true);
-    final ok = await ref
-        .read(speechServiceProvider)
-        .speak(widget.script, slow: slow);
+    final speech = ref.read(speechServiceProvider);
+    // Bazı ses motorları okumanın bittiğini hiç bildirmez; düğmeler metnin
+    // uzunluğuna göre bir süre sonra yeniden açılır.
+    final words = widget.script.split(RegExp(r'\s+')).length;
+    final limit = Duration(milliseconds: (words * (slow ? 900 : 500)) + 3000);
+    final ok = await speech
+        .speak(widget.script, slow: slow)
+        .timeout(limit, onTimeout: () => true);
     if (!mounted) return;
     setState(() {
       _playing = false;

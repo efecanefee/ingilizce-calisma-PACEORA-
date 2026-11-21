@@ -307,8 +307,9 @@ class PlacementResult {
 }
 
 /// Ağırlıklı puan eşikleri: yüzde bu değerlerin altındaysa o kademe.
-/// A2 < 18 ≤ B1- < 30 ≤ B1 < 42 ≤ B1+ < 54 ≤ B2- < 64 ≤ B2 < 74 ≤ B2+ < 84 ≤ C1
-const placementThresholds = [18.0, 30.0, 42.0, 54.0, 64.0, 74.0, 84.0];
+/// A2 < 32 ≤ B1- < 42 ≤ B1 < 52 ≤ B1+ < 61 ≤ B2- < 69 ≤ B2 < 77 ≤ B2+ < 86 ≤ C1
+/// Rastgele işaretleme (4 seçenek, ~%25) A2'de kalır.
+const placementThresholds = [32.0, 42.0, 52.0, 61.0, 69.0, 77.0, 86.0];
 
 /// Sorunun zorluğuna göre ağırlıklı puan. Şansla yükselmeyi önlemek için
 /// banda göre sınır konur: zor soruların yarısı doğru değilse B1+'yı,

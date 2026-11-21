@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
@@ -214,7 +215,10 @@ void main() {
     );
   });
 
-  Future<SharedPreferences> pumpTest(WidgetTester tester) async {
+  Future<SharedPreferences> pumpTest(
+    WidgetTester tester, {
+    SpeechService? speech,
+  }) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     await tester.pumpWidget(
@@ -222,7 +226,7 @@ void main() {
         overrides: [
           sharedPreferencesProvider.overrideWithValue(prefs),
           placementBankProvider.overrideWith((ref) async => _bank()),
-          speechServiceProvider.overrideWithValue(_FakeSpeech()),
+          speechServiceProvider.overrideWithValue(speech ?? _FakeSpeech()),
         ],
         child: MaterialApp(home: PlacementTestScreen(random: Random(7))),
       ),
@@ -289,6 +293,30 @@ void main() {
     expect(find.text(run.questions.last.prompt), findsOneWidget);
   });
 
+  testWidgets('bitişi bildirmeyen ses motoru düğmeleri kilitlemez', (
+    tester,
+  ) async {
+    await pumpTest(tester, speech: _HangingSpeech());
+    final run = _simulate(_bank(), 7, (q, i) => true);
+    final first = run.questions.indexWhere(
+      (q) => q.skill == PlacementSkill.listening,
+    );
+    for (var i = 0; i < first; i++) {
+      await answer(tester, run.questions[i], run.answers[i]);
+      await tester.pump(const Duration(seconds: 1));
+    }
+    FilledButton listen() => tester.widget<FilledButton>(
+      find.ancestor(
+        of: find.text('Dinle'),
+        matching: find.byType(FilledButton),
+      ),
+    );
+    await tester.tap(find.text('Dinle'));
+    await tester.pump();
+    expect(listen().onPressed, isNull, reason: 'okunurken kapalı');
+    await tester.pump(const Duration(seconds: 10));
+    expect(listen().onPressed, isNotNull, reason: 'süre dolunca açılır');
+  });
   testWidgets('dinleme metni istenince açılır', (tester) async {
     await pumpTest(tester);
     final run = _simulate(_bank(), 7, (q, i) => true);
@@ -417,6 +445,20 @@ void main() {
       expect(pastCount / grammar.length, lessThan(0.15));
     });
 
+    test('rastgele işaretleyen çoğunlukla A2, şansla nadiren B1 üstü', () {
+      final levels = <DifficultyLevel>[];
+      for (var seed = 0; seed < 300; seed++) {
+        final luck = Random(seed + 1000);
+        final run = _simulate(bank, seed, (q, i) => luck.nextInt(4) == 0);
+        levels.add(scorePlacement(run.questions, run.answers).level);
+      }
+      final a2 = levels.where((l) => l == DifficultyLevel.a2).length;
+      expect(a2 / levels.length, greaterThan(0.7));
+      // Şansla B1'in üstüne çıkan en fazla %2.
+      final lucky = levels.where((l) => l.index > DifficultyLevel.b1.index);
+      expect(lucky.length / levels.length, lessThanOrEqualTo(0.02));
+    });
+
     test('200 farklı test hatasız kurulur, kota ve konu sınırı tutar', () {
       for (var seed = 0; seed < 200; seed++) {
         final run = _simulate(bank, seed, (q, i) => (seed + i) % 3 != 0);
@@ -436,4 +478,15 @@ void main() {
       }
     });
   });
+}
+
+/// Okumayı başlatıp bitişini hiç bildirmeyen ses motoru.
+class _HangingSpeech implements SpeechService {
+  @override
+  Future<bool> speak(String text, {bool slow = false}) =>
+      Completer<bool>().future;
+  @override
+  Future<void> stopSpeaking() async {}
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
