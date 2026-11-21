@@ -1,0 +1,750 @@
+[
+  {
+    "level": "A2",
+    "skill": "grammar",
+    "topic": "present_simple",
+    "prompt": "My brother ___ to work by bus every day.",
+    "options": [
+      "go",
+      "goes",
+      "going",
+      "is go"
+    ],
+    "answer": 1
+  },
+  {
+    "level": "A2",
+    "skill": "grammar",
+    "topic": "comparatives",
+    "prompt": "This bag is ___ than the black one, so I can't carry it very far.",
+    "options": [
+      "heavier",
+      "more heavy",
+      "heaviest",
+      "heavy"
+    ],
+    "answer": 0
+  },
+  {
+    "level": "A2",
+    "skill": "grammar",
+    "topic": "prepositions_time",
+    "prompt": "The museum opens ___ 9 o'clock in the morning.",
+    "options": [
+      "on",
+      "in",
+      "at",
+      "to"
+    ],
+    "answer": 2
+  },
+  {
+    "level": "A2",
+    "skill": "grammar",
+    "topic": "past_simple",
+    "prompt": "We ___ a great film at the cinema last night.",
+    "options": [
+      "see",
+      "seen",
+      "seeing",
+      "saw"
+    ],
+    "answer": 3
+  },
+  {
+    "level": "A2",
+    "skill": "grammar",
+    "topic": "question_forms",
+    "prompt": "\"___ do you live?\" \"In a flat near the station.\"",
+    "options": [
+      "What",
+      "Who",
+      "When",
+      "Where"
+    ],
+    "answer": 3
+  },
+  {
+    "level": "A2",
+    "skill": "vocabulary",
+    "topic": "vocab_collocation",
+    "prompt": "I always ___ my homework after dinner.",
+    "options": [
+      "make",
+      "do",
+      "take",
+      "have"
+    ],
+    "answer": 1
+  },
+  {
+    "level": "A2",
+    "skill": "vocabulary",
+    "topic": "vocab_meaning",
+    "prompt": "It's raining outside, so don't forget your ___.",
+    "options": [
+      "umbrella",
+      "sunglasses",
+      "swimsuit",
+      "sandals"
+    ],
+    "answer": 0
+  },
+  {
+    "level": "A2",
+    "skill": "vocabulary",
+    "topic": "vocab_context",
+    "prompt": "The supermarket is ___ on Sundays, so we can't buy any food today.",
+    "options": [
+      "open",
+      "busy",
+      "closed",
+      "cheap"
+    ],
+    "answer": 2
+  },
+  {
+    "level": "A2",
+    "skill": "reading",
+    "topic": "reading_detail",
+    "passage": "Hi Sam, I can't come to the gym tomorrow morning because I have a doctor's appointment at ten. Can we go on Thursday evening instead? I finish work at five. See you, Lena",
+    "prompt": "Why can't Lena go to the gym tomorrow morning?",
+    "options": [
+      "She has to work late.",
+      "She is going on holiday.",
+      "She feels ill.",
+      "She has a doctor's appointment."
+    ],
+    "answer": 3
+  },
+  {
+    "level": "A2",
+    "skill": "reading",
+    "topic": "reading_detail",
+    "passage": "City Library. Open Monday to Friday, 9 am to 7 pm, and Saturday, 10 am to 2 pm. Closed on Sundays. You can borrow up to five books for three weeks.",
+    "prompt": "When is the library closed all day?",
+    "options": [
+      "On Saturdays",
+      "On Sundays",
+      "On Mondays",
+      "On Fridays"
+    ],
+    "answer": 1
+  },
+  {
+    "level": "A2",
+    "skill": "listening",
+    "topic": "listening_detail",
+    "passage": "Good morning, passengers. The train to the airport will leave from platform four, not platform two. We are sorry for the change.",
+    "prompt": "Which platform will the airport train leave from?",
+    "options": [
+      "Platform two",
+      "Platform three",
+      "Platform four",
+      "Platform five"
+    ],
+    "answer": 2
+  },
+  {
+    "level": "A2",
+    "skill": "listening",
+    "topic": "listening_function",
+    "passage": "Hi, it's me. Could you buy some milk and bread on your way home? We haven't got any for breakfast tomorrow.",
+    "prompt": "What does the speaker want the listener to do?",
+    "options": [
+      "Make breakfast",
+      "Go shopping on the way home",
+      "Come home early",
+      "Call back later"
+    ],
+    "answer": 1
+  },
+  {
+    "level": "B1-",
+    "skill": "grammar",
+    "topic": "present_perfect",
+    "prompt": "We have known each other ___ ten years.",
+    "options": [
+      "since",
+      "for",
+      "during",
+      "ago"
+    ],
+    "answer": 1
+  },
+  {
+    "level": "B1-",
+    "skill": "grammar",
+    "topic": "future_going_to",
+    "prompt": "Look at those dark clouds! It ___ rain.",
+    "options": [
+      "is going to",
+      "goes to",
+      "is go to",
+      "going to"
+    ],
+    "answer": 0
+  },
+  {
+    "level": "B1-",
+    "skill": "grammar",
+    "topic": "modals_obligation",
+    "prompt": "At our school, every student ___ wear a uniform. It's a rule.",
+    "options": [
+      "doesn't have to",
+      "mustn't",
+      "has to",
+      "needn't"
+    ],
+    "answer": 2
+  },
+  {
+    "level": "B1-",
+    "skill": "grammar",
+    "topic": "quantifiers",
+    "prompt": "There isn't ___ milk left in the fridge, so I'll buy some.",
+    "options": [
+      "many",
+      "a few",
+      "several",
+      "much"
+    ],
+    "answer": 3
+  },
+  {
+    "level": "B1-",
+    "skill": "grammar",
+    "topic": "past_continuous",
+    "prompt": "While I ___ to work this morning, I saw an accident.",
+    "options": [
+      "walk",
+      "have walked",
+      "am walking",
+      "was walking"
+    ],
+    "answer": 3
+  },
+  {
+    "level": "B1-",
+    "skill": "vocabulary",
+    "topic": "vocab_phrasal",
+    "prompt": "Could you ___ the music, please? I'm trying to sleep.",
+    "options": [
+      "turn up",
+      "turn on",
+      "turn down",
+      "turn over"
+    ],
+    "answer": 2
+  },
+  {
+    "level": "B1-",
+    "skill": "vocabulary",
+    "topic": "vocab_word_form",
+    "prompt": "The museum tour was really ___. I learned a lot.",
+    "options": [
+      "interested",
+      "interesting",
+      "interest",
+      "interestingly"
+    ],
+    "answer": 1
+  },
+  {
+    "level": "B1-",
+    "skill": "vocabulary",
+    "topic": "vocab_collocation",
+    "prompt": "Could you ___ me a favour and close the window?",
+    "options": [
+      "do",
+      "make",
+      "give",
+      "take"
+    ],
+    "answer": 0
+  },
+  {
+    "level": "B1-",
+    "skill": "reading",
+    "topic": "reading_detail",
+    "passage": "Dear customers, from next Monday our restaurant will open one hour later, at 12 noon, because we are training new kitchen staff in the mornings. Dinner times will not change. We hope to see you soon!",
+    "prompt": "Why will the restaurant open later from next Monday?",
+    "options": [
+      "Because dinner times are changing",
+      "Because the kitchen is being repaired",
+      "Because new staff are being trained",
+      "Because there are fewer customers"
+    ],
+    "answer": 2
+  },
+  {
+    "level": "B1-",
+    "skill": "reading",
+    "topic": "reading_gist",
+    "passage": "Many people think working from home is always relaxing, but it can be difficult. Without colleagues around, some people feel lonely, and it is easy to work too many hours. Experts suggest taking regular breaks and keeping a fixed timetable.",
+    "prompt": "What is the main idea of the text?",
+    "options": [
+      "Working from home is always relaxing.",
+      "Working from home can have some difficulties.",
+      "Colleagues make office work difficult.",
+      "Experts want everyone to work from home."
+    ],
+    "answer": 1
+  },
+  {
+    "level": "B1-",
+    "skill": "listening",
+    "topic": "listening_detail",
+    "passage": "Attention, shoppers. Our store will close in fifteen minutes. Please take your items to the checkout. The café on the second floor is already closed.",
+    "prompt": "What is already closed?",
+    "options": [
+      "The café",
+      "The store",
+      "The checkout",
+      "The car park"
+    ],
+    "answer": 0
+  },
+  {
+    "level": "B1-",
+    "skill": "listening",
+    "topic": "listening_function",
+    "passage": "I'm sorry, I didn't catch that. Could you say the address again, a bit more slowly?",
+    "prompt": "What is the speaker doing?",
+    "options": [
+      "Giving directions",
+      "Complaining about noise",
+      "Booking a taxi",
+      "Asking someone to repeat information"
+    ],
+    "answer": 3
+  },
+  {
+    "level": "B1",
+    "skill": "grammar",
+    "topic": "first_conditional",
+    "prompt": "If it ___ tomorrow, we'll have the picnic indoors.",
+    "options": [
+      "will rain",
+      "rains",
+      "would rain",
+      "rain"
+    ],
+    "answer": 1
+  },
+  {
+    "level": "B1",
+    "skill": "grammar",
+    "topic": "passive_present",
+    "prompt": "These phones ___ in a factory outside the city.",
+    "options": [
+      "make",
+      "are making",
+      "made",
+      "are made"
+    ],
+    "answer": 3
+  },
+  {
+    "level": "B1",
+    "skill": "grammar",
+    "topic": "gerund_infinitive",
+    "prompt": "I'm thinking about ___ a new language this year.",
+    "options": [
+      "to learn",
+      "learn",
+      "learning",
+      "learned"
+    ],
+    "answer": 2
+  },
+  {
+    "level": "B1",
+    "skill": "grammar",
+    "topic": "relative_clauses",
+    "prompt": "That's the hotel ___ we stayed last summer.",
+    "options": [
+      "where",
+      "which",
+      "who",
+      "what"
+    ],
+    "answer": 0
+  },
+  {
+    "level": "B1",
+    "skill": "grammar",
+    "topic": "used_to",
+    "prompt": "When I was a child, I ___ play football in the street every evening.",
+    "options": [
+      "was used to",
+      "used to",
+      "use to",
+      "am used to"
+    ],
+    "answer": 1
+  },
+  {
+    "level": "B1",
+    "skill": "grammar",
+    "topic": "too_enough",
+    "prompt": "He isn't old ___ to drive a car yet.",
+    "options": [
+      "too",
+      "very",
+      "enough",
+      "so"
+    ],
+    "answer": 2
+  },
+  {
+    "level": "B1",
+    "skill": "vocabulary",
+    "topic": "vocab_phrasal",
+    "prompt": "Our flight was cancelled, so we had to ___ our trip until next month.",
+    "options": [
+      "put off",
+      "put on",
+      "take off",
+      "get over"
+    ],
+    "answer": 0
+  },
+  {
+    "level": "B1",
+    "skill": "vocabulary",
+    "topic": "vocab_collocation",
+    "prompt": "Regular exercise and a healthy diet can help you ___ weight.",
+    "options": [
+      "miss",
+      "lack",
+      "fall",
+      "lose"
+    ],
+    "answer": 3
+  },
+  {
+    "level": "B1",
+    "skill": "vocabulary",
+    "topic": "vocab_word_form",
+    "prompt": "There has been a big ___ in the number of tourists visiting the city this year.",
+    "options": [
+      "increasing",
+      "increase",
+      "increased",
+      "increasingly"
+    ],
+    "answer": 1
+  },
+  {
+    "level": "B1",
+    "skill": "vocabulary",
+    "topic": "vocab_meaning",
+    "prompt": "She's very ___; she always tells the truth, even when it's difficult.",
+    "options": [
+      "patient",
+      "polite",
+      "honest",
+      "generous"
+    ],
+    "answer": 2
+  },
+  {
+    "level": "B1",
+    "skill": "reading",
+    "topic": "reading_detail",
+    "passage": "The city council has announced that the main bridge will be closed for repairs from 1 to 14 March. During this time, buses will use the river road, which adds about ten minutes to most journeys. Cyclists and people on foot can still cross the river using a temporary path on the east side of the bridge.",
+    "prompt": "Who can still cross the river at the bridge during the repairs?",
+    "options": [
+      "Buses",
+      "Car drivers",
+      "Nobody",
+      "Cyclists and people on foot"
+    ],
+    "answer": 3
+  },
+  {
+    "level": "B1",
+    "skill": "reading",
+    "topic": "reading_inference",
+    "passage": "Ahmet had planned to finish his report on Friday afternoon. However, his office computer kept freezing, and the IT team could not come until Monday. In the end, he took the files home on a memory stick and worked on the report on his own laptop over the weekend.",
+    "prompt": "What can we understand from the text?",
+    "options": [
+      "The IT team repaired his computer on Friday.",
+      "He did not finish the report on Friday.",
+      "He decided not to write the report.",
+      "His family helped him write the report."
+    ],
+    "answer": 1
+  },
+  {
+    "level": "B1",
+    "skill": "reading",
+    "topic": "reading_vocab",
+    "passage": "Many young people now choose to rent a flat with friends rather than live alone. Sharing the cost of rent and bills makes city life more affordable, and it can also reduce loneliness. However, flatmates need to agree on clear rules about cleaning and noise.",
+    "prompt": "In the text, what does \"affordable\" mean?",
+    "options": [
+      "exciting",
+      "crowded",
+      "cheap enough to pay for",
+      "easy to find"
+    ],
+    "answer": 2
+  },
+  {
+    "level": "B1",
+    "skill": "listening",
+    "topic": "listening_detail",
+    "passage": "Hello, this is the dental clinic calling about your appointment on Wednesday. Unfortunately, the dentist is ill that day, so we've moved you to Thursday at the same time. Please call us back if that doesn't suit you.",
+    "prompt": "What has changed about the appointment?",
+    "options": [
+      "The time",
+      "The day",
+      "The clinic",
+      "The type of treatment"
+    ],
+    "answer": 1
+  },
+  {
+    "level": "B1",
+    "skill": "listening",
+    "topic": "listening_gist",
+    "passage": "Right, everyone, before we start the tour, please remember that photos are not allowed inside the palace. And keep your tickets with you, because you'll need them again when we visit the gardens later.",
+    "prompt": "What is the speaker mainly doing?",
+    "options": [
+      "Selling tickets for the palace",
+      "Explaining the history of the palace",
+      "Apologising for a delay",
+      "Giving rules and advice before a tour"
+    ],
+    "answer": 3
+  },
+  {
+    "level": "B1",
+    "skill": "listening",
+    "topic": "listening_function",
+    "passage": "You look exhausted. Why don't you take a short break and get some fresh air? I can answer the phones while you're out.",
+    "prompt": "Which best describes what the speaker is doing?",
+    "options": [
+      "Offering to help and suggesting a break",
+      "Asking the listener for a favour",
+      "Complaining about the workload",
+      "Inviting the listener to lunch"
+    ],
+    "answer": 0
+  },
+  {
+    "level": "B1+",
+    "skill": "grammar",
+    "topic": "second_conditional",
+    "prompt": "If I ___ more free time, I would learn to play the guitar.",
+    "options": [
+      "had",
+      "have",
+      "would have",
+      "will have"
+    ],
+    "answer": 0
+  },
+  {
+    "level": "B1+",
+    "skill": "grammar",
+    "topic": "modals_deduction",
+    "prompt": "The lights are off and nobody is answering the door. They ___ be at home.",
+    "options": [
+      "can't",
+      "must",
+      "mustn't",
+      "should"
+    ],
+    "answer": 0
+  },
+  {
+    "level": "B1+",
+    "skill": "grammar",
+    "topic": "reported_speech",
+    "prompt": "The receptionist asked me what time ___.",
+    "options": [
+      "did I want to check out",
+      "I wanted to check out",
+      "do I want to check out",
+      "I want check out"
+    ],
+    "answer": 1
+  },
+  {
+    "level": "B1+",
+    "skill": "grammar",
+    "topic": "present_perfect_continuous",
+    "prompt": "I ___ for this bus for forty minutes, and it still hasn't come.",
+    "options": [
+      "am waiting",
+      "was waiting",
+      "have been waiting",
+      "wait"
+    ],
+    "answer": 2
+  },
+  {
+    "level": "B1+",
+    "skill": "grammar",
+    "topic": "passive_modal",
+    "prompt": "All mobile phones must ___ off before the exam begins.",
+    "options": [
+      "switch",
+      "been switched",
+      "switching",
+      "be switched"
+    ],
+    "answer": 3
+  },
+  {
+    "level": "B1+",
+    "skill": "grammar",
+    "topic": "linking_contrast",
+    "prompt": "___ the heavy traffic, we arrived at the airport on time.",
+    "options": [
+      "Despite",
+      "Although",
+      "However",
+      "Because"
+    ],
+    "answer": 0
+  },
+  {
+    "level": "B1+",
+    "skill": "vocabulary",
+    "topic": "vocab_phrasal",
+    "prompt": "We've ___ milk, so I'll get some on the way home.",
+    "options": [
+      "run out of",
+      "run into",
+      "run over",
+      "run away from"
+    ],
+    "answer": 0
+  },
+  {
+    "level": "B1+",
+    "skill": "vocabulary",
+    "topic": "vocab_collocation",
+    "prompt": "Before you sign the contract, make sure you ___ attention to the small print.",
+    "options": [
+      "take",
+      "make",
+      "pay",
+      "keep"
+    ],
+    "answer": 2
+  },
+  {
+    "level": "B1+",
+    "skill": "vocabulary",
+    "topic": "vocab_word_form",
+    "prompt": "Many people find it hard to stay ___ when they work from home.",
+    "options": [
+      "motivation",
+      "motivating",
+      "motivate",
+      "motivated"
+    ],
+    "answer": 3
+  },
+  {
+    "level": "B1+",
+    "skill": "vocabulary",
+    "topic": "vocab_context",
+    "prompt": "The hotel room was clean and comfortable, but the view was a bit of a ___: we could only see a car park.",
+    "options": [
+      "disappointment",
+      "bargain",
+      "success",
+      "relief"
+    ],
+    "answer": 0
+  },
+  {
+    "level": "B1+",
+    "skill": "reading",
+    "topic": "reading_inference",
+    "passage": "When the new café opened on our street, it was empty for weeks. The owner then started offering a free coffee to anyone who brought their own cup. Within a month, there was a queue every morning, and other shops nearby began to do the same. Now it is rare to see a paper cup in the neighbourhood.",
+    "prompt": "What can we infer from the text?",
+    "options": [
+      "The café closed after a month.",
+      "The free coffee offer helped change how local people buy coffee.",
+      "The owner started selling paper cups.",
+      "Other shops complained about the café."
+    ],
+    "answer": 1
+  },
+  {
+    "level": "B1+",
+    "skill": "reading",
+    "topic": "reading_gist",
+    "passage": "Online reviews can be useful when you are choosing a restaurant or hotel, but they should not be trusted completely. Some businesses pay for positive comments, while unhappy customers are often more likely to write a review than satisfied ones. Reading a wide range of reviews and looking for points that are repeated gives a more balanced picture.",
+    "prompt": "What is the writer's main point?",
+    "options": [
+      "Online reviews are always written by businesses.",
+      "Unhappy customers never write reviews.",
+      "Online reviews are useful but should be read carefully.",
+      "Restaurants and hotels should not use online reviews."
+    ],
+    "answer": 2
+  },
+  {
+    "level": "B1+",
+    "skill": "reading",
+    "topic": "reading_detail",
+    "passage": "The university's language centre offers free conversation clubs for international students. Sessions take place on Tuesday and Thursday evenings, and no booking is needed for your first visit. After that, students must register online, as groups are limited to twelve people to give everyone a chance to speak.",
+    "prompt": "Why are the groups limited to twelve people?",
+    "options": [
+      "So that every student has a chance to speak",
+      "Because the rooms are small",
+      "Because the sessions are free",
+      "So that teachers can check attendance"
+    ],
+    "answer": 0
+  },
+  {
+    "level": "B1+",
+    "skill": "listening",
+    "topic": "listening_detail",
+    "passage": "Due to a signal problem, the eight fifteen service to the city centre is running about twenty-five minutes late. Passengers who need to arrive sooner may take the number forty bus from outside the main entrance, where train tickets will be accepted.",
+    "prompt": "What can passengers do if they are in a hurry?",
+    "options": [
+      "Wait for the next train",
+      "Buy a bus ticket",
+      "Take a bus using their train ticket",
+      "Ask for their money back"
+    ],
+    "answer": 2
+  },
+  {
+    "level": "B1+",
+    "skill": "listening",
+    "topic": "listening_function",
+    "passage": "I'd love to come to the barbecue on Saturday, but I promised my parents I'd help them move house. Maybe we could meet up for coffee one evening next week instead?",
+    "prompt": "What is the speaker mainly doing in this message?",
+    "options": [
+      "Accepting an invitation",
+      "Inviting the listener to a barbecue",
+      "Asking for help moving house",
+      "Turning down an invitation and suggesting another plan"
+    ],
+    "answer": 3
+  },
+  {
+    "level": "B1+",
+    "skill": "listening",
+    "topic": "listening_gist",
+    "passage": "Thanks for calling the city sports centre. Because of the hot weather, the outdoor pool will stay open until nine p.m. this week, but the indoor gym will close early for cleaning. Please check our website for the full timetable.",
+    "prompt": "What is the main purpose of the message?",
+    "options": [
+      "To advertise a new swimming pool",
+      "To ask callers to book online",
+      "To explain how to join the gym",
+      "To inform callers about changes to opening hours"
+    ],
+    "answer": 3
+  }
+]

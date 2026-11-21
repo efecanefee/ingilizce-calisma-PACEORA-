@@ -1,0 +1,804 @@
+[
+  {
+    "level": "B2-",
+    "skill": "grammar",
+    "topic": "present_perfect_continuous",
+    "prompt": "She looks exhausted because she ___ on the report since early this morning.",
+    "options": [
+      "is working",
+      "worked",
+      "has been working",
+      "had worked"
+    ],
+    "answer": 2
+  },
+  {
+    "level": "B2-",
+    "skill": "grammar",
+    "topic": "second_conditional",
+    "prompt": "If our office ___ closer to the city centre, more people would cycle to work.",
+    "options": [
+      "is",
+      "will be",
+      "has been",
+      "were"
+    ],
+    "answer": 3
+  },
+  {
+    "level": "B2-",
+    "skill": "grammar",
+    "topic": "passive_future",
+    "prompt": "The results of the national survey ___ next Monday on the ministry's website.",
+    "options": [
+      "will be published",
+      "will publish",
+      "are publishing",
+      "will have publish"
+    ],
+    "answer": 0
+  },
+  {
+    "level": "B2-",
+    "skill": "grammar",
+    "topic": "reported_speech",
+    "prompt": "At the interview, she asked me where ___ before joining the company.",
+    "options": [
+      "did I work",
+      "was I working",
+      "do I work",
+      "I had worked"
+    ],
+    "answer": 3
+  },
+  {
+    "level": "B2-",
+    "skill": "grammar",
+    "topic": "relative_clauses",
+    "prompt": "The engineer ___ design won the national award will give a talk at our school tomorrow.",
+    "options": [
+      "who",
+      "which",
+      "whose",
+      "whom"
+    ],
+    "answer": 2
+  },
+  {
+    "level": "B2-",
+    "skill": "grammar",
+    "topic": "modals_deduction",
+    "prompt": "Ali's light is on and his car is outside, so he ___ be at home.",
+    "options": [
+      "must",
+      "can't",
+      "needn't",
+      "mustn't"
+    ],
+    "answer": 0
+  },
+  {
+    "level": "B2-",
+    "skill": "vocabulary",
+    "topic": "vocab_collocation",
+    "prompt": "Our team spent six months ___ research into new ways of recycling batteries.",
+    "options": [
+      "making",
+      "doing",
+      "taking",
+      "giving"
+    ],
+    "answer": 1
+  },
+  {
+    "level": "B2-",
+    "skill": "vocabulary",
+    "topic": "vocab_phrasal",
+    "prompt": "The outdoor concert was ___ at the last minute because of the heavy storm.",
+    "options": [
+      "called off",
+      "put up",
+      "turned down",
+      "given in"
+    ],
+    "answer": 0
+  },
+  {
+    "level": "B2-",
+    "skill": "vocabulary",
+    "topic": "vocab_word_form",
+    "prompt": "The ___ of the new train line has reduced traffic in the city centre.",
+    "options": [
+      "introduce",
+      "introducing",
+      "introduction",
+      "introductory"
+    ],
+    "answer": 2
+  },
+  {
+    "level": "B2-",
+    "skill": "vocabulary",
+    "topic": "vocab_precision",
+    "prompt": "Could I ___ your phone charger for an hour? Mine has stopped working.",
+    "options": [
+      "lend",
+      "borrow",
+      "owe",
+      "loan"
+    ],
+    "answer": 1
+  },
+  {
+    "level": "B2-",
+    "skill": "reading",
+    "topic": "reading_detail",
+    "passage": "From next month, the city library will open at 8 a.m. instead of 10 a.m. on weekdays, so that students can study before their classes begin. To cover the extra hours, the library will close at 6 p.m. rather than 8 p.m. on Saturdays. The children's section will keep its usual opening times. Members can still return books at any time using the box next to the main entrance, and the online catalogue will continue to work around the clock.",
+    "prompt": "What will change on Saturdays?",
+    "options": [
+      "The library will open earlier.",
+      "The library will close earlier.",
+      "The children's section will close.",
+      "Books cannot be returned."
+    ],
+    "answer": 1
+  },
+  {
+    "level": "B2-",
+    "skill": "reading",
+    "topic": "reading_gist",
+    "passage": "When my company let us work from home two days a week, I expected to get much more done. In some ways I did: without a long commute, I had more energy in the morning. But I soon noticed that I was answering messages late into the evening and rarely took proper breaks. Now I keep a fixed finishing time and leave my laptop in another room. Working from home suits me, but only because I set clear limits.",
+    "prompt": "What is the main point of the text?",
+    "options": [
+      "Working from home is less productive than working in an office.",
+      "A long commute gives people more energy.",
+      "Working from home works well if you set boundaries.",
+      "Companies should allow more days of home working."
+    ],
+    "answer": 2
+  },
+  {
+    "level": "B2-",
+    "skill": "reading",
+    "topic": "reading_inference",
+    "passage": "Mert had planned to cycle to the science fair, but when he looked outside, the streets were covered in a thin layer of ice. He sighed, put his helmet back on the shelf and checked the bus timetable on his phone. The next bus was in forty minutes, so he made a cup of tea and went over his presentation notes one more time.",
+    "prompt": "What can we infer about Mert?",
+    "options": [
+      "He decided that cycling was not safe.",
+      "He forgot about the science fair.",
+      "He missed the last bus of the day.",
+      "He had not prepared a presentation."
+    ],
+    "answer": 0
+  },
+  {
+    "level": "B2-",
+    "skill": "listening",
+    "topic": "listening_detail",
+    "passage": "Hi, it's Selin from the dental clinic. Your appointment on Thursday has moved from ten o'clock to half past eleven, because the dentist has a training session in the morning. Please call us back if the new time doesn't suit you.",
+    "prompt": "What time is the new appointment?",
+    "options": [
+      "10:00",
+      "10:30",
+      "11:00",
+      "11:30"
+    ],
+    "answer": 3
+  },
+  {
+    "level": "B2-",
+    "skill": "listening",
+    "topic": "listening_gist",
+    "passage": "Attention, please. Due to a technical problem, the lifts in the east building are out of service this afternoon. Staff with meetings on the upper floors are asked to use the stairs or the lifts in the west building.",
+    "prompt": "What is the announcement mainly about?",
+    "options": [
+      "A meeting has been cancelled.",
+      "Some lifts are not working.",
+      "The east building is closed.",
+      "All staff must leave the building."
+    ],
+    "answer": 1
+  },
+  {
+    "level": "B2-",
+    "skill": "listening",
+    "topic": "listening_attitude",
+    "passage": "Honestly, I thought the new science documentary would be boring, but it was the opposite. The presenter explained complicated ideas really clearly, and I've already recommended it to my whole class.",
+    "prompt": "How does the speaker feel about the documentary?",
+    "options": [
+      "Disappointed by it",
+      "Confused by it",
+      "Bored but polite about it",
+      "Surprised and impressed by it"
+    ],
+    "answer": 3
+  },
+  {
+    "level": "B2",
+    "skill": "grammar",
+    "topic": "third_conditional",
+    "prompt": "If we ___ the warning signs earlier, the project wouldn't have failed.",
+    "options": [
+      "noticed",
+      "had noticed",
+      "would notice",
+      "have noticed"
+    ],
+    "answer": 1
+  },
+  {
+    "level": "B2",
+    "skill": "grammar",
+    "topic": "future_perfect",
+    "prompt": "By the time the conference starts on Friday, we ___ all the presentations.",
+    "options": [
+      "will finish",
+      "are finishing",
+      "will have finished",
+      "have finished"
+    ],
+    "answer": 2
+  },
+  {
+    "level": "B2",
+    "skill": "grammar",
+    "topic": "causative",
+    "prompt": "We're ___ our office redecorated next week, so we'll all work from home.",
+    "options": [
+      "having",
+      "making",
+      "letting",
+      "doing"
+    ],
+    "answer": 0
+  },
+  {
+    "level": "B2",
+    "skill": "grammar",
+    "topic": "passive_advanced",
+    "prompt": "The new vaccine ___ to be highly effective against the virus.",
+    "options": [
+      "is said",
+      "says",
+      "is saying",
+      "has said"
+    ],
+    "answer": 0
+  },
+  {
+    "level": "B2",
+    "skill": "grammar",
+    "topic": "linkers_contrast",
+    "prompt": "___ the heavy rain, the outdoor festival went ahead as planned.",
+    "options": [
+      "Although",
+      "However",
+      "Even",
+      "Despite"
+    ],
+    "answer": 3
+  },
+  {
+    "level": "B2",
+    "skill": "grammar",
+    "topic": "gerund_infinitive",
+    "prompt": "During the meeting, the manager suggested ___ the deadline by two weeks.",
+    "options": [
+      "to extend",
+      "that extend",
+      "extend",
+      "extending"
+    ],
+    "answer": 3
+  },
+  {
+    "level": "B2",
+    "skill": "vocabulary",
+    "topic": "vocab_phrasal",
+    "prompt": "We've ___ milk, so could you buy some on your way home?",
+    "options": [
+      "run into",
+      "run over",
+      "run out of",
+      "run off"
+    ],
+    "answer": 2
+  },
+  {
+    "level": "B2",
+    "skill": "vocabulary",
+    "topic": "vocab_collocation",
+    "prompt": "The government has promised to take ___ to reduce air pollution in large cities.",
+    "options": [
+      "actions",
+      "steps",
+      "efforts",
+      "works"
+    ],
+    "answer": 1
+  },
+  {
+    "level": "B2",
+    "skill": "vocabulary",
+    "topic": "vocab_word_form",
+    "prompt": "Many doctors are still ___ about the long-term benefits of the new treatment.",
+    "options": [
+      "sceptic",
+      "scepticism",
+      "sceptically",
+      "sceptical"
+    ],
+    "answer": 3
+  },
+  {
+    "level": "B2",
+    "skill": "vocabulary",
+    "topic": "vocab_idiom",
+    "prompt": "Learning to code was hard at first, but once I got the ___ of it, I really enjoyed it.",
+    "options": [
+      "hang",
+      "grip",
+      "hold",
+      "catch"
+    ],
+    "answer": 0
+  },
+  {
+    "level": "B2",
+    "skill": "reading",
+    "topic": "reading_detail",
+    "passage": "A small town in the north has started a 'repair café', held every second Sunday in the community hall. Volunteers with technical skills help residents fix broken items such as lamps, bicycles and clothes, instead of throwing them away. The service is free, although visitors are encouraged to leave a small donation to cover the cost of spare parts. The organisers say that last year they saved nearly two tonnes of waste, and that many visitors now come to learn repair skills themselves.",
+    "prompt": "According to the text, what are visitors asked to do?",
+    "options": [
+      "Bring their own tools",
+      "Pay a fixed fee for each repair",
+      "Give some money if they can",
+      "Volunteer at the next event"
+    ],
+    "answer": 2
+  },
+  {
+    "level": "B2",
+    "skill": "reading",
+    "topic": "reading_attitude",
+    "passage": "Many schools now give every pupil a tablet, and the benefits are often presented as obvious. I am less certain. Tablets can make lessons more interactive, but I have watched too many students jump between apps without finishing anything. Before buying more devices, schools should ask what problem they are actually trying to solve. Technology is a tool, not a teaching method, and it works best when teachers decide exactly how and when it will be used.",
+    "prompt": "What is the writer's attitude towards tablets in schools?",
+    "options": [
+      "Enthusiastic about them",
+      "Cautious about their value",
+      "Completely opposed to them",
+      "Uninterested in the topic"
+    ],
+    "answer": 1
+  },
+  {
+    "level": "B2",
+    "skill": "reading",
+    "topic": "reading_vocab",
+    "passage": "The research team had expected the new material to absorb water slowly. Instead, it soaked up the liquid within seconds, which took everyone by surprise. Although the result was unexpected, the scientists believe it could be useful. Because the material is cheap to produce and can be reused many times, it might one day help to clean up oil spills at sea or reduce flooding in cities.",
+    "prompt": "In the text, what does the phrase 'soaked up' mean?",
+    "options": [
+      "absorbed",
+      "rejected",
+      "heated",
+      "coloured"
+    ],
+    "answer": 0
+  },
+  {
+    "level": "B2",
+    "skill": "listening",
+    "topic": "listening_function",
+    "passage": "Look, I know you're really busy this week, but if you get a chance, could you have a quick look at my slides before tomorrow? I'd really value your opinion.",
+    "prompt": "Which best describes what the speaker is doing?",
+    "options": [
+      "Making a complaint",
+      "Giving advice",
+      "Refusing an offer",
+      "Asking for a favour"
+    ],
+    "answer": 3
+  },
+  {
+    "level": "B2",
+    "skill": "listening",
+    "topic": "listening_detail",
+    "passage": "Good morning, passengers. The ten fifteen train to the airport will now leave from platform six, not platform two. We apologise for the change, and please note that this train will not stop at Central Station today.",
+    "prompt": "Which statement about the airport train is true?",
+    "options": [
+      "It has been cancelled.",
+      "It leaves from platform two.",
+      "It will not stop at Central Station.",
+      "It leaves at ten fifty."
+    ],
+    "answer": 2
+  },
+  {
+    "level": "B2",
+    "skill": "listening",
+    "topic": "listening_gist",
+    "passage": "I've been reading a lot about four-day working weeks. Some companies say staff are happier and just as productive, but others found that customers complained because nobody answered the phone on Fridays. So I think it depends on the type of business.",
+    "prompt": "What is the speaker's main conclusion?",
+    "options": [
+      "Four-day weeks always improve productivity.",
+      "Whether a four-day week works depends on the business.",
+      "Customers prefer companies with four-day weeks.",
+      "Four-day weeks make staff less happy."
+    ],
+    "answer": 1
+  },
+  {
+    "level": "B2+",
+    "skill": "grammar",
+    "topic": "mixed_conditional",
+    "prompt": "If I had chosen to study medicine at university, I ___ a doctor now.",
+    "options": [
+      "would be",
+      "would have been",
+      "will be",
+      "had been"
+    ],
+    "answer": 0
+  },
+  {
+    "level": "B2+",
+    "skill": "grammar",
+    "topic": "inversion",
+    "prompt": "Not only ___ the deadline, but they also went well over budget.",
+    "options": [
+      "they missed",
+      "did they miss",
+      "they did miss",
+      "they had missed"
+    ],
+    "answer": 1
+  },
+  {
+    "level": "B2+",
+    "skill": "grammar",
+    "topic": "wish_regret",
+    "prompt": "I wish my colleagues ___ interrupting me in meetings; it's really annoying.",
+    "options": [
+      "will stop",
+      "had stopped",
+      "would stop",
+      "are stopping"
+    ],
+    "answer": 2
+  },
+  {
+    "level": "B2+",
+    "skill": "grammar",
+    "topic": "participle_clauses",
+    "prompt": "___ the report twice, she realised that several key figures were missing.",
+    "options": [
+      "Having read",
+      "Had read",
+      "Being read",
+      "To have read"
+    ],
+    "answer": 0
+  },
+  {
+    "level": "B2+",
+    "skill": "grammar",
+    "topic": "relative_clauses_advanced",
+    "prompt": "The committee rejected three proposals, none of ___ addressed the funding problem.",
+    "options": [
+      "them",
+      "which",
+      "whom",
+      "that"
+    ],
+    "answer": 1
+  },
+  {
+    "level": "B2+",
+    "skill": "vocabulary",
+    "topic": "vocab_collocation",
+    "prompt": "The new evidence ___ serious doubt on the original findings of the study.",
+    "options": [
+      "gives",
+      "puts",
+      "makes",
+      "casts"
+    ],
+    "answer": 3
+  },
+  {
+    "level": "B2+",
+    "skill": "vocabulary",
+    "topic": "vocab_phrasal",
+    "prompt": "The negotiations finally ___ after both sides refused to make any compromise.",
+    "options": [
+      "broke out",
+      "broke in",
+      "broke down",
+      "broke through"
+    ],
+    "answer": 2
+  },
+  {
+    "level": "B2+",
+    "skill": "vocabulary",
+    "topic": "vocab_word_form",
+    "prompt": "Critics argue that the plan is financially ___ and will cost far more than expected.",
+    "options": [
+      "sustain",
+      "sustainable",
+      "unsustainable",
+      "sustainability"
+    ],
+    "answer": 2
+  },
+  {
+    "level": "B2+",
+    "skill": "vocabulary",
+    "topic": "vocab_precision",
+    "prompt": "The survey ___ that most commuters would switch to trains if fares were lower.",
+    "options": [
+      "proposes",
+      "suggests",
+      "advises",
+      "recommends"
+    ],
+    "answer": 1
+  },
+  {
+    "level": "B2+",
+    "skill": "reading",
+    "topic": "reading_inference",
+    "passage": "When the hospital introduced a new booking app, managers predicted that phone calls to reception would fall by half. Six months later, the number of calls had hardly changed. A staff survey offered a clue: many older patients had downloaded the app and used it, but rang anyway to check that their appointment had really been saved. The hospital has since added a confirmation text message, and early figures suggest the phone lines are finally getting quieter.",
+    "prompt": "What does the text suggest was the main reason calls did not fall at first?",
+    "options": [
+      "Older patients could not download the app.",
+      "Patients did not trust that the app had worked.",
+      "The app often lost appointment details.",
+      "Receptionists encouraged patients to call."
+    ],
+    "answer": 1
+  },
+  {
+    "level": "B2+",
+    "skill": "reading",
+    "topic": "reading_attitude",
+    "passage": "Every few years, a new study claims that a single food can prevent disease, and the headlines follow. Yet when you read beyond the headline, the findings are usually modest: a small group, a short period, a link rather than a cause. Researchers are rarely to blame; they tend to describe their results carefully. The exaggeration usually happens later, when complex work is squeezed into a catchy sentence designed to attract clicks.",
+    "prompt": "Who does the writer mainly criticise?",
+    "options": [
+      "The researchers who carry out the studies",
+      "People who read health news",
+      "Those who simplify research into headlines",
+      "Companies that sell healthy food"
+    ],
+    "answer": 2
+  },
+  {
+    "level": "B2+",
+    "skill": "reading",
+    "topic": "reading_gist",
+    "passage": "Urban planners once assumed that building wider roads would ease traffic. In practice, the opposite often happens. Extra lanes make driving more attractive, so more people choose to drive, and within a few years the roads are as congested as before. This effect, known as induced demand, has led some cities to take a different approach, investing in public transport and cycle lanes rather than simply adding more space for cars.",
+    "prompt": "What is the main idea of the text?",
+    "options": [
+      "Wider roads usually solve traffic problems permanently.",
+      "Cycle lanes are more popular than public transport.",
+      "Public transport is too expensive for most cities.",
+      "Adding road space tends to attract more traffic."
+    ],
+    "answer": 3
+  },
+  {
+    "level": "B2+",
+    "skill": "listening",
+    "topic": "listening_attitude",
+    "passage": "To be fair, the new timetable has its advantages, as there are more early trains. But they've cut the late services, and for those of us who work evening shifts, that's frankly a step backwards.",
+    "prompt": "What is the speaker's overall opinion of the new timetable?",
+    "options": [
+      "It is mostly negative for people like the speaker.",
+      "It is entirely positive.",
+      "The speaker has no opinion about it.",
+      "It is better for evening workers."
+    ],
+    "answer": 0
+  },
+  {
+    "level": "B2+",
+    "skill": "listening",
+    "topic": "listening_function",
+    "passage": "I take your point about the cost, but wouldn't it make more sense to run a small trial first, rather than rolling the system out across every department at once?",
+    "prompt": "How does the speaker respond to the proposal?",
+    "options": [
+      "Agreeing completely with a plan",
+      "Apologising for a mistake",
+      "Asking for a bigger budget",
+      "Suggesting an alternative approach"
+    ],
+    "answer": 3
+  },
+  {
+    "level": "C1",
+    "skill": "grammar",
+    "topic": "cleft_sentences",
+    "prompt": "___ surprised me most was how quickly the team adapted to the new system.",
+    "options": [
+      "What",
+      "That",
+      "Which",
+      "It"
+    ],
+    "answer": 0
+  },
+  {
+    "level": "C1",
+    "skill": "grammar",
+    "topic": "subjunctive",
+    "prompt": "The committee recommended that the proposal ___ until further data was available.",
+    "options": [
+      "was postponing",
+      "postpones",
+      "be postponed",
+      "to be postponed"
+    ],
+    "answer": 2
+  },
+  {
+    "level": "C1",
+    "skill": "grammar",
+    "topic": "inversion",
+    "prompt": "___ you require any further information, please do not hesitate to contact our office.",
+    "options": [
+      "Would",
+      "Should",
+      "Had",
+      "Were"
+    ],
+    "answer": 1
+  },
+  {
+    "level": "C1",
+    "skill": "grammar",
+    "topic": "modals_deduction",
+    "prompt": "The files ___ by accident; the system asks you to confirm every deletion twice.",
+    "options": [
+      "can't have been deleted",
+      "mustn't have been deleted",
+      "shouldn't have been deleted",
+      "needn't have been deleted"
+    ],
+    "answer": 0
+  },
+  {
+    "level": "C1",
+    "skill": "grammar",
+    "topic": "concessive_clauses",
+    "prompt": "___ carefully you plan a project, unexpected problems will always arise.",
+    "options": [
+      "Whatever",
+      "Although",
+      "Even if",
+      "However"
+    ],
+    "answer": 3
+  },
+  {
+    "level": "C1",
+    "skill": "vocabulary",
+    "topic": "vocab_idiom",
+    "prompt": "Economists dismissed the promise to cut taxes without reducing public services as ___.",
+    "options": [
+      "a piece of cake",
+      "on the ball",
+      "pie in the sky",
+      "under the weather"
+    ],
+    "answer": 2
+  },
+  {
+    "level": "C1",
+    "skill": "vocabulary",
+    "topic": "vocab_register",
+    "prompt": "In a formal letter: \"We would be grateful if you could ___ this error at your earliest convenience.\"",
+    "options": [
+      "fix up",
+      "rectify",
+      "get round to",
+      "mess with"
+    ],
+    "answer": 1
+  },
+  {
+    "level": "C1",
+    "skill": "vocabulary",
+    "topic": "vocab_precision",
+    "prompt": "The report repeatedly ___ the importance of early intervention, returning to it in almost every chapter.",
+    "options": [
+      "undermines",
+      "undertakes",
+      "underestimates",
+      "underlines"
+    ],
+    "answer": 3
+  },
+  {
+    "level": "C1",
+    "skill": "vocabulary",
+    "topic": "vocab_collocation",
+    "prompt": "Given how far ahead the polls were, the result of the vote was a ___ conclusion.",
+    "options": [
+      "foregone",
+      "predicted",
+      "settled",
+      "closed"
+    ],
+    "answer": 0
+  },
+  {
+    "level": "C1",
+    "skill": "reading",
+    "topic": "reading_inference",
+    "passage": "For decades, the village relied on a single employer: the paper mill by the river. When it closed, younger residents left for the cities, and the primary school shrank to just two classes. Today, however, the old mill houses a cluster of small design studios, and estate agents report rising interest from families. Not everyone is pleased. Some long-term residents complain that house prices have climbed beyond the reach of their own children, and that the new cafés cater to visitors rather than locals. The village, it seems, has been saved, though perhaps not for the people who stayed.",
+    "prompt": "What does the final sentence imply?",
+    "options": [
+      "The village is likely to decline again soon.",
+      "Long-term residents caused the village's problems.",
+      "The village's recovery has mainly benefited newcomers.",
+      "The paper mill should be reopened."
+    ],
+    "answer": 2
+  },
+  {
+    "level": "C1",
+    "skill": "reading",
+    "topic": "reading_attitude",
+    "passage": "Advocates of open-plan offices promised a revolution in collaboration: knock down the walls, they argued, and ideas would flow freely. The evidence has been less flattering. Several studies have found that when partitions disappear, face-to-face conversation actually declines, as employees retreat behind headphones and send messages to colleagues sitting a few metres away. None of this means that private offices for all are the answer. But it does suggest that the designers of modern workplaces confused visibility with communication, and that their confidence was, at best, premature.",
+    "prompt": "Which best describes the writer's view of open-plan offices?",
+    "options": [
+      "Supportive, despite some minor problems",
+      "Sceptical of the claims made for them",
+      "Undecided, because the evidence is mixed",
+      "Convinced that private offices are better"
+    ],
+    "answer": 1
+  },
+  {
+    "level": "C1",
+    "skill": "reading",
+    "topic": "reading_detail",
+    "passage": "Many people assume that the main obstacle to renewable energy is producing enough of it. Engineers increasingly argue that the harder problem is storage. Solar panels generate most of their electricity around midday, whereas demand peaks in the evening, and wind output can fall for days at a time. Batteries help to smooth these gaps, but storing energy on a national scale with them remains costly. Pumped storage, in which water is pushed uphill and later released through turbines, is cheaper over long periods, yet it is only possible where the landscape provides suitable hills and reservoirs.",
+    "prompt": "According to the text, what limits the use of pumped storage?",
+    "options": [
+      "It is more expensive than batteries.",
+      "It only works around midday.",
+      "It cannot store energy for long periods.",
+      "It depends on suitable geography."
+    ],
+    "answer": 3
+  },
+  {
+    "level": "C1",
+    "skill": "listening",
+    "topic": "listening_attitude",
+    "passage": "Well, the figures are certainly impressive on paper. I'd just be curious to know how many of those new users are still around once the free trial ends.",
+    "prompt": "What does the speaker imply about the figures?",
+    "options": [
+      "They may not reflect long-term success.",
+      "They have probably been invented.",
+      "They are better than the speaker expected.",
+      "They should be published immediately."
+    ],
+    "answer": 0
+  },
+  {
+    "level": "C1",
+    "skill": "listening",
+    "topic": "listening_function",
+    "passage": "I'm not saying the idea is without merit, but given where we are with the budget, I really don't think this is the moment to be taking it forward.",
+    "prompt": "What is the main purpose of the speaker's remark?",
+    "options": [
+      "Enthusiastically supporting the idea",
+      "Asking for more details about the idea",
+      "Politely rejecting the idea for now",
+      "Criticising the idea as worthless"
+    ],
+    "answer": 2
+  }
+]

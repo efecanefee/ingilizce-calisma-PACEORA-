@@ -88,6 +88,7 @@ flutter:
     - assets/images/
     - assets/mascot/
     - assets/lessons/
+    - assets/placement/
     - assets/sounds/
     - assets/fonts/OFL.txt
 

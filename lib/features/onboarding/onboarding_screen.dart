@@ -332,8 +332,11 @@ class _LevelStep extends StatelessWidget {
                 size: 52,
                 animate: false,
               ),
-              title: const Text('Kısa seviye testi'),
-              subtitle: Text('$placementQuestionCount soru, yaklaşık 3 dakika'),
+              title: const Text('Seviye testi'),
+              subtitle: Text(
+                '$placementQuestionCount soru: dilbilgisi, kelime, okuma, '
+                'dinleme · yaklaşık 6 dakika',
+              ),
               trailing: const Icon(Icons.chevron_right_rounded),
               onTap: onTest,
             ),
