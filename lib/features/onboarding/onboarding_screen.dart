@@ -9,7 +9,6 @@ import '../../app/logo.dart';
 import '../../app/mascot.dart';
 import '../../app/motion.dart';
 import '../../app/sounds.dart';
-import '../../app/turkish_letters.dart';
 import '../../data/level_check.dart';
 import '../../data/placement.dart';
 import '../../data/providers.dart';
@@ -281,19 +280,12 @@ class _NameStep extends StatelessWidget {
       header: const Center(child: AnimatedPaceoraLockup()),
       title: 'Merhaba! Sana nasıl hitap edelim?',
       subtitle: 'Günlük derslerinde ve raporlarında bu ismi kullanacağız.',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TextField(
-            controller: controller,
-            autofocus: true,
-            textCapitalization: TextCapitalization.words,
-            textInputAction: TextInputAction.done,
-            decoration: const InputDecoration(hintText: 'Adın'),
-          ),
-          const SizedBox(height: 10),
-          TurkishLetterBar(controller: controller),
-        ],
+      child: TextField(
+        controller: controller,
+        autofocus: true,
+        textCapitalization: TextCapitalization.words,
+        textInputAction: TextInputAction.done,
+        decoration: const InputDecoration(hintText: 'Adın'),
       ),
     );
   }

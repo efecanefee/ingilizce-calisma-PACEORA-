@@ -14,7 +14,7 @@ import '../../app/error_reporting.dart';
 import '../../app/logo.dart';
 import '../../app/motion.dart';
 import '../../app/theme.dart';
-import '../../app/turkish_letters.dart';
+import '../../app/turkish_text.dart';
 import '../../data/backup.dart';
 import '../../data/database.dart';
 import '../../data/feedback.dart';
@@ -450,8 +450,6 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
           textCapitalization: TextCapitalization.words,
           decoration: const InputDecoration(labelText: 'Adın'),
         ),
-        const SizedBox(height: 10),
-        TurkishLetterBar(controller: _nameController),
         const SizedBox(height: 20),
         Text('Seviye', style: theme.textTheme.labelLarge),
         const SizedBox(height: 10),
