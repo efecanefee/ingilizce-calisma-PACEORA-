@@ -70,7 +70,8 @@ class ApiKeyNotifier extends Notifier<String> {
 final apiKeyProvider =
     NotifierProvider<ApiKeyNotifier, String>(ApiKeyNotifier.new);
 
-/// Tema tercihi. Varsayılan sistem ayarını izler.
+/// Tema tercihi. Kayıt yoksa koyu temayla başlar; kullanıcının seçtiği
+/// tema (sistem dahil) korunur.
 class ThemeModeNotifier extends Notifier<ThemeMode> {
   @override
   ThemeMode build() {
@@ -78,8 +79,8 @@ class ThemeModeNotifier extends Notifier<ThemeMode> {
         ref.watch(sharedPreferencesProvider).getString(AppConstants.prefThemeMode);
     return switch (stored) {
       'light' => ThemeMode.light,
-      'dark' => ThemeMode.dark,
-      _ => ThemeMode.system,
+      'system' => ThemeMode.system,
+      _ => ThemeMode.dark,
     };
   }
 

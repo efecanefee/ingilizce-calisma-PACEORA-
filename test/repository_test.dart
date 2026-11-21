@@ -73,11 +73,11 @@ void main() {
       expect(profile?.name, 'Efe');
       expect(profile?.streak, 0);
 
-      await repository.saveProfile(name: 'Efecan', level: 'B2', dailyMinutes: 20);
+      await repository.saveProfile(name: 'Efecan', level: 'B2', dailyMinutes: 30);
       profile = await repository.profile();
       expect(profile?.name, 'Efecan');
       expect(profile?.level, 'B2');
-      expect(profile?.dailyMinutes, 20);
+      expect(profile?.dailyMinutes, 30);
       expect(await db.select(db.userProfiles).get(), hasLength(1));
     });
 

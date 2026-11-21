@@ -285,6 +285,7 @@ class LessonNotifier extends AsyncNotifier<LessonState> {
         level: profile.level,
         grammarTopic: today.grammarTopic,
         dayIndex: today.dayIndex,
+        size: LessonSize.forMinutes(profile.dailyMinutes),
       );
       if (lesson == null) {
         throw const LessonUnavailable('Hazır ders bulunamadı.');

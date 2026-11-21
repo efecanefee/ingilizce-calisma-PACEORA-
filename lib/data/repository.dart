@@ -75,8 +75,19 @@ class Repository {
   final AppDatabase _db;
 
   /// Tek kullanıcı profili; onboarding tamamlanmadıysa null.
-  Future<UserProfile?> profile() =>
-      (_db.select(_db.userProfiles)..limit(1)).getSingleOrNull();
+  ///
+  /// Eski sürümden kalan 10/20/45 dakikalık süre ilk okumada yeni
+  /// seçeneklerden birine taşınır ve kaydedilir.
+  Future<UserProfile?> profile() async {
+    final row =
+        await (_db.select(_db.userProfiles)..limit(1)).getSingleOrNull();
+    if (row == null) return null;
+    final minutes = AppConstants.normalizeDailyMinutes(row.dailyMinutes);
+    if (minutes == row.dailyMinutes) return row;
+    await (_db.update(_db.userProfiles)..where((t) => t.id.equals(row.id)))
+        .write(UserProfilesCompanion(dailyMinutes: Value(minutes)));
+    return row.copyWith(dailyMinutes: minutes);
+  }
 
   /// Profili oluşturur ya da mevcut olanı günceller.
   Future<UserProfile> saveProfile({

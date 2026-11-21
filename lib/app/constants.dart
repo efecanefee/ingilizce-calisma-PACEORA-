@@ -24,19 +24,25 @@ abstract class AppConstants {
       'https://generativelanguage.googleapis.com/v1beta/models';
 
   /// Günlük çalışma süresi seçenekleri (dakika)
-  static const dailyMinuteOptions = [5, 10, 15, 20, 30, 45, 60];
+  static const dailyMinuteOptions = [5, 15, 30, 60];
 
   /// Onboarding'de önceden seçili gelen süre.
   static const defaultDailyMinutes = 15;
 
+  /// Eski sürümlerde seçilebilen 10, 20 ve 45 dakikayı yeni seçeneklere
+  /// taşır: 10 ve 20 → 15, 45 → 30.
+  static int normalizeDailyMinutes(int minutes) => switch (minutes) {
+    <= 5 => 5,
+    <= 20 => 15,
+    <= 45 => 30,
+    _ => 60,
+  };
+
   /// Süre seçeneklerinin kısa açıklaması.
   static String dailyMinuteHint(int minutes) => switch (minutes) {
     <= 5 => 'Hızlı tekrar, yoğun günler için',
-    <= 10 => 'Kısa ve düzenli',
     <= 15 => 'Dengeli tempo, önerilen',
-    <= 20 => 'Rahat tempo, bol pratik',
-    <= 30 => 'Derinlemesine çalışma',
-    <= 45 => 'Yoğun program',
+    <= 30 => 'Derinlemesine çalışma, bol pratik',
     _ => 'Tam gaz, sınav hazırlığı',
   };
 

@@ -37,12 +37,9 @@ class LessonSize {
   final int quiz;
 
   static LessonSize forMinutes(int minutes) => switch (minutes) {
-        <= 10 => const LessonSize(vocab: 5, gapFill: 4, translate: 2, quiz: 4),
-        <= 15 => const LessonSize(vocab: 8, gapFill: 5, translate: 3, quiz: 5),
-        <= 20 => const LessonSize(vocab: 10, gapFill: 6, translate: 4, quiz: 6),
-        <= 30 => const LessonSize(vocab: 14, gapFill: 8, translate: 5, quiz: 8),
-        <= 45 =>
-          const LessonSize(vocab: 18, gapFill: 10, translate: 6, quiz: 10),
+        <= 5 => const LessonSize(vocab: 3, gapFill: 3, translate: 1, quiz: 3),
+        <= 20 => const LessonSize(vocab: 8, gapFill: 5, translate: 3, quiz: 5),
+        <= 45 => const LessonSize(vocab: 14, gapFill: 8, translate: 5, quiz: 8),
         _ => const LessonSize(vocab: 20, gapFill: 12, translate: 8, quiz: 12),
       };
 

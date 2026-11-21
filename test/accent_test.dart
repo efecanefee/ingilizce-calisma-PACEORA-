@@ -28,6 +28,28 @@ void main() {
     expect(prefs.getString(AppConstants.prefAccent), 'lavender');
   });
 
+  test('tema kaydı yoksa koyu, seçilen tema korunur', () async {
+    Future<ThemeMode> modeWith(Map<String, Object> values) async {
+      SharedPreferences.setMockInitialValues(values);
+      final prefs = await SharedPreferences.getInstance();
+      final container = ProviderContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
+      addTearDown(container.dispose);
+      return container.read(themeModeProvider);
+    }
+
+    expect(await modeWith({}), ThemeMode.dark);
+    expect(
+      await modeWith({AppConstants.prefThemeMode: 'light'}),
+      ThemeMode.light,
+    );
+    expect(
+      await modeWith({AppConstants.prefThemeMode: 'system'}),
+      ThemeMode.system,
+    );
+  });
+
   test('tema seçilen vurguyu birincil renk yapar', () {
     for (final accent in AppAccent.values) {
       expect(

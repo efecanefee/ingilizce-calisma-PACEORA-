@@ -82,8 +82,8 @@ void main() {
 
     // 3. adım: günlük süre
     expect(find.text('Günde ne kadar vakit ayırabilirsin?'), findsOneWidget);
-    await tester.ensureVisible(find.text('Günde 20 dakika'));
-    await tester.tap(find.text('Günde 20 dakika'));
+    await tester.ensureVisible(find.text('Günde 30 dakika'));
+    await tester.tap(find.text('Günde 30 dakika'));
     await tester.pump();
     await tester.tap(find.widgetWithText(FilledButton, 'Programımı oluştur'));
     await _advance(tester);
@@ -93,13 +93,13 @@ void main() {
     final profile = await db.select(db.userProfiles).getSingle();
     expect(profile.name, 'Efecan');
     expect(profile.level, 'B2');
-    expect(profile.dailyMinutes, 20);
+    expect(profile.dailyMinutes, 30);
     expect(await db.select(db.weeklyPlanDays).get(), hasLength(7));
 
     // Ana ekran — AppBar'da logo
     expect(find.byType(PaceoraWordmark), findsOneWidget);
     expect(find.text('Merhaba, Efecan'), findsOneWidget);
-    expect(find.text('Seviye B2 · günde 20 dk'), findsOneWidget);
+    expect(find.text('Seviye B2 · günde 30 dk'), findsOneWidget);
     expect(find.text('0 gün'), findsOneWidget);
     // API anahtarı olmadığı için yedek program kullanıldı.
     expect(find.byIcon(Icons.cloud_off), findsOneWidget);

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:paceora/app/constants.dart';
 import 'package:paceora/data/gemini_service.dart';
 import 'package:paceora/data/lesson_models.dart';
 
@@ -181,14 +182,31 @@ void main() {
 
   group('LessonSize', () {
     test('günlük süreye göre ölçeklenir', () {
-      expect(LessonSize.forMinutes(10).vocab, 5);
+      expect(LessonSize.forMinutes(5).vocab, 3, reason: 'kısa tekrar dersi');
+      expect(LessonSize.forMinutes(5).translate, 1);
       expect(LessonSize.forMinutes(15).vocab, 8);
-      expect(LessonSize.forMinutes(20).vocab, 10);
-      expect(LessonSize.forMinutes(5).gapFill, 4, reason: 'alt sınıra düşer');
       expect(LessonSize.forMinutes(30).vocab, 14);
-      expect(LessonSize.forMinutes(45).quiz, 10);
       expect(LessonSize.forMinutes(60).quiz, 12, reason: 'en büyük kademe');
       expect(LessonSize.forMinutes(90).quiz, 12, reason: 'üst sınıra düşer');
+      // Her seçenek bir öncekinden belirgin biçimde büyük.
+      final totals = [
+        for (final m in AppConstants.dailyMinuteOptions)
+          LessonSize.forMinutes(m).total,
+      ];
+      for (var i = 1; i < totals.length; i++) {
+        expect(totals[i], greaterThan(totals[i - 1] + 5));
+      }
+    });
+
+    test('eski süreler yeni seçeneklere taşınır', () {
+      expect(AppConstants.normalizeDailyMinutes(5), 5);
+      expect(AppConstants.normalizeDailyMinutes(10), 15);
+      expect(AppConstants.normalizeDailyMinutes(20), 15);
+      expect(AppConstants.normalizeDailyMinutes(45), 30);
+      expect(AppConstants.normalizeDailyMinutes(60), 60);
+      for (final m in AppConstants.dailyMinuteOptions) {
+        expect(AppConstants.normalizeDailyMinutes(m), m);
+      }
     });
 
     test('büyük derslerde zaman aşımı uzar, üst sınırı aşmaz', () {

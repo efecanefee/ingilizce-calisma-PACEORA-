@@ -50,7 +50,70 @@ class OfflineLessonBank {
 
   /// Günün dersi: konu birebir eşleşirse o, tekrar gününde karışık ders,
   /// aksi hâlde aynı seviye grubundan haftanın gününe göre bir ders.
+  ///
+  /// [size] verilirse ders günlük süreye göre kısaltılır ya da aynı seviye
+  /// grubundaki diğer derslerden parça eklenerek uzatılır.
   DailyLesson? lessonFor({
+    required String level,
+    required String grammarTopic,
+    required int dayIndex,
+    LessonSize? size,
+  }) {
+    final base = _baseLessonFor(
+      level: level,
+      grammarTopic: grammarTopic,
+      dayIndex: dayIndex,
+    );
+    if (base == null || size == null) return base;
+    final group = groupOf(level);
+    final extras = [
+      for (final e in _entries)
+        if (e.group == group && !identical(e.lesson, base)) e.lesson,
+    ];
+    return _fit(base, extras, size);
+  }
+
+  /// Dersi [size]'a uydurur: önce dersin kendi maddeleri, eksik kalırsa
+  /// sırayla diğer derslerin maddeleri; tekrarlar atlanır.
+  static DailyLesson _fit(
+    DailyLesson base,
+    List<DailyLesson> extras,
+    LessonSize size,
+  ) {
+    List<T> take<T>(
+      List<T> own,
+      List<T> Function(DailyLesson) pick,
+      Object Function(T) key,
+      int count,
+    ) {
+      final seen = <Object>{};
+      final out = <T>[];
+      for (final item in [own, for (final l in extras) pick(l)].expand((x) => x)) {
+        if (out.length >= count) break;
+        if (seen.add(key(item))) out.add(item);
+      }
+      return out;
+    }
+
+    return DailyLesson(
+      vocab: take(base.vocab, (l) => l.vocab, (v) => v.word, size.vocab),
+      gapFill: take(
+        base.gapFill,
+        (l) => l.gapFill,
+        (g) => g.sentence,
+        size.gapFill,
+      ),
+      translate: take(
+        base.translate,
+        (l) => l.translate,
+        (t) => t.tr,
+        size.translate,
+      ),
+      quiz: take(base.quiz, (l) => l.quiz, (q) => q.question, size.quiz),
+    );
+  }
+
+  DailyLesson? _baseLessonFor({
     required String level,
     required String grammarTopic,
     required int dayIndex,

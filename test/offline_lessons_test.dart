@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paceora/data/database.dart';
 import 'package:paceora/data/gemini_service.dart';
+import 'package:paceora/data/lesson_models.dart';
 import 'package:paceora/data/offline_lessons.dart';
 import 'package:paceora/data/providers.dart';
 import 'package:paceora/data/repository.dart';
@@ -57,6 +58,29 @@ void main() {
         ];
         expect(lesson.vocab.map((v) => v.word), words, reason: topic);
       }
+    }
+  });
+
+  test('hazır ders günlük süreye göre kısalır ve uzar', () {
+    DailyLesson fit(int minutes) => bank.lessonFor(
+      level: 'B1',
+      grammarTopic: 'Bilinmeyen konu',
+      dayIndex: 1,
+      size: LessonSize.forMinutes(minutes),
+    )!;
+
+    for (final minutes in [5, 15, 30, 60]) {
+      final size = LessonSize.forMinutes(minutes);
+      final lesson = fit(minutes);
+      expect(lesson.vocab, hasLength(size.vocab), reason: '$minutes dk');
+      expect(lesson.gapFill, hasLength(size.gapFill), reason: '$minutes dk');
+      expect(lesson.translate, hasLength(size.translate), reason: '$minutes dk');
+      expect(lesson.quiz, hasLength(size.quiz), reason: '$minutes dk');
+      // Uzatılan derste aynı kelime iki kez gelmez.
+      expect(
+        lesson.vocab.map((v) => v.word).toSet(),
+        hasLength(lesson.vocab.length),
+      );
     }
   });
 
