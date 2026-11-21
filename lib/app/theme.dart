@@ -194,6 +194,9 @@ ThemeData _base(Brightness brightness, AppAccent accent) {
       backgroundColor: isDark ? AppColors.graphite900 : AppColors.graphite50,
       foregroundColor: colorScheme.onSurface,
       elevation: 0,
+      // Kaydırınca vurgu rengine bürünmesin; zemin sabit kalır.
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
       centerTitle: false,
       titleTextStyle: textTheme.titleLarge?.copyWith(
         fontWeight: FontWeight.w700,
