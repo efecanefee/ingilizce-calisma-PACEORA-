@@ -16,7 +16,7 @@ jobs:
   kontrol:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: subosito/flutter-action@v2
         with:
@@ -48,13 +48,13 @@ jobs:
           print(f'### Test kapsamı: %{pct:.1f} ({hit}/{total} satır)')
           PY
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: kapsam
           path: coverage/lcov.info
 
       # Ekran görüntüsü testi düşerse farkı gösteren görseller.
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: golden-farklari
@@ -64,9 +64,9 @@ jobs:
   android:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '17'
