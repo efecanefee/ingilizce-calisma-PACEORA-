@@ -27,15 +27,45 @@
 - **Hazır dersler:** Gemini'ye ulaşılamadığında 24 konuluk yerleşik ders
   havuzundan çalışma; A2, B1, B2 ve C1 için programdaki konuyla aynı ders.
 - **Süre seçenekleri:** 5, 10, 15, 20, 30, 45 ve 60 dakika, açıklamalarıyla.
+  30, 45 ve 60 dakikada ders de uzar (daha çok kelime ve alıştırma).
+- **Animasyonlu açılış:** Sistem açılış ekranının devamı; rozetin çevresinde
+  dönen hale, üstte harf harf beliren PACEORA, solarak uygulamaya geçiş.
+  Karşılama ekranındaki logo da hareketli.
+- **Doğru/yanlış sesleri:** Derslerde, eşleştirmede ve seviye testinde kısa
+  sesler; telefon sessizdeyse çalmaz. Ayarlar > Ses efektleri ile kapatılır.
+- **Seviye testinde renkli geri bildirim:** Seçilen cevap yeşil/kırmızı,
+  doğru seçenek işaretlenir.
+- **Pace'in konuşma balonu:** Güne, seriye ve saate göre kısa mesajlar.
+- **Kişisel hatırlatma:** Bildirim metni seriye göre değişir; o gün
+  çalışıldıysa hatırlatma gelmez.
+- **Geri bildirim:** Ayarlar > Geri bildirim gönder; hata kaydı isteğe bağlı.
+- **Mağaza puanlama isteği:** 7 günlük seride bir kez.
+
+### Gizlilik ve güvenlik
+- Gemini API anahtarı cihazın güvenli kasasında (Keystore/Keychain) saklanır.
+- Kullanıcının adı Gemini'ye hiçbir zaman gönderilmez.
+- Ayarlar > Gizlilik metni düzeltildi; ayrıntılı açıklama ve
+  `docs/gizlilik-politikasi.md`.
+- Dağıtım derlemesi anahtarsız (`surum: paylasim`) ya da kişisel (anahtarlı)
+  seçilebilir; AAB ve kod gizleme.
+- Android: kesin alarm izni kaldırıldı, yedekleme kuralları eklendi.
+  iOS: gizlilik bildirimi (PrivacyInfo.xcprivacy).
 
 ### Değişti
 - Ayarlar'da seviye, seviye testi çözülmeden değiştirilemez.
+- Yüklenemeyen ekranlarda teknik hata yerine anlaşılır mesaj ve Tekrar dene.
+- Uygulama dikey yöne kilitli; iOS'ta yalnız iPhone.
+- Inter yazı tipi uygulamayla birlikte gelir (çevrimdışı da aynı görünüm).
+- Android 14+ öngörülü geri hareketi.
 - Açık modda Program başlık kartı ve ders sonu XP rozeti daha okunaklı.
 - Vurgu renkleri tema uzantısından okunur; renk değişince her ekran anında
   güncellenir.
 
 ### Erişilebilirlik ve performans
-- "Animasyonları azalt" açıksa Pace, seri çerçevesi, parıltı ve alev durur.
+- "Animasyonları azalt" açıksa Pace, seri çerçevesi, parıltı ve alev durur;
+  açılış animasyonu kısalır.
+- Dokunma alanları en az 48 dp, düğmelerde etiket, kontrast iyileştirmeleri.
+- Cihazda İngilizce ses yoksa sesli okumanın nasıl açılacağı anlatılır.
 - Pace görselleri 1x/2x/3x çözünürlükte ve açılışta önbelleğe alınır.
 - Ekran okuyucu Pace'in pozunu ve gün kutucuklarının durumunu okur.
 
@@ -43,4 +73,12 @@
 - Verileri sıfırla, forma dolabını ve seviye testi kaydını da temizler.
 
 ### Geliştirme
-- PR'larda analiz ve testleri çalıştıran iş akışı (`kontrol.yml`).
+- PR'larda analiz, testler, kapsam özeti ve Android derlemesi
+  (`kontrol.yml`); emülatörde uçtan uca test (`entegrasyon.yml`, elle).
+- Genel hata yakalama ve cihazda tutulan hata kaydı.
+- Veritabanı göç altyapısı ve şema dökümü; tarihe bağlı kodda `clock`.
+- Ek lint kuralları; golden, erişilebilirlik, gizlilik ve ayarlar testleri
+  (304 test).
+- Mağaza materyalleri: `docs/magaza/` (metinler, veri güvenliği, ekran
+  görüntüleri, öne çıkan görsel).
+- PR ve konu şablonları, dependabot.
