@@ -407,6 +407,32 @@ class Repository {
     });
   }
 
+  /// Aralıklı tekrar: yanlış yapılan bir ifade 1, 3 ve 7 gün sonra derse
+  /// geri gelir. Aralık üst üste doğru sayısıyla uzar; yanlışta başa döner.
+  static const reviewIntervals = [1, 3, 7];
+
+  /// Bugün tekrar zamanı gelmiş, pekişmemiş ifadeler; en çok yanlış
+  /// yapılanlar önce. Sonraki dersin istemine beslenir.
+  Future<List<String>> dueMistakeItems({
+    DateTime? now,
+    int limit = AppConstants.maxReviewItems,
+  }) async {
+    final today = dayOf(now ?? clock.now());
+    final rows = await (_db.select(_db.mistakes)
+          ..where((t) => t.resolved.equals(false))
+          ..orderBy([
+            (t) => OrderingTerm(expression: t.timesWrong, mode: OrderingMode.desc),
+            (t) => OrderingTerm(expression: t.lastAskedAt),
+          ]))
+        .get();
+    final due = rows.where((m) {
+      final last = dayOf(m.lastAskedAt ?? m.createdAt);
+      final step = m.timesCorrect.clamp(0, reviewIntervals.length - 1);
+      return _daysBetween(last, today) >= reviewIntervals[step];
+    });
+    return [for (final m in due.take(limit)) m.item];
+  }
+
   /// Henüz pekişmemiş ifadeler — sonraki dersin promptuna beslenir.
   ///
   /// En çok yanlış yapılanlar önce, eşitlikte en uzun süredir sorulmayanlar.

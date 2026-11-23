@@ -408,7 +408,7 @@ class LessonNotifier extends AsyncNotifier<LessonState> {
             dailyMinutes: profile.dailyMinutes,
             grammarTopic: day.grammarTopic,
             vocabTheme: day.vocabTheme,
-            reviewItems: await repository.unresolvedMistakeItems(),
+            reviewItems: await repository.dueMistakeItems(),
           );
       final lesson = result.lesson;
       if (lesson == null) return;
@@ -442,7 +442,7 @@ class LessonNotifier extends AsyncNotifier<LessonState> {
           dailyMinutes: _minutes(profile),
           grammarTopic: today.grammarTopic,
           vocabTheme: today.vocabTheme,
-          reviewItems: await repository.unresolvedMistakeItems(),
+          reviewItems: await repository.dueMistakeItems(),
         );
 
     final lesson = result.lesson;

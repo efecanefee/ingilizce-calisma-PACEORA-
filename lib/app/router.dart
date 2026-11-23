@@ -5,6 +5,7 @@ import '../data/providers.dart';
 import '../features/flashcards/flashcards_screen.dart';
 import '../features/home/home_screen.dart';
 import '../features/lesson/lesson_screen.dart';
+import '../features/level_exam/level_exam_screen.dart';
 import '../features/match/match_screen.dart';
 import '../features/mistakes/mistakes_screen.dart';
 import '../features/onboarding/onboarding_screen.dart';
@@ -96,6 +97,7 @@ GoRouter createRouter({required bool onboardingDone}) {
       fullScreen('/mistakes', (_, _) => const MistakesScreen()),
       fullScreen('/match', (_, _) => const MatchScreen()),
       fullScreen('/writing', (_, _) => const WritingScreen()),
+      fullScreen('/level-exam', (_, _) => const LevelExamScreen()),
       fullScreen('/profile', (_, _) => const ProfileScreen()),
       fullScreen('/roleplay', (_, _) => const RoleplayListScreen()),
       fullScreen(

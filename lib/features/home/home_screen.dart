@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'dart:math';
 
 import 'package:clock/clock.dart';
@@ -18,6 +17,7 @@ import '../../app/motion.dart';
 import '../../app/pace_messages.dart';
 import '../../app/theme.dart';
 import '../../data/database.dart';
+import '../../data/level_exam.dart';
 import '../../data/profile_style.dart';
 import '../../data/providers.dart';
 import '../../data/rewards.dart';
@@ -119,6 +119,15 @@ class _HomeBody extends ConsumerWidget {
                     ref.read(weekPlanProvider.notifier).completeDay(today),
               ),
             ),
+          if (shouldOfferLevelExam(
+            prefs: ref.watch(sharedPreferencesProvider),
+            level: DifficultyLevel.fromCode(user.level),
+            weekNumber: week.weekNumber,
+            now: DateTime.now(),
+          )) ...[
+            const SizedBox(height: 16),
+            item(_LevelExamCard(level: DifficultyLevel.fromCode(user.level))),
+          ],
           const SizedBox(height: 16),
           item(const _DailyGoalCard()),
           const SizedBox(height: 28),
@@ -1646,6 +1655,58 @@ class _NoProfileView extends StatelessWidget {
               child: const Text('Kuruluma başla'),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Programın 4. haftasından itibaren: "bir üst seviyeye hazır mısın?"
+class _LevelExamCard extends StatelessWidget {
+  const _LevelExamCard({required this.level});
+
+  final DifficultyLevel level;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final target = levelExamTarget(level)!;
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => context.push('/level-exam'),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
+          child: Row(
+            children: [
+              const ExcludeSemantics(
+                child: EquippedPace(mood: PaceMood.study, size: 64),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '${target.label} seviyesine hazır mısın?',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '10 soruluk seviye atlama sınavını çöz.',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: theme.colorScheme.outline,
+              ),
+            ],
+          ),
         ),
       ),
     );

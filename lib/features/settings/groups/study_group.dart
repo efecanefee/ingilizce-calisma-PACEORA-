@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../app/constants.dart';
 import '../../../data/database.dart';
+import '../../../data/level_exam.dart';
 import '../../../data/providers.dart';
 import '../profile/profile_form.dart';
 import '../settings_section.dart';
@@ -52,6 +54,14 @@ class StudyGroup extends ConsumerWidget {
           subtitle: 'Günde ${user.dailyMinutes} dakika',
           onTap: () => openDailyMinutesSheet(context, user),
         ),
+        if (levelExamTarget(DifficultyLevel.fromCode(user.level))
+            case final target?)
+          SettingsTile(
+            icon: Icons.trending_up_rounded,
+            title: 'Seviye atlama sınavı',
+            subtitle: '${target.label} seviyesine hazır mısın? 10 soru',
+            onTap: () => context.push('/level-exam'),
+          ),
         SettingsTile(
           icon: Icons.autorenew_rounded,
           title: 'Haftalık programı yenile',
