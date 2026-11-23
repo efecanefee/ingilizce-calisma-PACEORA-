@@ -68,13 +68,13 @@ extension EntranceAnimation on Widget {
   Widget entrance(int index) => Motion.reduced
       ? this
       : animate(delay: Motion.stagger * index)
-      .fadeIn(duration: Motion.medium, curve: Motion.curve)
-      .slideY(
-        begin: 0.12,
-        end: 0,
-        duration: Motion.medium,
-        curve: Motion.curve,
-      );
+            .fadeIn(duration: Motion.medium, curve: Motion.curve)
+            .slideY(
+              begin: 0.12,
+              end: 0,
+              duration: Motion.medium,
+              curve: Motion.curve,
+            );
 }
 
 /// Basılınca hafifçe küçülen dokunma alanı; kartlara fiziksel his verir.

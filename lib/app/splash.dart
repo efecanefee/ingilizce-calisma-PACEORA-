@@ -41,14 +41,15 @@ class _SplashOverlayState extends State<SplashOverlay>
   @override
   void initState() {
     super.initState();
-    _exit = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 450),
-    )..addStatusListener((status) {
-        if (status == AnimationStatus.completed && mounted) {
-          setState(() => _visible = false);
-        }
-      });
+    _exit =
+        AnimationController(
+          vsync: this,
+          duration: const Duration(milliseconds: 450),
+        )..addStatusListener((status) {
+          if (status == AnimationStatus.completed && mounted) {
+            setState(() => _visible = false);
+          }
+        });
   }
 
   @override
@@ -239,7 +240,10 @@ class _SplashViewState extends State<_SplashView>
                   text: 'PACE',
                   style: TextStyle(color: AppColors.brandLime),
                 ),
-                TextSpan(text: 'ORA', style: TextStyle(color: Colors.white)),
+                TextSpan(
+                  text: 'ORA',
+                  style: TextStyle(color: Colors.white),
+                ),
               ],
             ),
             style: const TextStyle(
@@ -277,7 +281,7 @@ class _SplashViewState extends State<_SplashView>
   Widget _late(Widget child) => _reduced
       ? child
       : child
-          .animate()
-          .fadeIn(delay: 1500.ms, duration: 700.ms)
-          .slideY(begin: 0.5, end: 0, curve: Curves.easeOutCubic);
+            .animate()
+            .fadeIn(delay: 1500.ms, duration: 700.ms)
+            .slideY(begin: 0.5, end: 0, curve: Curves.easeOutCubic);
 }

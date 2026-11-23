@@ -182,7 +182,7 @@ class _EmptyView extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const SizedBox(
-              child: EquippedPace(mood: PaceMood.cheer, size: 120),
+              child: PaceSticker(PacePose.cool, size: 130),
             ).animate().scale(curve: Curves.elasticOut, duration: Motion.slow),
             const SizedBox(height: 16),
             Text(

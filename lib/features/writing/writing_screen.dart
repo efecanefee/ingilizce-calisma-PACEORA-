@@ -287,8 +287,12 @@ class _Result extends StatelessWidget {
       children: [
         Row(
           children: [
-            EquippedPace(
-              mood: score >= 85 ? PaceMood.cheer : PaceMood.study,
+            PaceSticker(
+              score >= 85
+                  ? PacePose.trophy
+                  : score >= 60
+                  ? PacePose.strong
+                  : PacePose.idea,
               size: 88,
             ),
             const SizedBox(width: 12),

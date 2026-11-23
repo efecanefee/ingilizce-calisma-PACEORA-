@@ -155,7 +155,7 @@ class _EmptyHint extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 24),
       child: Column(
         children: [
-          const EquippedPace(mood: PaceMood.study, size: 96),
+          const PaceSticker(PacePose.late, size: 110),
           const SizedBox(height: 12),
           Text(
             'Henüz rapor yok. Hafta boyunca çalıştıkça rapor daha anlamlı olur.',

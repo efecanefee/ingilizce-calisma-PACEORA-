@@ -1705,7 +1705,7 @@ class _LevelExamCard extends StatelessWidget {
           child: Row(
             children: [
               const ExcludeSemantics(
-                child: EquippedPace(mood: PaceMood.study, size: 64),
+                child: PaceSticker(PacePose.graduate, size: 72),
               ),
               const SizedBox(width: 12),
               Expanded(

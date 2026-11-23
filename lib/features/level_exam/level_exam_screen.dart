@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/answer_option.dart';
+import '../../app/celebrate_banner.dart';
 import '../../app/constants.dart';
 import '../../app/error_view.dart';
 import '../../app/mascot.dart';
@@ -126,6 +127,11 @@ class _ExamState extends ConsumerState<_Exam> {
       _applying = false;
       _applied = true;
     });
+    celebrateWithBanner(
+      context,
+      title: 'Yeni seviye: ${widget.target.label}!',
+      message: 'Sınavı geçtin. Programın yeni seviyene göre hazırlandı.',
+    );
     messenger.showSnackBar(
       SnackBar(
         content: Text(
@@ -208,7 +214,7 @@ class _ExamState extends ConsumerState<_Exam> {
   Widget _intro(ThemeData theme) => ListView(
     padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
     children: [
-      const Center(child: EquippedPace(mood: PaceMood.study, size: 140)),
+      const Center(child: PaceSticker(PacePose.confident, size: 150)),
       const SizedBox(height: 16),
       Text(
         '${widget.current.label} → ${widget.target.label}',
@@ -242,8 +248,8 @@ class _ExamState extends ConsumerState<_Exam> {
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
       children: [
         Center(
-          child: EquippedPace(
-            mood: passed ? PaceMood.cheer : PaceMood.study,
+          child: PaceSticker(
+            passed ? PacePose.graduate : PacePose.strong,
             size: 140,
           ),
         ),

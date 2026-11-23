@@ -183,9 +183,9 @@ class CelebrationHost extends ConsumerStatefulWidget {
   /// Hangi ekrandan olursa olsun bir kutlama gösterir (ör. forma alındı,
   /// seri hedefi). Kuyruktaki diğer kutlamalardan sonra sıraya girer.
   static void show(BuildContext context, Celebration celebration) {
-    context
-        .findAncestorStateOfType<_CelebrationHostState>()
-        ?._enqueue(celebration);
+    context.findAncestorStateOfType<_CelebrationHostState>()?._enqueue(
+      celebration,
+    );
   }
 
   @override
@@ -371,37 +371,37 @@ class _CelebrationView extends StatelessWidget {
                       children: [
                         c.art ??
                             Container(
-                              width: 96,
-                              height: 96,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: RadialGradient(
-                                  colors: [
-                                    c.color,
-                                    c.color.withValues(alpha: 0.55),
-                                  ],
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: c.color.withValues(alpha: 0.6),
-                                    blurRadius: 24,
+                                  width: 96,
+                                  height: 96,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: RadialGradient(
+                                      colors: [
+                                        c.color,
+                                        c.color.withValues(alpha: 0.55),
+                                      ],
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: c.color.withValues(alpha: 0.6),
+                                        blurRadius: 24,
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                              child: Icon(
-                                c.icon,
-                                size: 52,
-                                color: AppColors.graphite900,
-                              ),
-                            )
-                            .animate()
-                            .scale(
-                              begin: const Offset(0.2, 0.2),
-                              duration: Motion.slow,
-                              curve: Curves.elasticOut,
-                            )
-                            .then()
-                            .shimmer(duration: 900.ms, color: Colors.white),
+                                  child: Icon(
+                                    c.icon,
+                                    size: 52,
+                                    color: AppColors.graphite900,
+                                  ),
+                                )
+                                .animate()
+                                .scale(
+                                  begin: const Offset(0.2, 0.2),
+                                  duration: Motion.slow,
+                                  curve: Curves.elasticOut,
+                                )
+                                .then()
+                                .shimmer(duration: 900.ms, color: Colors.white),
                         const SizedBox(height: 20),
                         Text(
                           c.title,

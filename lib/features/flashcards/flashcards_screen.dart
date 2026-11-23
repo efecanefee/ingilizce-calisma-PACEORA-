@@ -399,13 +399,13 @@ class _DoneView extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             SizedBox(
-              child: EquippedPace(
-                mood: empty
-                    ? PaceMood.study
+              child: PaceSticker(
+                empty
+                    ? PacePose.idea
                     : reviewed == 0
-                    ? PaceMood.run
-                    : PaceMood.cheer,
-                size: 120,
+                    ? PacePose.meditate
+                    : PacePose.dance,
+                size: 130,
               ),
             ).animate().scale(duration: Motion.slow, curve: Curves.elasticOut),
             const SizedBox(height: 20),

@@ -185,7 +185,7 @@ class _Hint extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const EquippedPace(mood: PaceMood.study, size: 110),
+            const PaceSticker(PacePose.wink, size: 120),
             const SizedBox(height: 16),
             Text(
               text,

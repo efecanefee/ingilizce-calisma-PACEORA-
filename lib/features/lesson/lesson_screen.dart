@@ -3,6 +3,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/celebrate_banner.dart';
+import '../../app/mascot.dart';
 import '../../app/motion.dart';
 import '../../app/theme.dart';
 import '../../data/lesson_models.dart';
@@ -55,10 +57,16 @@ class _PreparingView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const CircularProgressIndicator(),
-            const SizedBox(height: 24),
+            const PaceSticker(PacePose.meditate, size: 150),
+            const SizedBox(height: 16),
+            const SizedBox(
+              width: 28,
+              height: 28,
+              child: CircularProgressIndicator(strokeWidth: 3),
+            ),
+            const SizedBox(height: 20),
             Text(
-              'Bugünün dersi hazırlanıyor…',
+              'Pace dersini hazırlıyor…',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -205,7 +213,10 @@ class _LessonBody extends ConsumerWidget {
             child: ListView(
               key: ValueKey(kind),
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-              children: [_stepContent(ref, kind)],
+              children: [
+                _StepPace(kind: kind),
+                _stepContent(ref, kind),
+              ],
             ),
           ),
         ),
@@ -439,8 +450,20 @@ class _ResultViewState extends ConsumerState<_ResultView> {
     final router = GoRouter.of(context);
     final messenger = ScaffoldMessenger.of(context);
     final notifier = ref.read(lessonProvider.notifier);
+    // Günün ilk kez tamamlanışı kutlanır (tekrar çözme ve telafi hariç).
+    final firstToday =
+        notifier.isToday &&
+        notifier.persists &&
+        !(ref.read(todayLessonProvider).value?.completed ?? false);
     try {
       await notifier.finish();
+      if (firstToday && mounted) {
+        celebrateWithBanner(
+          context,
+          title: 'Bugün tamam!',
+          message: 'Günün dersini bitirdin. Serin büyüyor; yarın görüşürüz!',
+        );
+      }
       // Takvimden açılan dersler takvime döner.
       if (!notifier.isToday && router.canPop()) {
         router.pop();
@@ -488,15 +511,20 @@ class _ResultViewState extends ConsumerState<_ResultView> {
               Center(
                 child: Column(
                   children: [
-                    Icon(
-                          score >= 85 ? Icons.emoji_events : Icons.star_rounded,
-                          size: 56,
-                          color: color,
-                        )
-                        .animate()
-                        .scale(duration: Motion.slow, curve: Curves.elasticOut)
-                        .then()
-                        .shake(hz: 3, rotation: 0.06),
+                    // Puana göre Pace: kupa, kas ya da "bir dahakine".
+                    SizedBox(
+                      child: PaceSticker(
+                        score >= 85
+                            ? PacePose.trophy
+                            : score >= 60
+                            ? PacePose.strong
+                            : PacePose.tired,
+                        size: 140,
+                      ),
+                    ).animate().scale(
+                      duration: Motion.slow,
+                      curve: Curves.elasticOut,
+                    ),
                     const SizedBox(height: 8),
                     CountUpText(
                       value: score,
@@ -710,6 +738,60 @@ class _WrongItemTile extends StatelessWidget {
             context,
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Adım başında Pace: ne yapılacağını ve yardımın nerede olduğunu söyler.
+class _StepPace extends StatelessWidget {
+  const _StepPace({required this.kind});
+
+  final LessonStepKind kind;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final (pose, text) = switch (kind) {
+      LessonStepKind.vocab => (
+        PacePose.idea,
+        'Önce kelimelere göz at. Örnek cümlenin Türkçesine de bakabilirsin.',
+      ),
+      LessonStepKind.gapFill => (
+        PacePose.confident,
+        'Boşluğa uyanı seç. Takılırsan "Türkçesi"ne dokun.',
+      ),
+      LessonStepKind.translate => (
+        PacePose.selfie,
+        'Şimdi sen çevir! "İpucu" kelimeleri gösterir, istersen başını yazar.',
+      ),
+      LessonStepKind.quiz => (
+        PacePose.salute,
+        'Son bölüm: küçük bir test. Sen yaparsın!',
+      ),
+    };
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          ExcludeSemantics(child: PaceSticker(pose, size: 64, animate: false)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(4),
+                  topRight: Radius.circular(14),
+                  bottomLeft: Radius.circular(14),
+                  bottomRight: Radius.circular(14),
+                ),
+              ),
+              child: Text(text, style: theme.textTheme.bodyMedium),
             ),
           ),
         ],

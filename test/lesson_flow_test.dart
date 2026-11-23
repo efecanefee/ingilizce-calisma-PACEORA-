@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:paceora/app/celebrate_banner.dart';
 import 'package:paceora/data/database.dart';
 import 'package:paceora/data/gemini_service.dart';
 import 'package:paceora/data/providers.dart';
@@ -51,19 +52,19 @@ const _lessonJson = '''
 
 /// Gemini yerine sabit bir ders döndüren istemci.
 http.Client _stubClient() => MockClient((request) async {
-      final body = jsonEncode({
-        'candidates': [
-          {
-            'content': {
-              'parts': [
-                {'text': _lessonJson},
-              ],
-            },
-          },
-        ],
-      });
-      return http.Response.bytes(utf8.encode(body), 200);
-    });
+  final body = jsonEncode({
+    'candidates': [
+      {
+        'content': {
+          'parts': [
+            {'text': _lessonJson},
+          ],
+        },
+      },
+    ],
+  });
+  return http.Response.bytes(utf8.encode(body), 200);
+});
 
 /// "Bugünü çalış" düğmesine basar. Küçük test ekranında düğme karşılama
 /// kartının altında kalabildiği için kaydırmadan doğrudan tetiklenir.
@@ -79,8 +80,9 @@ Future<void> _tapStudy(WidgetTester tester) async {
 }
 
 void main() {
-  testWidgets('ders akışı: sorular çözülür, skor ve streak kaydedilir',
-      (tester) async {
+  testWidgets('ders akışı: sorular çözülür, skor ve streak kaydedilir', (
+    tester,
+  ) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     final db = AppDatabase.forTesting(NativeDatabase.memory());
@@ -126,7 +128,9 @@ void main() {
     expect(find.text('1. I ___ to work every day.'), findsOneWidget);
     // Cevaplanmadan devam edilemez.
     expect(
-      tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'Devam')).enabled,
+      tester
+          .widget<FilledButton>(find.widgetWithText(FilledButton, 'Devam'))
+          .enabled,
       isFalse,
     );
     await tester.tap(find.text('commute'));
@@ -155,10 +159,18 @@ void main() {
     // Sonuç ekranı
     expect(find.text('%100'), findsOneWidget);
     expect(find.text('3/3 doğru'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Tüm soruları doğru yaptın.'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('Tüm soruları doğru yaptın.'), findsOneWidget);
 
     await tester.tap(find.widgetWithText(FilledButton, 'Dersi bitir'));
     await _advance(tester);
+
+    // Günün ilk bitişi Paceora afişiyle kutlanır (kutlama kuyruğunda).
+    expect(find.byType(CelebrateBannerArt), findsOneWidget);
 
     // Ana ekrana dönüldü: gün tamamlandı, streak arttı.
     expect(find.text('Merhaba, Efecan'), findsOneWidget);
@@ -175,8 +187,9 @@ void main() {
     expect(await db.select(db.mistakes).get(), isEmpty);
   });
 
-  testWidgets('yanlış cevap hata defterine yazılır ve skora yansır',
-      (tester) async {
+  testWidgets('yanlış cevap hata defterine yazılır ve skora yansır', (
+    tester,
+  ) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     final db = AppDatabase.forTesting(NativeDatabase.memory());
@@ -230,6 +243,11 @@ void main() {
 
     expect(find.text('%33'), findsOneWidget);
     expect(find.text('1/3 doğru'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Tekrar edilecekler'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('Tekrar edilecekler'), findsOneWidget);
 
     await tester.tap(find.widgetWithText(FilledButton, 'Dersi bitir'));
@@ -237,10 +255,7 @@ void main() {
 
     final mistakes = await db.select(db.mistakes).get();
     expect(mistakes, hasLength(2));
-    expect(
-      mistakes.map((m) => m.item).toSet(),
-      {'commute', 'I am happy.'},
-    );
+    expect(mistakes.map((m) => m.item).toSet(), {'commute', 'I am happy.'});
     expect(mistakes.every((m) => m.resolved == false), isTrue);
 
     // Bu hatalar sonraki dersin promptuna beslenir.

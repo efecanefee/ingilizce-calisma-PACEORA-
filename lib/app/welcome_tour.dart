@@ -44,20 +44,20 @@ class TourStep {
     required this.tab,
     required this.title,
     required this.body,
-    this.mood = PaceMood.run,
+    this.pose = PacePose.wink,
   });
 
   /// Alt çubuktaki sekme sırası; null ise ok çizilmez (karşılama/kapanış).
   final int? tab;
   final String title;
   final String body;
-  final PaceMood mood;
+  final PacePose pose;
 }
 
 const tourSteps = <TourStep>[
   TourStep(
     tab: null,
-    mood: PaceMood.cheer,
+    pose: PacePose.wave,
     title: 'Merhaba, ben Pace!',
     body:
         'İngilizce yolculuğunda koşu arkadaşınım. Sana uygulamayı bir '
@@ -72,7 +72,7 @@ const tourSteps = <TourStep>[
   ),
   TourStep(
     tab: 1,
-    mood: PaceMood.study,
+    pose: PacePose.skate,
     title: 'Pratik',
     body:
         'Kartlar, hikayeler, konuşma, dikte, rol yapma ve Kelime Rallisi. '
@@ -80,6 +80,7 @@ const tourSteps = <TourStep>[
   ),
   TourStep(
     tab: 2,
+    pose: PacePose.idea,
     title: 'Program',
     body:
         'Programın bugün başladı; her 7 günde bir seviyene göre yenilenir. '
@@ -87,7 +88,7 @@ const tourSteps = <TourStep>[
   ),
   TourStep(
     tab: 3,
-    mood: PaceMood.surprised,
+    pose: PacePose.strong,
     title: 'İlerleme',
     body:
         'Seviyen, rozetlerin, hata defterin ve haftalık raporun burada. '
@@ -95,6 +96,7 @@ const tourSteps = <TourStep>[
   ),
   TourStep(
     tab: 4,
+    pose: PacePose.confident,
     title: 'Ayarlar',
     body:
         'Günlük süreni, temayı ve hatırlatma saatini buradan değiştirirsin. '
@@ -102,7 +104,7 @@ const tourSteps = <TourStep>[
   ),
   TourStep(
     tab: 0,
-    mood: PaceMood.cheer,
+    pose: PacePose.cool,
     title: 'Hazırsın!',
     body: 'Hadi ilk dersine başlayalım. Ben hep buradayım.',
   ),
@@ -179,7 +181,7 @@ class _WelcomeTourState extends ConsumerState<WelcomeTour> {
             children: [
               // EquippedPace'in kendi `animate` alanı uzantıyı gölgelediği
               // için sarmalanır.
-              SizedBox(child: EquippedPace(mood: step.mood, size: 132))
+              SizedBox(child: PaceSticker(step.pose, size: 140))
                   .animate(key: ValueKey(_index))
                   .slideY(
                     begin: 0.25,

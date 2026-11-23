@@ -18,10 +18,8 @@ enum AppAccent {
   final Color dim;
   final Color dark;
 
-  static AppAccent fromName(String? name) => values.firstWhere(
-    (a) => a.name == name,
-    orElse: () => AppAccent.lime,
-  );
+  static AppAccent fromName(String? name) =>
+      values.firstWhere((a) => a.name == name, orElse: () => AppAccent.lime);
 }
 
 /// Seçili vurgunun üç tonu; temaya uzantı olarak eklenir.
@@ -187,8 +185,9 @@ ThemeData _base(Brightness brightness, AppAccent accent) {
     extensions: [PaceColors.of(accent)],
     brightness: brightness,
     colorScheme: colorScheme,
-    scaffoldBackgroundColor:
-        isDark ? AppColors.graphite900 : AppColors.graphite50,
+    scaffoldBackgroundColor: isDark
+        ? AppColors.graphite900
+        : AppColors.graphite50,
     textTheme: textTheme,
     appBarTheme: AppBarTheme(
       backgroundColor: isDark ? AppColors.graphite900 : AppColors.graphite50,
@@ -217,9 +216,7 @@ ThemeData _base(Brightness brightness, AppAccent accent) {
         backgroundColor: isDark ? accent.spark : accent.dark,
         foregroundColor: isDark ? AppColors.graphite900 : Colors.white,
         minimumSize: const Size.fromHeight(52),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         textStyle: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
       ),
     ),
@@ -228,9 +225,7 @@ ThemeData _base(Brightness brightness, AppAccent accent) {
         foregroundColor: colorScheme.onSurface,
         minimumSize: const Size.fromHeight(52),
         side: BorderSide(color: colorScheme.outline),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         textStyle: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
       ),
     ),
@@ -252,8 +247,7 @@ ThemeData _base(Brightness brightness, AppAccent accent) {
           width: 2,
         ),
       ),
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
     ),
     progressIndicatorTheme: ProgressIndicatorThemeData(
       color: isDark ? accent.spark : accent.dark,

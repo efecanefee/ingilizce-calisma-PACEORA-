@@ -42,28 +42,32 @@ class AnswerOption extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final (Color? fill, Color border, Color text, IconData? icon) =
-        switch (state) {
-          AnswerState.idle => (null, scheme.outline, scheme.onSurface, null),
-          AnswerState.correct => (
-            AppColors.success.withValues(alpha: 0.16),
-            AppColors.success,
-            scheme.onSurface,
-            Icons.check_circle_rounded,
-          ),
-          AnswerState.wrong => (
-            AppColors.error.withValues(alpha: 0.14),
-            AppColors.error,
-            scheme.onSurface,
-            Icons.cancel_rounded,
-          ),
-          AnswerState.muted => (
-            null,
-            scheme.outline.withValues(alpha: 0.4),
-            scheme.onSurface.withValues(alpha: 0.5),
-            null,
-          ),
-        };
+    final (
+      Color? fill,
+      Color border,
+      Color text,
+      IconData? icon,
+    ) = switch (state) {
+      AnswerState.idle => (null, scheme.outline, scheme.onSurface, null),
+      AnswerState.correct => (
+        AppColors.success.withValues(alpha: 0.16),
+        AppColors.success,
+        scheme.onSurface,
+        Icons.check_circle_rounded,
+      ),
+      AnswerState.wrong => (
+        AppColors.error.withValues(alpha: 0.14),
+        AppColors.error,
+        scheme.onSurface,
+        Icons.cancel_rounded,
+      ),
+      AnswerState.muted => (
+        null,
+        scheme.outline.withValues(alpha: 0.4),
+        scheme.onSurface.withValues(alpha: 0.5),
+        null,
+      ),
+    };
 
     final content = Row(
       mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
@@ -86,13 +90,16 @@ class AnswerOption extends StatelessWidget {
         AnswerState.wrong => '$label, yanlış',
         _ => null,
       },
-      excludeSemantics: state == AnswerState.correct ||
-          state == AnswerState.wrong,
+      excludeSemantics:
+          state == AnswerState.correct || state == AnswerState.wrong,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         decoration: BoxDecoration(
           color: fill,
-          border: Border.all(color: border, width: state == AnswerState.idle ? 1 : 2),
+          border: Border.all(
+            color: border,
+            width: state == AnswerState.idle ? 1 : 2,
+          ),
           borderRadius: BorderRadius.circular(14),
         ),
         child: Material(
@@ -103,7 +110,10 @@ class AnswerOption extends StatelessWidget {
             child: ConstrainedBox(
               constraints: const BoxConstraints(minHeight: 48),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 12,
+                ),
                 child: Align(
                   alignment: Alignment.centerLeft,
                   widthFactor: expand ? null : 1,

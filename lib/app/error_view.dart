@@ -10,14 +10,14 @@ import 'mascot.dart';
 /// Uygulamanın kendi Türkçe mesajları olduğu gibi gösterilir; teknik hatalar
 /// ("Bad state", "Exception: ...") kullanıcıya hiç yansımaz.
 String friendlyErrorMessage(Object error) => switch (error) {
-      LessonUnavailable(:final message) => message,
-      StateError(:final message) => message,
-      TimeoutException() =>
-        'Bağlantı çok uzun sürdü. İnternetini kontrol edip tekrar dene.',
-      http.ClientException() =>
-        'İnternete bağlanılamadı. Bağlantını kontrol edip tekrar dene.',
-      _ => 'Bir şeyler ters gitti. Tekrar denemek ister misin?',
-    };
+  LessonUnavailable(:final message) => message,
+  StateError(:final message) => message,
+  TimeoutException() =>
+    'Bağlantı çok uzun sürdü. İnternetini kontrol edip tekrar dene.',
+  http.ClientException() =>
+    'İnternete bağlanılamadı. Bağlantını kontrol edip tekrar dene.',
+  _ => 'Bir şeyler ters gitti. Tekrar denemek ister misin?',
+};
 
 /// Tam ekran hata görünümü: şaşkın Pace, anlaşılır mesaj ve isteğe bağlı
 /// "Tekrar dene" düğmesi.
@@ -38,11 +38,7 @@ class ErrorView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const PaceMascot(
-              mood: PaceMood.surprised,
-              size: 110,
-              animate: false,
-            ),
+            const PaceSticker(PacePose.confused, size: 120, animate: false),
             const SizedBox(height: 20),
             Text(
               friendlyErrorMessage(error),

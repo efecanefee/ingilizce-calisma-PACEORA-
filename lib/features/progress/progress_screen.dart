@@ -187,7 +187,7 @@ class _FirstStepsCard extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            const EquippedPace(mood: PaceMood.run, size: 120),
+            const PaceSticker(PacePose.skate, size: 130),
             const SizedBox(height: 12),
             Text(
               'Yolculuk ilk dersle başlar',

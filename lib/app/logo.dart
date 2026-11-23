@@ -233,9 +233,9 @@ class _AnimatedPaceoraLockupState extends State<AnimatedPaceoraLockup>
   Widget _fadeLate(Widget child, bool reduced) => reduced
       ? child
       : child
-          .animate()
-          .fadeIn(delay: 1300.ms, duration: 700.ms)
-          .slideY(begin: 0.4, end: 0, curve: Curves.easeOutCubic);
+            .animate()
+            .fadeIn(delay: 1300.ms, duration: 700.ms)
+            .slideY(begin: 0.4, end: 0, curve: Curves.easeOutCubic);
 }
 
 /// PACEORA harfleri soldan sağa, sırayla yukarı kayarak belirir; sonra
@@ -296,20 +296,21 @@ class LetterByLetterWordmark extends StatelessWidget {
   Widget _letter(Widget letter, int index) => reduced
       ? letter
       : letter
-          .animate(delay: delay + (140 * index).ms)
-          .fadeIn(duration: 500.ms, curve: Curves.easeOut)
-          .slideY(begin: 0.6, end: 0, duration: 600.ms, curve: Curves.easeOutBack)
-          .blurXY(begin: 6, end: 0, duration: 500.ms);
+            .animate(delay: delay + (140 * index).ms)
+            .fadeIn(duration: 500.ms, curve: Curves.easeOut)
+            .slideY(
+              begin: 0.6,
+              end: 0,
+              duration: 600.ms,
+              curve: Curves.easeOutBack,
+            )
+            .blurXY(begin: 6, end: 0, duration: 500.ms);
 }
 
 /// Rozetin arkasındaki hareketli hale: nefes alan parıltı, dönen yarım
 /// halka ve yörüngedeki üç küçük ışık.
 class PaceHaloPainter extends CustomPainter {
-  PaceHaloPainter({
-    required this.turn,
-    required this.color,
-    this.opacity = 1,
-  });
+  PaceHaloPainter({required this.turn, required this.color, this.opacity = 1});
 
   /// Halenin görünürlüğü (açılışta yavaşça belirmesi için).
   final double opacity;
