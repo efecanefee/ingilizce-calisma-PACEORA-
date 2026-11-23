@@ -122,6 +122,36 @@ void main() {
     });
   });
 
+  test('zorlanılan kelimeler: yanlışta artar, doğruda azalıp düşer', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    await HardWords.record(
+      prefs,
+      scoreSentence(
+        'I thought about the weather.',
+        'I taught about the wetter',
+      ),
+    );
+    await HardWords.record(
+      prefs,
+      scoreSentence('The weather is nice.', 'the wetter is nice'),
+    );
+    var hard = HardWords.read(prefs);
+    expect(hard.top().first, 'weather');
+    expect(hard.counts['weather'], 2);
+    expect(hard.counts.containsKey('thought'), isTrue);
+    // Tek harfli kelimeler sayılmaz.
+    expect(hard.counts.containsKey('i'), isFalse);
+
+    await HardWords.record(
+      prefs,
+      scoreSentence('I thought so.', 'I thought so'),
+    );
+    hard = HardWords.read(prefs);
+    expect(hard.counts.containsKey('thought'), isFalse);
+    expect(hard.counts['weather'], 2);
+  });
+
   test('cümle seçimi: uzunluk süzgeci ve tekrar yok', () {
     final picked = pickPracticeSentences([
       'Too short.',

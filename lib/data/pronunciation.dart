@@ -205,3 +205,55 @@ class SpeechRecords {
     await prefs.setInt(key, (prefs.getInt(key) ?? 0) + 1);
   }
 }
+
+/// Konuşmada zorlanılan kelimeler (SharedPreferences, `speech_hard_words`).
+///
+/// Yanlış söylenen kelimenin sayacı artar, doğru söylenince azalır; sıfıra
+/// inen kelime listeden düşer. Böylece liste "hâlâ zorlandıkların"dır.
+class HardWords {
+  const HardWords(this.counts);
+
+  static const key = 'speech_hard_words';
+
+  final Map<String, int> counts;
+
+  factory HardWords.read(SharedPreferences prefs) {
+    final raw = prefs.getStringList(key) ?? const [];
+    final counts = <String, int>{};
+    for (final entry in raw) {
+      final at = entry.lastIndexOf('|');
+      if (at <= 0) continue;
+      final n = int.tryParse(entry.substring(at + 1));
+      if (n != null && n > 0) counts[entry.substring(0, at)] = n;
+    }
+    return HardWords(counts);
+  }
+
+  /// En çok zorlanılandan başlayarak en çok [n] kelime.
+  List<String> top([int n = 8]) {
+    final sorted = counts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    return [for (final e in sorted.take(n)) e.key];
+  }
+
+  /// Bir cümlenin sonucunu işler.
+  static Future<void> record(
+    SharedPreferences prefs,
+    SentenceScore score,
+  ) async {
+    final counts = {...HardWords.read(prefs).counts};
+    for (final w in score.words) {
+      final word = _norm(w.word);
+      if (word.length < 2) continue;
+      final next = (counts[word] ?? 0) + (w.ok ? -1 : 1);
+      if (next > 0) {
+        counts[word] = next;
+      } else {
+        counts.remove(word);
+      }
+    }
+    await prefs.setStringList(key, [
+      for (final e in counts.entries) '${e.key}|${e.value}',
+    ]);
+  }
+}

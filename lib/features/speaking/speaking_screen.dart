@@ -98,6 +98,12 @@ class _SessionState extends ConsumerState<_Session> {
   Future<void> _play({bool slow = false}) =>
       speakWithNotice(context, _speech, _sentence, slow: slow);
 
+  /// Tek bir kelimeyi yavaşça okur (kırmızı kelimeye dokununca).
+  Future<void> _sayWord(String word) {
+    Haptics.tap();
+    return speakWithNotice(context, _speech, word, slow: true);
+  }
+
   Future<void> _listen() async {
     if (_stage == _Stage.listening) {
       await _speech.stopListening();
@@ -152,6 +158,9 @@ class _SessionState extends ConsumerState<_Session> {
       _stage = _Stage.scored;
       _score = score;
     });
+    if (widget.mode == PracticeMode.speak) {
+      await HardWords.record(ref.read(sharedPreferencesProvider), score);
+    }
     if (score.passed) {
       Haptics.success();
       if (_passed.add(_index)) {
@@ -198,6 +207,10 @@ class _SessionState extends ConsumerState<_Session> {
       return _Summary(
         passed: _passed.length,
         total: widget.sentences.length,
+        hardWords: widget.mode == PracticeMode.speak
+            ? HardWords.read(ref.read(sharedPreferencesProvider)).top()
+            : const [],
+        onWord: _sayWord,
         onAgain: _restart,
         onDone: () => context.pop(),
       );
@@ -247,7 +260,7 @@ class _SessionState extends ConsumerState<_Session> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (score != null)
-                  _ScoredSentence(score: score)
+                  _ScoredSentence(score: score, onWord: _sayWord)
                 else if (dictation)
                   Text(
                     'Cümle gizli — dinleyip yaz.',
@@ -443,10 +456,13 @@ class _DictationInput extends StatelessWidget {
 }
 
 /// Hedef cümle; doğru kelimeler yeşil, eksik/yanlışlar kırmızı ve altı çizili.
+/// Puanlanmış cümle: doğru kelimeler yeşil, yanlışlar kırmızı. Kırmızı
+/// kelimeye dokununca kelime yavaşça okunur.
 class _ScoredSentence extends StatelessWidget {
-  const _ScoredSentence({required this.score});
+  const _ScoredSentence({required this.score, required this.onWord});
 
   final SentenceScore score;
+  final ValueChanged<String> onWord;
 
   @override
   Widget build(BuildContext context) {
@@ -455,23 +471,47 @@ class _ScoredSentence extends StatelessWidget {
       fontWeight: FontWeight.w700,
       height: 1.35,
     );
-    return Text.rich(
-      TextSpan(
-        style: base,
-        children: [
-          for (final (i, w) in score.words.indexed) ...[
-            if (i > 0) const TextSpan(text: ' '),
-            TextSpan(
-              text: w.word,
-              style: TextStyle(
-                color: w.ok ? AppColors.success : AppColors.error,
-                decoration: w.ok ? null : TextDecoration.underline,
-                decorationColor: AppColors.error,
-              ),
-            ),
+    final missed = score.words.where((w) => !w.ok).length;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          spacing: 6,
+          runSpacing: 2,
+          children: [
+            for (final w in score.words)
+              w.ok
+                  ? Text(
+                      w.word,
+                      style: base?.copyWith(color: AppColors.success),
+                    )
+                  : Semantics(
+                      button: true,
+                      label: '${w.word}, dinle',
+                      excludeSemantics: true,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(6),
+                        onTap: () => onWord(w.word),
+                        child: Text(
+                          w.word,
+                          style: base?.copyWith(
+                            color: AppColors.error,
+                            decoration: TextDecoration.underline,
+                            decorationColor: AppColors.error,
+                          ),
+                        ),
+                      ),
+                    ),
           ],
+        ),
+        if (missed > 0) ...[
+          const SizedBox(height: 8),
+          Text(
+            'Kırmızı kelimeye dokun, nasıl okunduğunu dinle.',
+            style: theme.textTheme.bodySmall,
+          ),
         ],
-      ),
+      ],
     );
   }
 }
@@ -549,10 +589,16 @@ class _Summary extends StatelessWidget {
     required this.total,
     required this.onAgain,
     required this.onDone,
+    this.hardWords = const [],
+    this.onWord,
   });
 
   final int passed;
   final int total;
+
+  /// Hâlâ zorlanılan kelimeler; dokununca okunur.
+  final List<String> hardWords;
+  final ValueChanged<String>? onWord;
   final VoidCallback onAgain;
   final VoidCallback onDone;
 
@@ -588,6 +634,33 @@ class _Summary extends StatelessWidget {
             fontWeight: FontWeight.w800,
           ),
         ),
+        if (hardWords.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          Text(
+            'Zorlandığın kelimeler',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Dokun ve dinle. Doğru söyledikçe listeden düşerler.',
+            style: theme.textTheme.bodySmall,
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final word in hardWords)
+                ActionChip(
+                  avatar: const Icon(Icons.volume_up_rounded, size: 18),
+                  label: Text(word),
+                  onPressed: onWord == null ? null : () => onWord!(word),
+                ),
+            ],
+          ),
+        ],
         const SizedBox(height: 28),
         FilledButton.icon(
           onPressed: onAgain,
