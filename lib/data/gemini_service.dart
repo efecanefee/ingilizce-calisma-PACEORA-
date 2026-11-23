@@ -13,6 +13,7 @@ import 'review_models.dart';
 import 'roleplay.dart';
 import 'story_models.dart';
 import 'word_lookup.dart';
+import 'writing.dart';
 
 /// Haftalık plan üretiminin sonucu.
 ///
@@ -371,6 +372,51 @@ Respond with JSON:
     return (turn: turn, error: null);
   }
 
+  /// Öğrencinin yazdığı paragrafı değerlendirir: hataları işaretler,
+  /// Türkçe açıklar ve düzeltilmiş halini verir.
+  ///
+  /// Hata fırlatmaz; ulaşılamazsa `feedback` null, `error` dolu döner.
+  Future<({WritingFeedback? feedback, String? error})> correctWriting({
+    required String text,
+    required String level,
+    required String task,
+  }) async {
+    final response = await _post(
+      prompt:
+          '''
+Türkçe konuşan, CEFR $level seviyesinde bir İngilizce öğrencisi aşağıdaki görevi yazdı.
+
+Görev (Türkçe): $task
+
+Öğrencinin yazısı:
+"""
+$text
+"""
+
+JSON olarak değerlendir:
+- score: 0-100 arası puan. Seviyeye göre değerlendir: dilbilgisi, kelime seçimi, yazım ve görevi yerine getirme.
+- corrected: yazının düzeltilmiş hali. Öğrencinin anlatımını koru, yalnızca gerekeni değiştir.
+- issues: gerçek hatalar (en çok 10). Her biri:
+  - original: yazıda BİREBİR geçen hatalı parça (birkaç kelime; büyük-küçük harf ve noktalama dahil aynen kopyala)
+  - fix: o parçanın doğru hali
+  - explanationTr: hatayı açıklayan kısa TÜRKÇE cümle
+  - type: grammar | vocabulary | spelling | style
+- feedbackTr: yazı hakkında 1-2 cümlelik cesaretlendirici TÜRKÇE genel yorum; neyi iyi yaptığını ve neye dikkat etmesi gerektiğini söyle.
+
+Kurallar: Doğru olanı hata sayma. Cümle sonu noktalaması ya da büyük harf eksikliği tek başına hata değildir. Yazı İngilizce değilse score 0 ver ve feedbackTr'de İngilizce yazmasını iste.
+''',
+      schema: _writingSchema,
+      timeout: const Duration(seconds: 45),
+      temperature: 0.3,
+    );
+    if (response.body == null) return (feedback: null, error: response.error);
+    final feedback = parseWritingResponse(response.body!);
+    if (feedback == null) {
+      return (feedback: null, error: 'Değerlendirme okunamadı — tekrar dene');
+    }
+    return (feedback: feedback, error: null);
+  }
+
   /// Hikayede dokunulan kelimenin cümledeki anlamını Türkçe verir.
   ///
   /// Hata fırlatmaz; ulaşılamazsa `meaning` null, `error` dolu döner.
@@ -555,6 +601,29 @@ Verilerde olmayan bir şey uydurma. Veri azsa bunu nazikçe belirt.
       'goalReached': {'type': 'BOOLEAN'},
     },
     'required': ['reply', 'hasError', 'goalReached'],
+  };
+
+  static const Map<String, dynamic> _writingSchema = {
+    'type': 'OBJECT',
+    'properties': {
+      'score': {'type': 'INTEGER'},
+      'corrected': {'type': 'STRING'},
+      'issues': {
+        'type': 'ARRAY',
+        'items': {
+          'type': 'OBJECT',
+          'properties': {
+            'original': {'type': 'STRING'},
+            'fix': {'type': 'STRING'},
+            'explanationTr': {'type': 'STRING'},
+            'type': {'type': 'STRING'},
+          },
+          'required': ['original', 'fix', 'explanationTr', 'type'],
+        },
+      },
+      'feedbackTr': {'type': 'STRING'},
+    },
+    'required': ['score', 'corrected', 'issues', 'feedbackTr'],
   };
 
   static const Map<String, dynamic> _wordSchema = {

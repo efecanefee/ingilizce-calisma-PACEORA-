@@ -23,6 +23,7 @@ class GameStats {
     this.spokenGood = 0,
     this.roleplayXp = 0,
     this.roleplays = 0,
+    this.writingXp = 0,
   });
 
   final int lessons;
@@ -60,6 +61,9 @@ class GameStats {
 
   /// XP kazandıran (tamamlanan) sohbet sayısı.
   final int roleplays;
+
+  /// Yazma pratiğinden kazanılan XP.
+  final int writingXp;
 }
 
 /// Bir dersin kazandırdığı XP — sonuç ekranında da aynı formül gösterilir.
@@ -87,7 +91,8 @@ int totalXp(GameStats s) =>
     s.levelUps * xpPerLevelUp +
     s.matchXp +
     s.speechXp +
-    s.roleplayXp;
+    s.roleplayXp +
+    s.writingXp;
 
 /// [level]'e ulaşmak için gereken toplam XP: 0, 100, 300, 600, 1000, …
 ///

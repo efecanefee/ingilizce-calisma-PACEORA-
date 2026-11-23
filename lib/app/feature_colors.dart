@@ -60,6 +60,12 @@ enum Feature {
     Icons.bolt_rounded,
     Color(0xFFFBBF24), // kehribar
     Color(0xFFB45309),
+  ),
+  writing(
+    'Yazma',
+    Icons.draw_rounded,
+    Color(0xFFE879F9), // fuşya
+    Color(0xFFA21CAF),
   );
 
   const Feature(this.label, this.icon, this.bright, this.deep);

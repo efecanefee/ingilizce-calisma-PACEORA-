@@ -25,6 +25,7 @@ import 'story_models.dart';
 import 'streak_freeze.dart';
 import 'wardrobe.dart';
 import 'word_lookup.dart';
+import 'writing.dart';
 
 /// main() içinde gerçek örnekle override edilir.
 final sharedPreferencesProvider = Provider<SharedPreferences>(
@@ -1299,6 +1300,7 @@ final gameProvider = FutureProvider<GameState>((ref) async {
   final match = MatchRecords.read(prefs);
   final speech = SpeechRecords.read(prefs);
   final roleplay = RoleplayRecords.read(prefs);
+  final writing = WritingRecords.read(prefs);
   final stats = await ref
       .read(repositoryProvider)
       .gameStats(
@@ -1310,6 +1312,7 @@ final gameProvider = FutureProvider<GameState>((ref) async {
         spokenGood: speech.spokenGood,
         roleplayXp: roleplay.xp,
         roleplays: roleplay.completed,
+        writingXp: writing.xp,
       );
   return GameState(stats);
 });

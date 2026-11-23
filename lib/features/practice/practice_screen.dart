@@ -7,6 +7,7 @@ import '../../app/feature_colors.dart';
 import '../../app/motion.dart';
 import '../../app/theme.dart';
 import '../../data/providers.dart';
+import '../../data/writing.dart';
 
 /// "Pratik" sekmesi: dersin dışındaki bütün çalışma alanları.
 ///
@@ -22,6 +23,7 @@ class PracticeScreen extends ConsumerWidget {
     final cards = ref.watch(flashcardSummaryProvider).value;
     final rally = ref.watch(matchRecordsProvider);
     final roleplay = ref.watch(roleplayRecordsProvider);
+    final writing = WritingRecords.read(ref.watch(sharedPreferencesProvider));
     final due = cards?.due ?? 0;
 
     // Dönüşte rozet ve XP güncel olsun.
@@ -62,6 +64,13 @@ class PracticeScreen extends ConsumerWidget {
             : 'Bugünlük tamam',
         badge: due > 0 ? '$due' : null,
         onTap: () => open('/flashcards'),
+      ),
+      _PracticeTile(
+        feature: Feature.writing,
+        subtitle: writing.count > 0
+            ? 'En iyi puanın: %${writing.bestScore}'
+            : 'Yaz, Pace düzeltsin',
+        onTap: () => open('/writing'),
       ),
       _PracticeTile(
         feature: Feature.story,

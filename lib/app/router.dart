@@ -17,6 +17,7 @@ import '../features/roleplay/roleplay_screen.dart';
 import '../features/settings/settings_screen.dart';
 import '../features/speaking/speaking_screen.dart';
 import '../features/story/story_screen.dart';
+import '../features/writing/writing_screen.dart';
 import 'motion.dart';
 import 'shell.dart';
 
@@ -94,6 +95,7 @@ GoRouter createRouter({required bool onboardingDone}) {
       fullScreen('/review', (_, _) => const WeeklyReviewScreen()),
       fullScreen('/mistakes', (_, _) => const MistakesScreen()),
       fullScreen('/match', (_, _) => const MatchScreen()),
+      fullScreen('/writing', (_, _) => const WritingScreen()),
       fullScreen('/profile', (_, _) => const ProfileScreen()),
       fullScreen('/roleplay', (_, _) => const RoleplayListScreen()),
       fullScreen(
