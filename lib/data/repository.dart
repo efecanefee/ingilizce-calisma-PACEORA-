@@ -202,6 +202,19 @@ class Repository {
         ),
       );
 
+  /// [date] günündeki derse hiç başlanmamışsa siler (önceden hazırlanmış
+  /// ders konu değişince eskimesin diye).
+  Future<void> deleteUnstartedLesson(DateTime date) async {
+    final lesson = await lessonFor(date);
+    if (lesson == null || lesson.completed) return;
+    final state = LessonState.decode(lesson.contentJson);
+    if (state != null &&
+        (state.progress.answers.isNotEmpty || state.progress.stepIndex > 0)) {
+      return;
+    }
+    await (_db.delete(_db.lessons)..where((t) => t.id.equals(lesson.id))).go();
+  }
+
   /// Tüm plan günleri (bütün haftalar).
   Future<List<WeeklyPlanDay>> allPlanDays() =>
       _db.select(_db.weeklyPlanDays).get();

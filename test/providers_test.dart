@@ -32,11 +32,15 @@ const _lessonJson = '''
 /// Üretim isteği sayısını da tutan sahte Gemini istemcisi.
 class _StubGemini {
   int requestCount = 0;
+  final bodies = <String>[];
 
   http.Client get client => MockClient((request) async {
     // Model listesi (GET) içerik üretimi değildir; yalnızca
     // generateContent çağrıları sayılır.
-    if (request.method == 'POST') requestCount++;
+    if (request.method == 'POST') {
+      requestCount++;
+      bodies.add(request.body);
+    }
     final body = jsonEncode({
       'candidates': [
         {
@@ -78,6 +82,60 @@ void main() {
   });
 
   tearDown(() => db.close());
+
+  group('kısa gün ve önceden hazırlık', () {
+    List<PlanDaySpec> week() => [
+      for (var i = 0; i < 7; i++)
+        PlanDaySpec(grammarTopic: 'Konu $i', vocabTheme: 'Tema $i'),
+    ];
+
+    test('"vaktim az" günü ders 5 dakikalık istenir', () async {
+      await repository.saveProfile(name: 'Efe', level: 'B1', dailyMinutes: 30);
+      await repository.replaceWeeklyPlan(DateTime.now(), week());
+      final stub = _StubGemini();
+      final container = await _container(
+        db: db,
+        gemini: GeminiService(client: stub.client, apiKey: 'test'),
+      );
+      await container.read(shortDayProvider.notifier).set(true);
+      final sub = container.listen(lessonProvider, (_, _) {});
+      addTearDown(sub.close);
+      await container.read(lessonProvider.future);
+
+      final prompt = stub.bodies.last;
+      expect(prompt, contains('5 dakika'));
+      expect(prompt, isNot(contains('30 dakika')));
+    });
+
+    test('yarının dersi önceden hazırlanır, başlanmamış sayılır', () async {
+      await repository.saveProfile(name: 'Efe', level: 'B1', dailyMinutes: 15);
+      await repository.replaceWeeklyPlan(DateTime.now(), week());
+      final stub = _StubGemini();
+      final container = await _container(
+        db: db,
+        gemini: GeminiService(client: stub.client, apiKey: 'test'),
+      );
+      final sub = container.listen(lessonProvider, (_, _) {});
+      addTearDown(sub.close);
+      await container.read(lessonProvider.notifier).prefetchTomorrow();
+
+      final now = DateTime.now();
+      final tomorrow = DateTime(now.year, now.month, now.day + 1);
+      final lesson = await repository.lessonFor(tomorrow);
+      expect(lesson, isNotNull);
+      expect(lessonStarted(lesson!), isFalse);
+      expect(stub.bodies.where((b) => b.contains('Konu 1')), hasLength(1));
+
+      // İkinci çağrı yeniden üretmez.
+      final count = stub.requestCount;
+      await container.read(lessonProvider.notifier).prefetchTomorrow();
+      expect(stub.requestCount, count);
+
+      // Konu değişince hazır ders atılır.
+      await repository.deleteUnstartedLesson(tomorrow);
+      expect(await repository.lessonFor(tomorrow), isNull);
+    });
+  });
 
   group('weekPlanProvider', () {
     test('plan yoksa kendiliğinden üretilir', () async {

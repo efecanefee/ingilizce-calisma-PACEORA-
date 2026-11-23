@@ -61,6 +61,9 @@ abstract class AppConstants {
   /// Pace'in tanıtım turu bekliyor (ilk kurulumda açılır).
   static const prefTourPending = 'tour_pending';
 
+  /// "Vaktim az" günleri: anahtarın sonuna günün tarihi eklenir.
+  static const prefShortDayPrefix = 'short_day_';
+
   /// Kullanıcının Ayarlar'dan girdiği Gemini anahtarı; boşsa derleme zamanı
   /// anahtarı kullanılır.
   static const prefApiKey = 'gemini_api_key';

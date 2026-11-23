@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'dart:math';
 
 import 'package:clock/clock.dart';
@@ -91,9 +93,28 @@ class _HomeBody extends ConsumerWidget {
             item(
               _TodayCard(
                 day: today,
-                dailyMinutes: user.dailyMinutes,
+                dailyMinutes: ref.watch(shortDayProvider)
+                    ? 5
+                    : user.dailyMinutes,
                 lesson: lesson,
                 onStudy: () => context.push('/lesson'),
+                // "Vaktim az": ders henüz üretilmediyse 5 dakikalık açılır.
+                onShort:
+                    user.dailyMinutes > 5 &&
+                        !ref.watch(shortDayProvider) &&
+                        (lesson == null || !lessonStarted(lesson))
+                    ? () async {
+                        final router = GoRouter.of(context);
+                        await ref.read(shortDayProvider.notifier).set(true);
+                        // Önceden hazırlanmış tam ders varsa kısa olanla
+                        // değişsin.
+                        await ref
+                            .read(repositoryProvider)
+                            .deleteUnstartedLesson(DateTime.now());
+                        ref.invalidate(todayLessonProvider);
+                        unawaited(router.push('/lesson'));
+                      }
+                    : null,
                 onComplete: () =>
                     ref.read(weekPlanProvider.notifier).completeDay(today),
               ),
@@ -1408,10 +1429,14 @@ class _TodayCard extends StatelessWidget {
     required this.lesson,
     required this.onStudy,
     required this.onComplete,
+    this.onShort,
   });
 
   final WeeklyPlanDay day;
   final int dailyMinutes;
+
+  /// "Vaktim az: 5 dakikalık ders"; uygun değilse null.
+  final VoidCallback? onShort;
 
   /// Bugünkü ders kaydı; henüz üretilmediyse null.
   final Lesson? lesson;
@@ -1436,7 +1461,7 @@ class _TodayCard extends StatelessWidget {
     final theme = Theme.of(context);
     final done = day.status == 'completed';
     // Ders başlanmış ama bitmemişse buton "devam et" der.
-    final inProgress = lesson != null && !lesson!.completed;
+    final inProgress = lesson != null && lessonStarted(lesson!);
     // Günün dersi kendi bölüm renginde (vurgu rengi).
     const feature = Feature.lesson;
     final color = feature.color(context);
@@ -1542,6 +1567,15 @@ class _TodayCard extends StatelessWidget {
                     duration: 1200.ms,
                     color: Colors.white.withValues(alpha: 0.45),
                   ),
+              if (onShort != null)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: onShort,
+                    icon: const Icon(Icons.timer_outlined, size: 18),
+                    label: const Text('Vaktim az: 5 dakikalık ders'),
+                  ),
+                ),
               // Ders üretilemediği ya da başka bir yerde çalışıldığı durumlar
               // için elle işaretleme yolu açık kalıyor.
               Align(

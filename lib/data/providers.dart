@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:clock/clock.dart';
@@ -221,6 +222,8 @@ class WeekPlanNotifier extends AsyncNotifier<WeekPlan> {
   /// uygun konu bulunamazsa null.
   Future<String?> replaceDay(WeeklyPlanDay day) async {
     final repository = ref.read(repositoryProvider);
+    // O gün için önceden hazırlanmış ders eski konudaysa atılır.
+    await repository.deleteUnstartedLesson(planDateOf(day));
     final profile = await repository.profile();
     if (profile == null) return null;
     final used = {
@@ -237,7 +240,8 @@ class WeekPlanNotifier extends AsyncNotifier<WeekPlan> {
     final candidates = [...result.days, ...fallbackWeeklyPlan(profile.level)];
     PlanDaySpec? pick;
     for (final spec in candidates) {
-      final review = spec.grammarTopic.toLowerCase().contains('review') ||
+      final review =
+          spec.grammarTopic.toLowerCase().contains('review') ||
           spec.grammarTopic.toLowerCase().contains('tekrar');
       if (!review && !used.contains(spec.grammarTopic)) {
         pick = spec;
@@ -284,6 +288,37 @@ final todayLessonProvider = FutureProvider<Lesson?>((ref) async {
   ref.watch(weekPlanProvider);
   return ref.read(repositoryProvider).lessonFor(clock.now());
 });
+
+/// Ders kaydına başlanmış mı? Önceden hazırlanmış ama açılmamış ders
+/// "devam et" gibi gösterilmesin diye.
+bool lessonStarted(Lesson lesson) {
+  if (lesson.completed) return true;
+  final state = LessonState.decode(lesson.contentJson);
+  return state != null &&
+      (state.progress.answers.isNotEmpty || state.progress.stepIndex > 0);
+}
+
+/// "Vaktim az" günü: bugünün dersi 5 dakikalık üretilir.
+class ShortDayNotifier extends Notifier<bool> {
+  static String keyFor(DateTime date) =>
+      '${AppConstants.prefShortDayPrefix}${dayOf(date).toIso8601String()}';
+
+  @override
+  bool build() =>
+      ref.watch(sharedPreferencesProvider).getBool(keyFor(clock.now())) ??
+      false;
+
+  Future<void> set(bool value) async {
+    await ref
+        .read(sharedPreferencesProvider)
+        .setBool(keyFor(clock.now()), value);
+    state = value;
+  }
+}
+
+final shortDayProvider = NotifierProvider<ShortDayNotifier, bool>(
+  ShortDayNotifier.new,
+);
 
 /// Cihazdaki hata kaydı (Ayarlar > Hata kaydı).
 final errorLogProvider = Provider<ErrorLog>(
@@ -349,6 +384,41 @@ class LessonNotifier extends AsyncNotifier<LessonState> {
     return _generate();
   }
 
+  /// Dersin süresi: "vaktim az" günüyse 5 dakika.
+  int _minutes(UserProfile profile) =>
+      isToday && ref.read(shortDayProvider) ? 5 : profile.dailyMinutes;
+
+  /// Yarının dersini şimdiden hazırlar: internet varken üretilir, yarın
+  /// bağlantı olmasa da ders hazır olur. Hata sessizce yutulur; yarın
+  /// ders her zamanki gibi açılışta üretilir.
+  Future<void> prefetchTomorrow() async {
+    try {
+      final repository = ref.read(repositoryProvider);
+      final now = clock.now();
+      final tomorrow = DateTime(now.year, now.month, now.day + 1);
+      final day = await repository.planDayOn(tomorrow);
+      final profile = await repository.profile();
+      if (day == null || profile == null) return;
+      if (await repository.lessonFor(tomorrow) != null) return;
+      final result = await ref
+          .read(geminiServiceProvider)
+          .generateDailyLesson(
+            level: profile.level,
+            dailyMinutes: profile.dailyMinutes,
+            grammarTopic: day.grammarTopic,
+            vocabTheme: day.vocabTheme,
+            reviewItems: await repository.unresolvedMistakeItems(),
+          );
+      final lesson = result.lesson;
+      if (lesson == null) return;
+      // Bu arada başka bir yerden üretilmişse ezme.
+      if (await repository.lessonFor(tomorrow) != null) return;
+      await repository.saveLesson(tomorrow, LessonState(lesson: lesson));
+    } catch (_) {
+      // Önceden hazırlık isteğe bağlı; başarısızlık dersi engellemez.
+    }
+  }
+
   Future<LessonState> _generate() async {
     final repository = ref.read(repositoryProvider);
 
@@ -368,7 +438,7 @@ class LessonNotifier extends AsyncNotifier<LessonState> {
         .read(geminiServiceProvider)
         .generateDailyLesson(
           level: profile.level,
-          dailyMinutes: profile.dailyMinutes,
+          dailyMinutes: _minutes(profile),
           grammarTopic: today.grammarTopic,
           vocabTheme: today.vocabTheme,
           reviewItems: await repository.unresolvedMistakeItems(),
@@ -399,7 +469,7 @@ class LessonNotifier extends AsyncNotifier<LessonState> {
         level: profile.level,
         grammarTopic: today.grammarTopic,
         dayIndex: today.dayIndex,
-        size: LessonSize.forMinutes(profile.dailyMinutes),
+        size: LessonSize.forMinutes(_minutes(profile)),
       );
       if (lesson == null) {
         throw const LessonUnavailable('Hazır ders bulunamadı.');
@@ -500,6 +570,7 @@ class LessonNotifier extends AsyncNotifier<LessonState> {
     }
     ref.invalidate(todayLessonProvider);
     ref.invalidate(flashcardSummaryProvider);
+    if (isToday) unawaited(prefetchTomorrow());
     ref.invalidate(progressProvider);
     ref.invalidate(gameProvider);
   }
