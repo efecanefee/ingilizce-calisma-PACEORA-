@@ -9,6 +9,7 @@ import '../../app/logo.dart';
 import '../../app/mascot.dart';
 import '../../app/motion.dart';
 import '../../app/sounds.dart';
+import '../../app/welcome_tour.dart';
 import '../../data/level_check.dart';
 import '../../data/placement.dart';
 import '../../data/providers.dart';
@@ -88,34 +89,30 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Future<void> _finish() async {
     setState(() => _submitting = true);
     try {
-      await ref.read(profileProvider.notifier).save(
+      await ref
+          .read(profileProvider.notifier)
+          .save(
             name: _nameController.text.trim(),
             level: _level.code,
             dailyMinutes: _dailyMinutes,
           );
-      final result = await ref.read(weekPlanProvider.notifier).regenerate();
+      await ref.read(weekPlanProvider.notifier).regenerate();
       await ref
           .read(sharedPreferencesProvider)
           .setBool(AppConstants.prefOnboardingDone, true);
+      await ref.read(tourProvider.notifier).start();
 
       if (!mounted) return;
-      if (result.offline) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Gemini\'ye ulaşılamadı, hazır program yüklendi. '
-              'Ana ekrandan planı yenileyebilirsin.',
-            ),
-          ),
-        );
-      }
+      // Hazır program yüklendiyse uyarı bildirim çubuğuyla verilmez: açılan
+      // tanıtım turunun düğmelerini örterdi. Ana ekrandaki bulut simgesi ve
+      // program ekranı durumu zaten gösterir.
       context.go('/');
     } catch (e) {
       if (!mounted) return;
       setState(() => _submitting = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Kayıt sırasında hata: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Kayıt sırasında hata: $e')));
     }
   }
 
@@ -192,7 +189,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                         width: 22,
                         child: CircularProgressIndicator(strokeWidth: 2.5),
                       )
-                    : Text(_step == _stepCount - 1 ? 'Programımı oluştur' : 'Devam'),
+                    : Text(
+                        _step == _stepCount - 1
+                            ? 'Programımı oluştur'
+                            : 'Devam',
+                      ),
               ),
               if (_submitting) ...[
                 const SizedBox(height: 12),
@@ -247,19 +248,24 @@ class _StepScaffold extends StatelessWidget {
             header!
                 .animate()
                 .fadeIn(duration: Motion.slow)
-                .scale(begin: const Offset(0.85, 0.85), curve: Curves.easeOutBack),
+                .scale(
+                  begin: const Offset(0.85, 0.85),
+                  curve: Curves.easeOutBack,
+                ),
             const SizedBox(height: 32),
           ],
           Text(
             title,
-            style: theme.textTheme.headlineSmall
-                ?.copyWith(fontWeight: FontWeight.w800),
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
           ).entrance(1),
           const SizedBox(height: 8),
           Text(
             subtitle,
-            style: theme.textTheme.bodyMedium
-                ?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.7)),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+            ),
           ).entrance(2),
           const SizedBox(height: 28),
           child.entrance(3),
@@ -628,14 +634,16 @@ class _MinutesStep extends StatelessWidget {
                             children: [
                               Text(
                                 'Günde $minutes dakika',
-                                style: theme.textTheme.titleMedium
-                                    ?.copyWith(fontWeight: FontWeight.w600),
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                               Text(
                                 AppConstants.dailyMinuteHint(minutes),
                                 style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onSurface
-                                      .withValues(alpha: 0.65),
+                                  color: theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.65,
+                                  ),
                                 ),
                               ),
                             ],

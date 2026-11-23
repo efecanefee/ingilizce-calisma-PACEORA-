@@ -15,6 +15,8 @@ String paceMessage({
 
   switch (status) {
     case StreakStatus.done:
+      // Ders bittikten sonra her iki günde bir Pace bir ipucu verir.
+      if (rotation.isEven) return paceTips[(rotation ~/ 2) % paceTips.length];
       return pick([
         'Bugünü tamamladın, harikasın! Yarın görüşürüz.',
         'Serin $streak gün oldu. Böyle devam!',
@@ -54,3 +56,15 @@ String paceMessage({
       ? 'Gün bitmeden dersini yapalım, serin $streak gün!'
       : 'Gün bitmeden kısa bir ders yapalım mı?';
 }
+
+/// Ders bittikten sonra Pace'in verdiği kısa İngilizce ipuçları.
+const paceTips = <String>[
+  'İpucu: "I am agree" denmez; doğrusu "I agree".',
+  'İpucu: since + başlangıç (since Monday), for + süre (for 3 days).',
+  'İpucu: "Make a mistake" denir, "do a mistake" değil.',
+  'İpucu: Yeni kelimeyi bugün bir cümlede kullanırsan aklında kalır.',
+  'İpucu: "Interesting" ilginç olan şey, "interested" ilgi duyan kişi.',
+  'İpucu: Dizi izlerken İngilizce altyazı aç; kulağın hızla alışır.',
+  'İpucu: "Fun" eğlenceli, "funny" komik demek.',
+  'İpucu: "look forward to" + -ing: looking forward to seeing you.',
+];

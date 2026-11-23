@@ -96,6 +96,14 @@ void main() {
     expect(profile.dailyMinutes, 30);
     expect(await db.select(db.weeklyPlanDays).get(), hasLength(7));
 
+    // İlk girişte Pace tanıtım turu açılır; atlanınca bir daha çıkmaz.
+    expect(prefs.getBool(AppConstants.prefTourPending), isTrue);
+    expect(find.text('Merhaba, ben Pace!'), findsOneWidget);
+    await tester.tap(find.text('Atla'));
+    await _advance(tester);
+    expect(find.text('Merhaba, ben Pace!'), findsNothing);
+    expect(prefs.getBool(AppConstants.prefTourPending), isFalse);
+
     // Ana ekran — AppBar'da logo
     expect(find.byType(PaceoraWordmark), findsOneWidget);
     expect(find.text('Merhaba, Efecan'), findsOneWidget);

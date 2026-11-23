@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/constants.dart';
 import '../../../app/logo.dart';
 import '../../../app/motion.dart';
+import '../../../app/welcome_tour.dart';
 import '../../../data/feedback.dart';
 import '../../../data/providers.dart';
 import '../settings_section.dart';
@@ -38,6 +39,15 @@ class AboutGroup extends StatelessWidget {
                   'İlerlemen cihazda; dersler için konu ve cevaplar '
                   'Google Gemini\'ye gider, adın gitmez',
               onTap: () => openPrivacySheet(context),
+            ),
+            SettingsTile(
+              icon: Icons.waving_hand_rounded,
+              title: 'Tanıtımı yeniden izle',
+              subtitle: 'Pace sekmeleri sana tekrar gezdirsin',
+              onTap: () => ProviderScope.containerOf(
+                context,
+                listen: false,
+              ).read(tourProvider.notifier).start(),
             ),
             const FeedbackTile(),
             SettingsTile(

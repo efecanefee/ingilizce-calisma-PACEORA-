@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/mascot.dart';
 import '../../app/motion.dart';
 import '../../app/theme.dart';
 import '../../data/database.dart';
@@ -179,14 +180,12 @@ class _EmptyView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.edit_note_rounded,
-              size: 56,
-              color: theme.colorScheme.primary,
+            const SizedBox(
+              child: EquippedPace(mood: PaceMood.cheer, size: 120),
             ).animate().scale(curve: Curves.elasticOut, duration: Motion.slow),
             const SizedBox(height: 16),
             Text(
-              'Hata defterin boş',
+              'Hata defterin boş, harikasın!',
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w800,
               ),

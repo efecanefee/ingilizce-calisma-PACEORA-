@@ -6,6 +6,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/error_view.dart';
+import '../../app/mascot.dart';
 import '../../app/motion.dart';
 import '../../app/speak_button.dart';
 import '../../app/theme.dart';
@@ -397,15 +398,16 @@ class _DoneView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-                  empty ? Icons.style_outlined : Icons.celebration,
-                  size: 64,
-                  color: theme.colorScheme.primary,
-                )
-                .animate()
-                .scale(duration: Motion.slow, curve: Curves.elasticOut)
-                .then()
-                .shake(hz: 2, rotation: 0.05),
+            SizedBox(
+              child: EquippedPace(
+                mood: empty
+                    ? PaceMood.study
+                    : reviewed == 0
+                    ? PaceMood.run
+                    : PaceMood.cheer,
+                size: 120,
+              ),
+            ).animate().scale(duration: Motion.slow, curve: Curves.elasticOut),
             const SizedBox(height: 20),
             Text(
               empty

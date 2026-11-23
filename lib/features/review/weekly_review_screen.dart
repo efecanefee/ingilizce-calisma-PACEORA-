@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/constants.dart';
 import '../../app/error_view.dart';
+import '../../app/mascot.dart';
 import '../../app/motion.dart';
 import '../../app/theme.dart';
 import '../../data/providers.dart';
@@ -154,7 +155,7 @@ class _EmptyHint extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 24),
       child: Column(
         children: [
-          Icon(Icons.bar_chart, size: 48, color: theme.colorScheme.outline),
+          const EquippedPace(mood: PaceMood.study, size: 96),
           const SizedBox(height: 12),
           Text(
             'Henüz rapor yok. Hafta boyunca çalıştıkça rapor daha anlamlı olur.',

@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'motion.dart';
+import 'welcome_tour.dart';
 
 /// Alt gezinme çubuklu ana iskelet: Bugün · Pratik · Program · İlerleme · Ayarlar.
 ///
 /// Sekmeler `IndexedStack` ile tutulur, böylece kaydırma konumu ve durum
 /// korunur; sekme değişince içerik hafifçe yükselerek belirir.
-class AppShell extends StatelessWidget {
+class AppShell extends ConsumerWidget {
   const AppShell({super.key, required this.shell});
 
   final StatefulNavigationShell shell;
@@ -19,9 +21,15 @@ class AppShell extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final touring = ref.watch(tourProvider);
     return Scaffold(
-      body: _RiseOnChange(index: shell.currentIndex, child: shell),
+      body: Stack(
+        children: [
+          _RiseOnChange(index: shell.currentIndex, child: shell),
+          if (touring) WelcomeTour(onTab: shell.goBranch),
+        ],
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: shell.currentIndex,
         onDestinationSelected: _select,

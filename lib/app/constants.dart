@@ -58,6 +58,9 @@ abstract class AppConstants {
   /// Onboarding tamamlandı bayrağı (SharedPreferences anahtarı).
   static const prefOnboardingDone = 'onboarding_done';
 
+  /// Pace'in tanıtım turu bekliyor (ilk kurulumda açılır).
+  static const prefTourPending = 'tour_pending';
+
   /// Kullanıcının Ayarlar'dan girdiği Gemini anahtarı; boşsa derleme zamanı
   /// anahtarı kullanılır.
   static const prefApiKey = 'gemini_api_key';

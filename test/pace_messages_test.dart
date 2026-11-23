@@ -8,23 +8,48 @@ void main() {
 
   test('bugün tamamlandıysa tebrik eder', () {
     final m = paceMessage(status: StreakStatus.done, streak: 5, now: morning);
-    expect(m, anyOf(contains('tamamladın'), contains('5 gün'), contains('Bugünlük')));
+    expect(
+      m,
+      anyOf(contains('tamamladın'), contains('5 gün'), contains('Bugünlük')),
+    );
+  });
+
+  test('ders bitince çift günlerde ipucu verir', () {
+    final even = DateTime(2026, 11, 21, 9); // yılın 324. günü
+    final m = paceMessage(status: StreakStatus.done, streak: 5, now: even);
+    expect(paceTips, contains(m));
   });
 
   test('korunan seride hakları hatırlatır', () {
-    final m = paceMessage(status: StreakStatus.protected, streak: 4, now: morning);
+    final m = paceMessage(
+      status: StreakStatus.protected,
+      streak: 4,
+      now: morning,
+    );
     expect(m, contains('hakların'));
   });
 
   test('hedefe bir gün kala haber verir', () {
-    final m = paceMessage(status: StreakStatus.pending, streak: 6, now: evening);
+    final m = paceMessage(
+      status: StreakStatus.pending,
+      streak: 6,
+      now: evening,
+    );
     expect(m, contains('7 günlük'));
   });
 
   test('saate göre selamlar ve akşam seriyi hatırlatır', () {
-    final day = paceMessage(status: StreakStatus.pending, streak: 0, now: morning);
+    final day = paceMessage(
+      status: StreakStatus.pending,
+      streak: 0,
+      now: morning,
+    );
     expect(day, anyOf(contains('Günaydın'), contains('Güne')));
-    final night = paceMessage(status: StreakStatus.pending, streak: 4, now: evening);
+    final night = paceMessage(
+      status: StreakStatus.pending,
+      streak: 4,
+      now: evening,
+    );
     expect(night, contains('serin 4 gün'));
   });
 
