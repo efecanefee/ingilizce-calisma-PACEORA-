@@ -53,6 +53,7 @@ Future<void> main() async {
   );
   // Saat dilimi ya da cihaz değişmiş olabilir; açık hatırlatma yeniden kurulur.
   container.read(reminderProvider.notifier).resync().ignore();
+  container.read(extraNotificationsProvider.notifier).resync().ignore();
 
   runApp(
     UncontrolledProviderScope(

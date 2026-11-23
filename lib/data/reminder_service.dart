@@ -57,6 +57,30 @@ abstract class ReminderService {
   });
 
   Future<void> cancel();
+
+  /// Her hafta [weekday] (1 = pazartesi) günü [time]'da tekrarlayan bildirim.
+  Future<void> scheduleWeekly({
+    required int id,
+    required int weekday,
+    required TimeOfDay time,
+    required ReminderContent content,
+  });
+
+  /// [at] anında bir kez gelen bildirim.
+  Future<void> scheduleAt({
+    required int id,
+    required DateTime at,
+    required ReminderContent content,
+  });
+
+  /// [id]'li bildirimi iptal eder.
+  Future<void> cancelId(int id);
+}
+
+/// Günlük hatırlatma dışındaki bildirimlerin kimlikleri.
+abstract final class NotificationIds {
+  static const weeklyReport = 7002;
+  static const wordOfDay = 7003;
 }
 
 class NoopReminderService implements ReminderService {
@@ -74,6 +98,24 @@ class NoopReminderService implements ReminderService {
 
   @override
   Future<void> cancel() async {}
+
+  @override
+  Future<void> scheduleWeekly({
+    required int id,
+    required int weekday,
+    required TimeOfDay time,
+    required ReminderContent content,
+  }) async {}
+
+  @override
+  Future<void> scheduleAt({
+    required int id,
+    required DateTime at,
+    required ReminderContent content,
+  }) async {}
+
+  @override
+  Future<void> cancelId(int id) async {}
 }
 
 /// `flutter_local_notifications` ile yerel, sunucusuz hatırlatma.
@@ -189,6 +231,68 @@ class LocalReminderService implements ReminderService {
 
   @override
   Future<void> cancel() => _plugin.cancel(id: _notificationId);
+
+  static const _extraDetails = NotificationDetails(
+    android: AndroidNotificationDetails(
+      'extras',
+      'Haftalık rapor ve günün kelimesi',
+      channelDescription: 'Pazar raporu ve sabah kelime bildirimi',
+      icon: _smallIcon,
+      color: Color(0xFF5A7414),
+    ),
+    iOS: DarwinNotificationDetails(),
+  );
+
+  @override
+  Future<void> scheduleWeekly({
+    required int id,
+    required int weekday,
+    required TimeOfDay time,
+    required ReminderContent content,
+  }) async {
+    await _plugin.cancel(id: id);
+    final now = tz.TZDateTime.now(tz.local);
+    var at = nextInstanceOf(time, now);
+    while (at.weekday != weekday) {
+      at = tz.TZDateTime(
+        at.location,
+        at.year,
+        at.month,
+        at.day + 1,
+        time.hour,
+        time.minute,
+      );
+    }
+    await _plugin.zonedSchedule(
+      id: id,
+      title: content.title,
+      body: content.body,
+      scheduledDate: at,
+      notificationDetails: _extraDetails,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+    );
+  }
+
+  @override
+  Future<void> scheduleAt({
+    required int id,
+    required DateTime at,
+    required ReminderContent content,
+  }) async {
+    await _plugin.cancel(id: id);
+    await _plugin.zonedSchedule(
+      id: id,
+      title: content.title,
+      body: content.body,
+      scheduledDate: tz.TZDateTime.from(at, tz.local),
+      notificationDetails: _extraDetails,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+    );
+  }
+
+  @override
+  Future<void> cancelId(int id) => _plugin.cancel(id: id);
 }
 
 /// [now]'dan sonraki ilk [time] anı — bugün geçtiyse ya da [skipToday]

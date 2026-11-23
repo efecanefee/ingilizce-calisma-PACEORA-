@@ -30,6 +30,26 @@ class NotificationsGroup extends ConsumerWidget {
     }
   }
 
+  static String _format(TimeOfDay t) =>
+      '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+
+  Future<void> _toggleExtra(
+    BuildContext context,
+    Future<bool> Function() toggle,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    if (!await toggle()) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Bildirim izni verilmedi. Telefon ayarlarından Paceora için '
+            'bildirimlere izin verebilirsin.',
+          ),
+        ),
+      );
+    }
+  }
+
   Future<void> _pickTime(BuildContext context, WidgetRef ref) async {
     final current = ref.read(reminderProvider).time;
     final picked = await showTimePicker(
@@ -50,6 +70,10 @@ class NotificationsGroup extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final reminder = ref.watch(reminderProvider);
+    final extras = ref.watch(extraNotificationsProvider);
+    final suggestion = reminder.enabled
+        ? ref.watch(reminderSuggestionProvider).value
+        : null;
     final time =
         '${reminder.time.hour.toString().padLeft(2, '0')}:${reminder.time.minute.toString().padLeft(2, '0')}';
 
@@ -95,6 +119,44 @@ class NotificationsGroup extends ConsumerWidget {
                   : const SizedBox(width: double.infinity),
             ),
           ],
+        ),
+        if (suggestion != null)
+          SettingsTile(
+            icon: Icons.auto_awesome_rounded,
+            title: 'Önerilen saat: ${_format(suggestion)}',
+            subtitle:
+                'Genelde bu saatlerde çalışıyorsun; hatırlatma biraz önce '
+                'gelsin.',
+            trailing: TextButton(
+              onPressed: () =>
+                  ref.read(reminderProvider.notifier).setTime(suggestion),
+              child: const Text('Uygula'),
+            ),
+          ),
+        SettingsTile(
+          icon: Icons.assessment_rounded,
+          title: 'Haftalık rapor',
+          subtitle: "Pazar 19:00'da haftanın özeti",
+          trailing: Switch(
+            value: extras.weekly,
+            onChanged: (v) => _toggleExtra(
+              context,
+              () => ref.read(extraNotificationsProvider.notifier).setWeekly(v),
+            ),
+          ),
+        ),
+        SettingsTile(
+          icon: Icons.wb_twilight_rounded,
+          title: 'Günün kelimesi',
+          subtitle: "Her sabah 09:00'da destenden bir kelime",
+          trailing: Switch(
+            value: extras.wordOfDay,
+            onChanged: (v) => _toggleExtra(
+              context,
+              () =>
+                  ref.read(extraNotificationsProvider.notifier).setWordOfDay(v),
+            ),
+          ),
         ),
       ],
     );

@@ -48,6 +48,28 @@ class _FakeReminders implements ReminderService {
 
   @override
   Future<void> cancel() async => cancels++;
+
+  final weekly = <({int weekday, TimeOfDay time})>[];
+  final once = <({int id, DateTime at, ReminderContent content})>[];
+  final cancelledIds = <int>[];
+
+  @override
+  Future<void> scheduleWeekly({
+    required int id,
+    required int weekday,
+    required TimeOfDay time,
+    required ReminderContent content,
+  }) async => weekly.add((weekday: weekday, time: time));
+
+  @override
+  Future<void> scheduleAt({
+    required int id,
+    required DateTime at,
+    required ReminderContent content,
+  }) async => once.add((id: id, at: at, content: content));
+
+  @override
+  Future<void> cancelId(int id) async => cancelledIds.add(id);
 }
 
 Future<void> _advance(WidgetTester tester) async {

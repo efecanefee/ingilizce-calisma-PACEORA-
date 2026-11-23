@@ -247,3 +247,170 @@ class ReminderNotifier extends Notifier<ReminderSettings> {
 
 final reminderProvider =
     NotifierProvider<ReminderNotifier, ReminderSettings>(ReminderNotifier.new);
+
+/// Hatırlatma dışındaki bildirimler: Pazar akşamı haftalık rapor ve her
+/// sabah günün kelimesi.
+class ExtraNotifications {
+  const ExtraNotifications({this.weekly = false, this.wordOfDay = false});
+
+  final bool weekly;
+  final bool wordOfDay;
+}
+
+/// Haftalık rapor bildirimi: Pazar 19:00.
+const weeklyReportTime = TimeOfDay(hour: 19, minute: 0);
+
+/// Günün kelimesi bildirimi: her sabah 09:00.
+const wordOfDayTime = TimeOfDay(hour: 9, minute: 0);
+
+/// Kelime destesi boşken kullanılan kelimeler.
+const _starterWords = [
+  ('look forward to', 'dört gözle beklemek'),
+  ('get used to', 'alışmak'),
+  ('figure out', 'çözmek, anlamak'),
+  ('take advantage of', 'fırsatı değerlendirmek'),
+  ('run out of', 'tükenmek, bitmek'),
+  ('come up with', '(fikir) bulmak'),
+  ('keep in touch', 'iletişimi sürdürmek'),
+];
+
+/// [date] için günün kelimesi: desteden, güne göre değişen bir kart.
+({String word, String meaning}) wordOfDayFor(
+  List<({String word, String meaning})> deck,
+  DateTime date,
+) {
+  final pool = deck.isNotEmpty
+      ? deck
+      : [for (final (w, m) in _starterWords) (word: w, meaning: m)];
+  final dayNumber = DateTime.utc(date.year, date.month, date.day)
+      .difference(DateTime.utc(2026))
+      .inDays;
+  return pool[dayNumber.abs() % pool.length];
+}
+
+class ExtraNotificationsNotifier extends Notifier<ExtraNotifications> {
+  static const weeklyKey = 'notify_weekly_report';
+  static const wordKey = 'notify_word_of_day';
+
+  @override
+  ExtraNotifications build() {
+    final prefs = ref.watch(sharedPreferencesProvider);
+    return ExtraNotifications(
+      weekly: prefs.getBool(weeklyKey) ?? false,
+      wordOfDay: prefs.getBool(wordKey) ?? false,
+    );
+  }
+
+  /// İzin verilmezse kapalı kalır ve false döner.
+  Future<bool> setWeekly(bool enabled) async {
+    final service = ref.read(reminderServiceProvider);
+    if (enabled) {
+      if (!await service.requestPermission()) return false;
+      await _scheduleWeekly();
+    } else {
+      await service.cancelId(NotificationIds.weeklyReport);
+    }
+    await ref.read(sharedPreferencesProvider).setBool(weeklyKey, enabled);
+    state = ExtraNotifications(weekly: enabled, wordOfDay: state.wordOfDay);
+    return true;
+  }
+
+  Future<bool> setWordOfDay(bool enabled) async {
+    final service = ref.read(reminderServiceProvider);
+    if (enabled) {
+      if (!await service.requestPermission()) return false;
+    } else {
+      await service.cancelId(NotificationIds.wordOfDay);
+    }
+    await ref.read(sharedPreferencesProvider).setBool(wordKey, enabled);
+    state = ExtraNotifications(weekly: state.weekly, wordOfDay: enabled);
+    if (enabled) await scheduleNextWord();
+    return true;
+  }
+
+  Future<void> _scheduleWeekly() => ref
+      .read(reminderServiceProvider)
+      .scheduleWeekly(
+        id: NotificationIds.weeklyReport,
+        weekday: DateTime.sunday,
+        time: weeklyReportTime,
+        content: const ReminderContent(
+          title: 'Haftalık raporun hazır 📊',
+          body:
+              'Pace bu haftanı özetledi: ne kadar çalıştın, nerede '
+              'zorlandın? Bir bak!',
+        ),
+      );
+
+  /// Bir sonraki sabahın kelimesini kurar. Kelime destesi değiştikçe her
+  /// açılışta yenilenir; bildirim içeriği kurulduğu anda sabitlenir.
+  Future<void> scheduleNextWord({DateTime? now}) async {
+    if (!state.wordOfDay) return;
+    final at = now ?? DateTime.now();
+    var next = DateTime(
+      at.year,
+      at.month,
+      at.day,
+      wordOfDayTime.hour,
+      wordOfDayTime.minute,
+    );
+    if (!next.isAfter(at)) next = next.add(const Duration(days: 1));
+    final db = ref.read(databaseProvider);
+    final deck = [
+      for (final c in await db.select(db.flashcards).get())
+        (word: c.word, meaning: c.meaning),
+    ];
+    final word = wordOfDayFor(deck, next);
+    await ref
+        .read(reminderServiceProvider)
+        .scheduleAt(
+          id: NotificationIds.wordOfDay,
+          at: next,
+          content: ReminderContent(
+            title: 'Günün kelimesi: ${word.word}',
+            body: '${word.meaning} — bugün bir cümlede kullanmayı dene!',
+          ),
+        );
+  }
+
+  /// Açılışta zamanlamaları tazeler.
+  Future<void> resync() async {
+    if (state.weekly) await _scheduleWeekly();
+    await scheduleNextWord();
+  }
+}
+
+final extraNotificationsProvider =
+    NotifierProvider<ExtraNotificationsNotifier, ExtraNotifications>(
+      ExtraNotificationsNotifier.new,
+    );
+
+/// Kullanıcının genelde çalıştığı saate göre hatırlatma önerisi: son
+/// derslerin başlangıç saatlerinin ortancasından yarım saat önce, çeyrek
+/// saate yuvarlanmış. En az 5 ders gerekir; yoksa null.
+TimeOfDay? suggestReminderTime(List<DateTime> lessonStarts) {
+  if (lessonStarts.length < 5) return null;
+  final minutes = [
+    for (final d in lessonStarts.reversed.take(14)) d.hour * 60 + d.minute,
+  ]..sort();
+  final median = minutes[minutes.length ~/ 2];
+  final target = ((median - 30) / 15).round() * 15;
+  final clamped = target.clamp(6 * 60, 23 * 60);
+  return TimeOfDay(hour: clamped ~/ 60, minute: clamped % 60);
+}
+
+/// Hatırlatma saati önerisi; mevcut saatten 45 dakikadan az farklıysa null.
+final reminderSuggestionProvider = FutureProvider.autoDispose<TimeOfDay?>((
+  ref,
+) async {
+  final current = ref.watch(reminderProvider).time;
+  final lessons = await ref.read(repositoryProvider).completedLessons();
+  final suggestion = suggestReminderTime([
+    for (final l in lessons) l.createdAt.toLocal(),
+  ]);
+  if (suggestion == null) return null;
+  final diff =
+      (suggestion.hour * 60 + suggestion.minute) -
+      (current.hour * 60 + current.minute);
+  return diff.abs() < 45 ? null : suggestion;
+});
