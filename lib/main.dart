@@ -11,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'app/celebration.dart';
 import 'app/constants.dart';
 import 'app/error_reporting.dart';
+import 'app/home_widget_sync.dart';
 import 'app/mascot.dart';
 import 'app/motion.dart';
 import 'app/router.dart';
@@ -118,6 +119,30 @@ class _PaceoraAppState extends ConsumerState<PaceoraApp>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // Ana ekran widget'ı seriyle birlikte güncellenir (yalnızca Android).
+    ref.listenManual(
+      streakDisplayProvider,
+      (_, next) => _syncHomeWidget(next).ignore(),
+      fireImmediately: true,
+    );
+  }
+
+  Future<void> _syncHomeWidget(
+    ({int streak, StreakStatus status, int freezesNeeded}) streak,
+  ) async {
+    if (defaultTargetPlatform != TargetPlatform.android || kIsWeb) return;
+    final db = ref.read(databaseProvider);
+    final deck = [
+      for (final c in await db.select(db.flashcards).get())
+        (word: c.word, meaning: c.meaning),
+    ];
+    final word = wordOfDayFor(deck, DateTime.now());
+    await HomeWidgetSync.update(
+      streak: streak.streak,
+      doneToday: streak.status == StreakStatus.done,
+      word: word.word,
+      meaning: word.meaning,
+    );
   }
 
   @override

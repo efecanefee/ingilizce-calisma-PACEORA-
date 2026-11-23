@@ -59,6 +59,7 @@ dependencies:
   audioplayers: ^6.8.1
   firebase_core: ^5.2.0
   firebase_app_check: ^0.5.2
+  home_widget: ^0.10.0
 
 dev_dependencies:
   flutter_test:
