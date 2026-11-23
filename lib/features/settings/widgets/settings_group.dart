@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../settings_section.dart';
 
-/// Başlıklı, kart içinde gruplanmış ayar satırları.
+/// Kart içinde gruplanmış ayar satırları.
 ///
-/// Başlık bölüm rengiyle yazılır; içindeki her [SettingsTile] rengini
-/// [SettingsSectionScope] üzerinden buradan alır, böylece bir gruptaki tüm
-/// simgeler aynı renkte kalır.
+/// Bölümün kendi sayfasında ([SettingsSectionPage]) başlık sayfa çubuğunda
+/// yazdığı için grup başlığı gösterilmez; başka bir yerde kullanılırsa
+/// nötr renkte küçük bir başlık çıkar.
 class SettingsGroup extends StatelessWidget {
   const SettingsGroup({
     super.key,
@@ -20,11 +20,11 @@ class SettingsGroup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return SettingsSectionScope(
-      section: section,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    final onOwnPage = SettingsPageScope.of(context) == section;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (!onOwnPage)
           Padding(
             padding: const EdgeInsets.only(left: 4, bottom: 8),
             child: Semantics(
@@ -34,31 +34,30 @@ class SettingsGroup extends StatelessWidget {
                 style: theme.textTheme.labelMedium?.copyWith(
                   fontWeight: FontWeight.w800,
                   letterSpacing: 1.1,
-                  color: section.color(context),
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
             ),
           ),
-          Card(
-            clipBehavior: Clip.antiAlias,
-            child: Column(
-              children: [
-                for (final (i, child) in children.indexed) ...[
-                  if (i > 0) const Divider(height: 1, indent: 64),
-                  child,
-                ],
+        Card(
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            children: [
+              for (final (i, child) in children.indexed) ...[
+                if (i > 0) const Divider(height: 1, indent: 64),
+                child,
               ],
-            ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
 
-/// Satırlara içinde bulundukları bölümü bildirir.
-class SettingsSectionScope extends InheritedWidget {
-  const SettingsSectionScope({
+/// Hangi bölümün sayfasında olunduğunu alttaki gruplara bildirir.
+class SettingsPageScope extends InheritedWidget {
+  const SettingsPageScope({
     super.key,
     required this.section,
     required super.child,
@@ -66,14 +65,11 @@ class SettingsSectionScope extends InheritedWidget {
 
   final SettingsSection section;
 
-  /// En yakın gruptaki bölüm; grup dışında [SettingsSection.about] (nötr).
-  static SettingsSection of(BuildContext context) =>
-      context
-          .dependOnInheritedWidgetOfExactType<SettingsSectionScope>()
-          ?.section ??
-      SettingsSection.about;
+  /// En yakın bölüm sayfası; ana Ayarlar listesindeyse null.
+  static SettingsSection? of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<SettingsPageScope>()?.section;
 
   @override
-  bool updateShouldNotify(SettingsSectionScope oldWidget) =>
+  bool updateShouldNotify(SettingsPageScope oldWidget) =>
       section != oldWidget.section;
 }

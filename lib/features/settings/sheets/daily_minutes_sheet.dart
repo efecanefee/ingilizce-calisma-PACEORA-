@@ -5,7 +5,6 @@ import '../../../app/constants.dart';
 import '../../../app/motion.dart';
 import '../../../data/database.dart';
 import '../../../data/providers.dart';
-import '../settings_section.dart';
 import '../widgets/settings_sheet.dart';
 
 /// Günlük çalışma süresi seçicisini alt sayfada açar.
@@ -68,7 +67,8 @@ class _DailyMinutesPickerState extends ConsumerState<DailyMinutesPicker> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final color = SettingsSection.study.color(context);
+    // Seçili değer vurgu renginde; ayarlarda renk yalnızca seçimi gösterir.
+    final color = theme.colorScheme.primary;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

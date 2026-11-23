@@ -10,6 +10,8 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:paceora/app/constants.dart';
 import 'package:paceora/app/error_reporting.dart';
+import 'package:paceora/app/mascot.dart';
+import 'package:paceora/app/welcome_tour.dart';
 import 'package:paceora/data/database.dart';
 import 'package:paceora/data/gemini_service.dart';
 import 'package:paceora/data/placement.dart';
@@ -160,6 +162,26 @@ void main() {
       return instance;
     }
 
+    /// Ana sayfadaki kategori kartına dokunup bölüm sayfasını açar.
+    Future<void> openSection(
+      WidgetTester tester,
+      SettingsSection section,
+    ) async {
+      final card = find.byKey(ValueKey('settings-${section.name}'));
+      // Önceki bölüm için aşağı kaydırılmış olabilir; listenin başına dön.
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, 5000));
+      await _advance(tester);
+      await scrollIntoView(tester, card);
+      await tester.tap(card);
+      await _advance(tester);
+      expect(find.byType(SettingsSectionPage), findsOneWidget);
+    }
+
+    Future<void> goBack(WidgetTester tester) async {
+      Navigator.of(tester.element(find.byType(SettingsSectionPage))).pop();
+      await _advance(tester);
+    }
+
     testWidgets('bildirim izni verilmezse yol gösteren mesaj çıkar', (
       tester,
     ) async {
@@ -168,7 +190,7 @@ void main() {
         tester,
         overrides: [reminderServiceProvider.overrideWithValue(reminders)],
       );
-      await scrollIntoView(tester, find.text('Her gün hatırlat'));
+      await openSection(tester, SettingsSection.notifications);
       await tester.tap(find.byType(Switch).first);
       await _advance(tester);
 
@@ -178,7 +200,7 @@ void main() {
 
     testWidgets('API anahtarı kaydedilir ve silinir', (tester) async {
       await openSettings(tester);
-      await scrollIntoView(tester, find.text('Kendi Gemini anahtarın'));
+      await openSection(tester, SettingsSection.advanced);
       await tester.tap(find.text('Kendi Gemini anahtarın'));
       await _advance(tester);
 
@@ -221,7 +243,7 @@ void main() {
           ),
         ],
       );
-      await scrollIntoView(tester, find.text('Bağlantıyı test et'));
+      await openSection(tester, SettingsSection.advanced);
       await tester.tap(find.text('Bağlantıyı test et'));
       await _advance(tester);
 
@@ -233,6 +255,7 @@ void main() {
       tester,
     ) async {
       await openSettings(tester);
+      await openSection(tester, SettingsSection.data);
       await scrollIntoView(tester, find.text('Verileri sıfırla'));
       await tester.tap(find.text('Verileri sıfırla'));
       await _advance(tester);
@@ -256,6 +279,7 @@ void main() {
           AppConstants.prefThemeMode: 'dark',
         },
       );
+      await openSection(tester, SettingsSection.data);
       await scrollIntoView(tester, find.text('Verileri sıfırla'));
       await tester.tap(find.text('Verileri sıfırla'));
       await _advance(tester);
@@ -289,7 +313,7 @@ void main() {
         tester,
         prefs: {ErrorLog.key: seed.getStringList(ErrorLog.key)!},
       );
-      await scrollIntoView(tester, find.text('Hata kaydı'));
+      await openSection(tester, SettingsSection.advanced);
       expect(find.text('1 hata kaydı · yalnızca bu cihazda'), findsOneWidget);
       await tester.tap(find.text('Hata kaydı'));
       await _advance(tester);
@@ -304,44 +328,34 @@ void main() {
     Finder inSettings(Finder finder) =>
         find.descendant(of: find.byType(SettingsScreen), matching: finder);
 
-    Finder inGroup(SettingsSection section, Finder finder) => find.descendant(
-      of: find.byWidgetPredicate(
-        (w) => w is SettingsGroup && w.section == section,
-      ),
-      matching: finder,
+    testWidgets(
+      'ana sayfa: Pace\'li profil kartı ve sırayla kategori kartları',
+      (tester) async {
+        await openSettings(tester, tall: true);
+
+        expect(inSettings(find.byType(EquippedPace)), findsOneWidget);
+        final tops = [
+          for (final s in SettingsSection.values)
+            tester.getTopLeft(find.byKey(ValueKey('settings-${s.name}'))),
+        ];
+        // Kartlar iki sütunlu: sol-sağ, sonra alt satır.
+        expect(tops[0].dy, tops[1].dy);
+        expect(tops[0].dx, lessThan(tops[1].dx));
+        expect(tops[2].dy, greaterThan(tops[0].dy));
+        expect(tops[4].dy, greaterThan(tops[2].dy));
+        expect(tops[5].dy, greaterThan(tops[4].dy));
+        // Kartlar güncel değeri özetler; uzun ayar listesi ana sayfada yok.
+        expect(inSettings(find.text('10 dk · B1')), findsNothing);
+        expect(inSettings(find.text('15 dk · B1')), findsOneWidget);
+        expect(inSettings(find.text('Koyu tema')), findsOneWidget);
+        expect(inSettings(find.text('Hatırlatma kapalı')), findsOneWidget);
+        expect(inSettings(find.byType(SettingsGroup)), findsNothing);
+        expect(inSettings(find.text('YAPAY ZEKA')), findsNothing);
+        expect(inSettings(find.text('Hata defterim')), findsNothing);
+      },
     );
 
-    testWidgets('bölümler sırayla ve başlıklarıyla gelir', (tester) async {
-      await openSettings(tester, tall: true);
-
-      final order = tester
-          .widgetList<SettingsGroup>(inSettings(find.byType(SettingsGroup)))
-          .map((g) => g.section)
-          .toList();
-      expect(order, SettingsSection.values);
-      for (final s in SettingsSection.values) {
-        expect(inSettings(find.text(s.title)), findsOneWidget, reason: s.name);
-      }
-      // Her satır aynı ortak görünümü kullanır.
-      expect(
-        inSettings(find.byType(ListTile)),
-        findsNWidgets(
-          tester.widgetList(inSettings(find.byType(SettingsTile))).length,
-        ),
-      );
-    });
-
-    testWidgets('hata defteri ve haftalık rapor artık Ayarlarda değil', (
-      tester,
-    ) async {
-      await openSettings(tester, tall: true);
-      expect(inSettings(find.text('Hata defterim')), findsNothing);
-      expect(inSettings(find.text('Haftalık rapor')), findsNothing);
-      // Eski "Yapay zeka" bölümü GELİŞMİŞ'e taşındı.
-      expect(inSettings(find.text('YAPAY ZEKA')), findsNothing);
-    });
-
-    testWidgets('satırlar doğru bölümlerde', (tester) async {
+    testWidgets('satırlar doğru bölüm sayfalarında', (tester) async {
       await openSettings(tester, tall: true);
       final expected = {
         SettingsSection.study: [
@@ -369,23 +383,36 @@ void main() {
         SettingsSection.about: [
           'Sürüm',
           'Gizlilik',
+          'Tanıtımı yeniden izle',
           'Geri bildirim gönder',
           'Açık kaynak lisansları',
         ],
       };
-      expected.forEach((section, titles) {
+      for (final MapEntry(key: section, value: titles) in expected.entries) {
+        await openSection(tester, section);
+        // Sayfa başlığı bölüm adı; grup başlığı tekrar yazılmaz.
+        expect(
+          find.descendant(
+            of: find.byType(AppBar),
+            matching: find.text(section.label),
+          ),
+          findsOneWidget,
+        );
+        expect(find.text(section.title), findsNothing);
         for (final title in titles) {
-          expect(
-            inGroup(section, find.text(title)),
-            findsOneWidget,
-            reason: '$title → ${section.title}',
-          );
+          expect(find.text(title), findsOneWidget, reason: section.label);
         }
-      });
+        // Her satır aynı ortak görünümü kullanır.
+        expect(
+          find.byType(ListTile),
+          findsNWidgets(tester.widgetList(find.byType(SettingsTile)).length),
+        );
+        await goBack(tester);
+      }
     });
 
     for (final mode in ['dark', 'light']) {
-      testWidgets('simgeler bölüm renginde, sıfırlama hata renginde ($mode)', (
+      testWidgets('simgeler nötr, yalnızca sıfırlama hata renginde ($mode)', (
         tester,
       ) async {
         await openSettings(
@@ -394,33 +421,29 @@ void main() {
           prefs: {AppConstants.prefThemeMode: mode},
         );
         final context = tester.element(find.byType(SettingsScreen));
-        final dark = mode == 'dark';
-        expect(Theme.of(context).brightness == Brightness.dark, dark);
+        final scheme = Theme.of(context).colorScheme;
+        expect(Theme.of(context).brightness == Brightness.dark, mode == 'dark');
 
+        // Ana sayfadaki kart simgeleri nötr.
+        for (final s in SettingsSection.values) {
+          final icon = tester.widget<Icon>(inSettings(find.byIcon(s.icon)));
+          expect(icon.color, scheme.onSurfaceVariant, reason: s.label);
+        }
+
+        await openSection(tester, SettingsSection.data);
         Color? iconColor(IconData icon) =>
-            tester.widget<Icon>(inSettings(find.byIcon(icon))).color;
-
-        expect(
-          iconColor(Icons.delete_forever_rounded),
-          Theme.of(context).colorScheme.error,
-        );
-        final dataColor = dark
-            ? SettingsSection.data.bright
-            : SettingsSection.data.deep;
-        expect(iconColor(Icons.upload_file_rounded), dataColor);
-        expect(iconColor(Icons.restore_rounded), dataColor);
-        // Hata rengi yalnızca sıfırlama satırında.
+            tester.widget<Icon>(find.byIcon(icon)).color;
+        expect(iconColor(Icons.delete_forever_rounded), scheme.error);
+        expect(iconColor(Icons.upload_file_rounded), scheme.onSurfaceVariant);
+        expect(iconColor(Icons.restore_rounded), scheme.onSurfaceVariant);
         final errorIcons = tester
-            .widgetList<Icon>(inSettings(find.byType(Icon)))
-            .where((i) => i.color == Theme.of(context).colorScheme.error);
+            .widgetList<Icon>(find.byType(Icon))
+            .where((i) => i.color == scheme.error);
         expect(errorIcons, hasLength(1));
-        // Tema satırı da diğerleri gibi bölüm renginde.
-        expect(
-          iconColor(Icons.contrast_rounded),
-          dark
-              ? SettingsSection.appearance.bright
-              : SettingsSection.appearance.deep,
-        );
+        await goBack(tester);
+
+        await openSection(tester, SettingsSection.appearance);
+        expect(iconColor(Icons.contrast_rounded), scheme.onSurfaceVariant);
       });
     }
 
@@ -428,6 +451,7 @@ void main() {
       tester,
     ) async {
       await openSettings(tester);
+      await openSection(tester, SettingsSection.study);
       expect(find.text('Günde 15 dakika'), findsOneWidget);
       await tester.tap(find.text('Günlük çalışma süresi'));
       await _advance(tester);
@@ -445,6 +469,11 @@ void main() {
       expect((await repository.profile())!.dailyMinutes, 30);
       expect(find.text('Günde 30 dakika'), findsOneWidget);
       expect(find.text('Programı yenile'), findsOneWidget);
+
+      // Ana sayfadaki kart da yeni süreyi gösterir.
+      await tester.pump(const Duration(seconds: 5));
+      await goBack(tester);
+      expect(find.text('30 dk · B1'), findsOneWidget);
     });
 
     for (final mode in ['dark', 'light']) {
@@ -458,18 +487,21 @@ void main() {
           },
         );
         expect(tester.takeException(), isNull);
-        for (var i = 0; i < 16; i++) {
-          await tester.drag(
-            find.byType(Scrollable).first,
-            const Offset(0, -300),
-          );
-          await _advance(tester);
-          expect(tester.takeException(), isNull, reason: 'adım $i');
+        for (final section in SettingsSection.values) {
+          await openSection(tester, section);
+          expect(tester.takeException(), isNull, reason: section.label);
+          for (var i = 0; i < 6; i++) {
+            await tester.drag(
+              find.byType(Scrollable).last,
+              const Offset(0, -300),
+            );
+            await _advance(tester);
+            expect(tester.takeException(), isNull, reason: section.label);
+          }
+          await goBack(tester);
         }
         // Süre seçicisi de dar ekranda sığar.
-        await tester.drag(find.byType(Scrollable).first, const Offset(0, 6000));
-        await _advance(tester);
-        await scrollIntoView(tester, find.text('Günlük çalışma süresi'));
+        await openSection(tester, SettingsSection.study);
         await tester.tap(find.text('Günlük çalışma süresi'));
         await _advance(tester);
         expect(tester.takeException(), isNull, reason: 'süre seçicisi');
@@ -477,9 +509,8 @@ void main() {
     }
 
     for (final mode in ['dark', 'light']) {
-      testWidgets('tüm liste erişilebilirlik yönergelerine uyar ($mode)', (
-        tester,
-      ) async {
+      testWidgets('ana sayfa ve bölüm sayfaları erişilebilirlik yönergelerine '
+          'uyar ($mode)', (tester) async {
         final handle = tester.ensureSemantics();
         await openSettings(
           tester,
@@ -489,10 +520,21 @@ void main() {
             AppConstants.prefReminderEnabled: true,
           },
         );
-        expect(find.text('Hatırlatma saati'), findsOneWidget);
-        await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
-        await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
-        await expectLater(tester, meetsGuideline(textContrastGuideline));
+        Future<void> check() async {
+          await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+          await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+          await expectLater(tester, meetsGuideline(textContrastGuideline));
+        }
+
+        await check();
+        for (final section in SettingsSection.values) {
+          await openSection(tester, section);
+          if (section == SettingsSection.notifications) {
+            expect(find.text('Hatırlatma saati'), findsOneWidget);
+          }
+          await check();
+          await goBack(tester);
+        }
         handle.dispose();
       });
     }
@@ -508,8 +550,17 @@ void main() {
           ),
         ],
       );
-      await scrollIntoView(tester, find.text('Kendi Gemini anahtarın'));
+      await openSection(tester, SettingsSection.advanced);
       expect(find.textContaining('Genelde gerekmez'), findsOneWidget);
+    });
+
+    testWidgets('Tanıtımı yeniden izle turu başlatır', (tester) async {
+      final prefs = await openSettings(tester);
+      await openSection(tester, SettingsSection.about);
+      await tester.tap(find.text('Tanıtımı yeniden izle'));
+      await _advance(tester);
+      expect(prefs.getBool(AppConstants.prefTourPending), isTrue);
+      expect(find.byType(WelcomeTour), findsOneWidget);
     });
   });
 }

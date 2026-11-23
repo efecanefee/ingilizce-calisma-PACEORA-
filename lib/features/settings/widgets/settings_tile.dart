@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/motion.dart';
-import 'settings_group.dart';
+import '../settings_section.dart';
 
-/// Tüm ayar satırlarının ortak görünümü: bölüm renginde simge kutusu,
-/// başlık, isteğe bağlı açıklama ve sağda kontrol ya da ok.
+/// Tüm ayar satırlarının ortak görünümü: nötr simge kutusu, başlık, isteğe
+/// bağlı açıklama ve sağda kontrol ya da ok.
 ///
-/// Rengi kendisi seçmez; içinde bulunduğu [SettingsGroup]'un bölüm rengini
-/// kullanır. Tek istisna [danger]: geri alınamaz işlemler hata rengindedir.
+/// Simgeler renksizdir; tek istisna [danger]: geri alınamaz işlemler hata
+/// rengindedir.
 ///
 /// [below] verilirse (ör. tema seçici, vurgu renkleri) satırın altında, aynı
 /// kart hücresinde gösterilir.
@@ -35,11 +35,12 @@ class SettingsTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final dark = theme.brightness == Brightness.dark;
-    final section = SettingsSectionScope.of(context);
-    final color = danger ? theme.colorScheme.error : section.color(context);
+    final color = danger
+        ? theme.colorScheme.error
+        : SettingsSection.iconColor(context);
     final tint = danger
         ? color.withValues(alpha: dark ? 0.16 : 0.10)
-        : section.tint(context);
+        : SettingsSection.iconTint(context);
 
     final tile = ListTile(
       onTap: onTap == null

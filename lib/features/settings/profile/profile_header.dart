@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/constants.dart';
+import '../../../app/mascot.dart';
 import '../../../app/motion.dart';
 import '../../../app/theme.dart';
 import '../../../app/turkish_text.dart';
@@ -42,38 +42,47 @@ class ProfileHeader extends ConsumerWidget {
         children: [
           Row(
             children: [
-              Container(
-                    width: 64,
-                    height: 64,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        colors: [context.pace.accent, context.pace.accentDim],
+              // Pace, kullanıcının baş harfli rozetiyle birlikte.
+              SizedBox(
+                width: 76,
+                height: 72,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    const Align(
+                      alignment: Alignment.bottomLeft,
+                      child: ExcludeSemantics(
+                        child: EquippedPace(mood: PaceMood.cheer, size: 72),
                       ),
                     ),
-                    child: Text(
-                      initial,
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.graphite900,
+                    Positioned(
+                      right: 0,
+                      bottom: 0,
+                      child: Container(
+                        width: 28,
+                        height: 28,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: context.pace.accent,
+                          border: Border.all(
+                            color: AppColors.graphite900,
+                            width: 2,
+                          ),
+                        ),
+                        child: Text(
+                          initial,
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.graphite900,
+                          ),
+                        ),
                       ),
                     ),
-                  )
-                  .animate(onPlay: Motion.loop(reverse: true))
-                  .boxShadow(
-                    begin: const BoxShadow(
-                      color: Colors.transparent,
-                      blurRadius: 0,
-                    ),
-                    end: BoxShadow(
-                      color: context.pace.accent.withValues(alpha: 0.5),
-                      blurRadius: 18,
-                    ),
-                    borderRadius: BorderRadius.circular(32),
-                    duration: 1400.ms,
-                  ),
-              const SizedBox(width: 16),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

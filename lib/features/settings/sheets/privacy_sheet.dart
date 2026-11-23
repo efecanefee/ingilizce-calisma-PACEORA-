@@ -14,8 +14,7 @@ class PrivacyDetails extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // Hakkında bölümünden açılır; simgeler o bölümün renginde.
-    final color = SettingsSection.about.color(context);
+    final color = SettingsSection.iconColor(context);
     Widget section(IconData icon, String title, String body) => Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(

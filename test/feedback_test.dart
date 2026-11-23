@@ -76,6 +76,9 @@ void main() {
       await _advance(tester);
       await tester.tap(find.text('Ayarlar'));
       await _advance(tester);
+      await scrollIntoView(tester, find.text('Hakkında'));
+      await tester.tap(find.text('Hakkında'));
+      await _advance(tester);
       await scrollIntoView(tester, find.text('Geri bildirim gönder'));
       await tester.tap(find.text('Geri bildirim gönder'));
       await _advance(tester);

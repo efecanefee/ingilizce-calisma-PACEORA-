@@ -85,9 +85,7 @@ class NotificationsGroup extends ConsumerWidget {
                             time,
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w800,
-                              color: SettingsSection.notifications.color(
-                                context,
-                              ),
+                              color: theme.colorScheme.primary,
                             ),
                           ),
                           onTap: () => _pickTime(context, ref),

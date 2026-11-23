@@ -2,64 +2,39 @@ import 'package:flutter/material.dart';
 
 /// Ayarlar ekranının bölümleri, sırasıyla.
 ///
-/// Her bölümün tek bir rengi vardır: başlık yazısı ve o bölümdeki tüm satır
-/// simgeleri bu rengi kullanır, böylece renk = bölüm olur. Tonlar bilerek
-/// sakin (az doygun) seçildi ve pratik bölümlerinin renklerinden
-/// (`lib/app/feature_colors.dart`) ve durum renklerinden (başarı, uyarı,
-/// hata) ayrı tutuldu; ayarlarda bir rengin "anlam" taşıdığı izlenimi
-/// oluşmasın. Kırmızı yalnızca "Verileri sıfırla" satırına ayrılmıştır.
+/// Ayarlar bilerek renksizdir: tüm simgeler aynı nötr tonda durur
+/// ([iconColor], [iconTint]). Renk yalnızca seçili değerlerde (vurgu rengi)
+/// ve geri alınamaz işlemlerde (kırmızı, "Verileri sıfırla") kullanılır.
+/// Önceki sürümde her bölümün kendi rengi vardı; ekran fazla renkli
+/// bulunduğu için kaldırıldı.
 ///
-/// - [bright]: koyu temada kart zemininde (graphite700) okunur ton.
-/// - [deep]: açık temada beyaz kart zemininde okunur ton.
-///
-/// İkisi de metin ve simge için WCAG AA (4.5:1) kontrastını sağlar;
-/// `test/settings_section_test.dart` bunu denetler.
+/// Ana sayfada her bölüm bir kart olarak görünür ([label], [icon]); karta
+/// dokununca bölümün kendi sayfası açılır.
 enum SettingsSection {
-  /// Çivit: seviye, günlük süre, program.
-  study('ÇALIŞMA', Color(0xFF9AA8FF), Color(0xFF4250C4)),
+  study('ÇALIŞMA', 'Çalışma', Icons.school_rounded),
+  appearance('GÖRÜNÜM', 'Görünüm', Icons.palette_rounded),
+  notifications('BİLDİRİMLER', 'Bildirimler', Icons.notifications_rounded),
+  data('VERİLERİM', 'Verilerim', Icons.save_rounded),
+  advanced('GELİŞMİŞ', 'Gelişmiş', Icons.build_rounded),
+  about('HAKKINDA', 'Hakkında', Icons.info_outline_rounded);
 
-  /// Orkide: tema, vurgu, titreşim, ses.
-  appearance('GÖRÜNÜM', Color(0xFFE3A0F0), Color(0xFF9333A8)),
+  const SettingsSection(this.title, this.label, this.icon);
 
-  /// Kum: hatırlatma.
-  notifications('BİLDİRİMLER', Color(0xFFE2C07E), Color(0xFF86621A)),
-
-  /// Adaçayı: yedekleme ve geri yükleme.
-  data('VERİLERİM', Color(0xFF9FD4AE), Color(0xFF2F7A47)),
-
-  /// Çelik mavisi: kendi anahtarın, bağlantı testi, hata kaydı.
-  advanced('GELİŞMİŞ', Color(0xFF9FC0DA), Color(0xFF3A6485)),
-
-  /// Taş: sürüm, gizlilik, geri bildirim, lisanslar.
-  about('HAKKINDA', Color(0xFFC2BAAE), Color(0xFF6B6257));
-
-  const SettingsSection(this.title, this.bright, this.deep);
-
-  /// Bölüm başlığı. Doğrudan büyük yazıldı: `toUpperCase` Türkçeye duyarsız
-  /// ("Verilerim" → "VERILERIM").
+  /// Bölüm başlığı (büyük harf). Doğrudan büyük yazıldı: `toUpperCase`
+  /// Türkçeye duyarsız ("Verilerim" → "VERILERIM").
   final String title;
 
-  /// Koyu tema tonu.
-  final Color bright;
+  /// Kartta ve sayfa başlığında görünen ad.
+  final String label;
 
-  /// Açık tema tonu.
-  final Color deep;
+  /// Kartın simgesi.
+  final IconData icon;
 
-  /// Etkin temada başlık ve simge rengi.
-  Color color(BuildContext context) =>
-      Theme.of(context).brightness == Brightness.dark ? bright : deep;
+  /// Satır ve kart simgelerinin nötr rengi.
+  static Color iconColor(BuildContext context) =>
+      Theme.of(context).colorScheme.onSurfaceVariant;
 
-  /// Simge kutusunun zemini için yumuşak ton.
-  Color tint(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    return color(
-      context,
-    ).withValues(alpha: dark ? tintAlphaDark : tintAlphaLight);
-  }
-
-  /// Simge kutusu zemininin koyu temadaki saydamlığı.
-  static const tintAlphaDark = 0.16;
-
-  /// Simge kutusu zemininin açık temadaki saydamlığı.
-  static const tintAlphaLight = 0.10;
+  /// Simge kutusunun nötr zemini.
+  static Color iconTint(BuildContext context) =>
+      Theme.of(context).colorScheme.surfaceContainerHighest;
 }
