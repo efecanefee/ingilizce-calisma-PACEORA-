@@ -88,18 +88,40 @@ final profileProvider = AsyncNotifierProvider<ProfileNotifier, UserProfile?>(
   ProfileNotifier.new,
 );
 
-/// İçinde bulunulan haftanın planı + planın kaynağı.
+/// İçinde bulunulan program haftasının planı + planın kaynağı.
+///
+/// Program haftası pazartesiye bağlı değil: programın başladığı günden
+/// itibaren 7 günlük bloklar. Perşembe başlayan birinin haftası perşembeden
+/// çarşambaya sürer.
 class WeekPlan {
-  const WeekPlan({required this.days, required this.offline});
+  WeekPlan({
+    required this.days,
+    required this.offline,
+    DateTime? start,
+    this.weekNumber = 1,
+  }) : start = start ?? dayOf(clock.now());
 
   final List<WeeklyPlanDay> days;
 
   /// true ise plan Gemini'den değil yerleşik yedek programdan geldi.
   final bool offline;
 
+  /// Program haftasının ilk günü (00:00).
+  final DateTime start;
+
+  /// Programın kaçıncı haftası (1'den başlar).
+  final int weekNumber;
+
+  /// Haftanın [index]. gününün tarihi.
+  DateTime dateOf(int index) =>
+      DateTime(start.year, start.month, start.day + index);
+
+  /// Bugünün hafta içindeki sırası (0..6).
+  int get todayIndex => daysBetween(start, clock.now());
+
   /// Bugüne denk gelen gün; plan boşsa null.
   WeeklyPlanDay? get today {
-    final index = clock.now().weekday - DateTime.monday;
+    final index = todayIndex;
     for (final day in days) {
       if (day.dayIndex == index) return day;
     }
@@ -118,11 +140,22 @@ class WeekPlanNotifier extends AsyncNotifier<WeekPlan> {
 
   Future<WeekPlan> _load() async {
     final now = clock.now();
-    final days = await ref.read(repositoryProvider).planForWeek(now);
+    final repository = ref.read(repositoryProvider);
+    final programStart = await repository.programStart();
+    final start = planWeekStartOf(now, programStart);
+    final days = await repository.planForWeek(now);
     final offline =
-        ref.read(sharedPreferencesProvider).getBool(_offlineKey()) ?? false;
+        ref.read(sharedPreferencesProvider).getBool(_offlineKey(start)) ??
+        false;
     _loadedDay = dayOf(now);
-    return WeekPlan(days: days, offline: offline);
+    return WeekPlan(
+      days: days,
+      offline: offline,
+      start: start,
+      weekNumber: programStart == null
+          ? 1
+          : daysBetween(programStart, start) ~/ 7 + 1,
+    );
   }
 
   /// Plan yoksa kendiliğinden üretir.
@@ -140,22 +173,28 @@ class WeekPlanNotifier extends AsyncNotifier<WeekPlan> {
     return _load();
   }
 
-  String _offlineKey() =>
-      '$_offlinePrefix${mondayOf(clock.now()).toIso8601String()}';
+  String _offlineKey(DateTime start) =>
+      '$_offlinePrefix${start.toIso8601String()}';
 
   Future<WeeklyPlanResult> _generate(UserProfile profile) async {
+    final repository = ref.read(repositoryProvider);
+    final now = clock.now();
+    final programStart = await repository.programStart();
+    final start = planWeekStartOf(now, programStart);
     final result = await ref
         .read(geminiServiceProvider)
         .generateWeeklyPlan(
           level: profile.level,
           dailyMinutes: profile.dailyMinutes,
+          weekNumber: programStart == null
+              ? 1
+              : daysBetween(programStart, start) ~/ 7 + 1,
+          previousTopics: await repository.pastGrammarTopics(before: start),
         );
-    await ref
-        .read(repositoryProvider)
-        .replaceWeeklyPlan(clock.now(), result.days);
+    await repository.replaceWeeklyPlan(now, result.days);
     await ref
         .read(sharedPreferencesProvider)
-        .setBool(_offlineKey(), result.offline);
+        .setBool(_offlineKey(start), result.offline);
     return result;
   }
 

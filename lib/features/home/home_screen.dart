@@ -18,7 +18,6 @@ import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../data/profile_style.dart';
 import '../../data/providers.dart';
-import '../../data/repository.dart' show mondayOf;
 import '../../data/rewards.dart';
 import '../../data/streak_freeze.dart';
 import '../program/program_screen.dart';
@@ -1211,9 +1210,7 @@ class _WeekStrip extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final accent = isDark ? context.pace.accent : context.pace.accentDark;
-    final now = clock.now();
-    final todayIndex = now.weekday - DateTime.monday;
-    final monday = mondayOf(now);
+    final todayIndex = week.todayIndex;
     final byIndex = {for (final d in week.days) d.dayIndex: d};
 
     // Her gün ayrı bir kutucuk: dokununca o günün konusu açılır.
@@ -1224,20 +1221,18 @@ class _WeekStrip extends StatelessWidget {
           Expanded(
             child:
                 _DayTile(
-                      initial: _initials[i],
-                      dayName: AppConstants.weekdayNames[i],
-                      date: DateTime(
-                        monday.year,
-                        monday.month,
-                        monday.day + i,
-                      ).day,
+                      initial: _initials[week.dateOf(i).weekday - 1],
+                      dayName:
+                          AppConstants.weekdayNames[week.dateOf(i).weekday - 1],
+                      date: week.dateOf(i).day,
                       done: byIndex[i]?.status == 'completed',
                       today: i == todayIndex,
                       past: i < todayIndex,
                       accent: accent,
                       onTap: byIndex[i] == null
                           ? null
-                          : () => showPlanDayDetails(context, byIndex[i]!),
+                          : () =>
+                                showPlanDayDetails(context, week, byIndex[i]!),
                     )
                     .animate(delay: (60 * i).ms)
                     .scale(

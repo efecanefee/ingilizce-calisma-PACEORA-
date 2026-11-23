@@ -76,7 +76,7 @@ abstract class AppConstants {
   /// Bir derste modele hatırlatılacak en fazla çözülmemiş hata sayısı.
   static const maxReviewItems = 8;
 
-  /// Haftanın günleri — plan listesinde dayIndex 0..6 ile eşleşir.
+  /// Haftanın günleri; `DateTime.weekday - 1` ile eşleşir (0 = Pazartesi).
   static const weekdayNames = [
     'Pazartesi',
     'Salı',

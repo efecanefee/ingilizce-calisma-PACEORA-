@@ -226,9 +226,16 @@ class GeminiService {
   Future<WeeklyPlanResult> generateWeeklyPlan({
     required String level,
     required int dailyMinutes,
+    int weekNumber = 1,
+    List<String> previousTopics = const [],
   }) async {
     final response = await _post(
-      prompt: _planPrompt(level: level, dailyMinutes: dailyMinutes),
+      prompt: _planPrompt(
+        level: level,
+        dailyMinutes: dailyMinutes,
+        weekNumber: weekNumber,
+        previousTopics: previousTopics,
+      ),
       schema: _planSchema,
       timeout: const Duration(seconds: 60),
     );
@@ -682,21 +689,37 @@ Verilerde olmayan bir şey uydurma. Veri azsa bunu nazikçe belirt.
     _ => 'Gemini $statusCode',
   };
 
-  String _planPrompt({required String level, required int dailyMinutes}) {
+  String _planPrompt({
+    required String level,
+    required int dailyMinutes,
+    required int weekNumber,
+    required List<String> previousTopics,
+  }) {
+    final progress = weekNumber <= 1
+        ? 'Bu, öğrencinin bu seviyedeki İLK haftası. Programa seviyenin '
+              'temel konularıyla başla; öğrenci daha önce bu seviyede hiçbir '
+              'konu işlemedi.'
+        : 'Bu, programın $weekNumber. haftası. Önceki haftaların üzerine '
+              'koyarak ilerle.';
+    final done = previousTopics.isEmpty
+        ? ''
+        : '\nDaha önce işlenen konular (bunları tekrar etme, sonrakine geç): '
+              '${previousTopics.join(", ")}.\n';
     return '''
 Sen bir İngilizce öğretmenisin. Türkçe konuşan bir öğrenci için haftalık çalışma programı hazırlıyorsun.
 
 CEFR seviyesi: $level
 Günlük çalışma süresi: $dailyMinutes dakika
-
-Pazartesiden pazara 7 günlük bir program üret. Her gün için:
+$progress
+$done
+7 günlük bir program üret (1. gün bugün). Her gün için:
 - grammarTopic: O günün dilbilgisi konusu. İngilizce konu adı, seviyeye uygun (örn. "Present Perfect vs Past Simple").
 - vocabTheme: O günün kelime teması. TÜRKÇE yazılmış kısa bir tema (örn. "Seyahat ve ulaşım").
 
 Kurallar:
 - Konular hafta boyunca birbirini tamamlasın, kolaydan zora ilerlesin.
 - Aynı konu iki kez tekrar etmesin.
-- 7. gün (pazar) haftanın tekrarı olsun.
+- 7. gün haftanın tekrarı olsun.
 - $dailyMinutes dakikada bitirilebilecek kapsamda tut.
 ''';
   }

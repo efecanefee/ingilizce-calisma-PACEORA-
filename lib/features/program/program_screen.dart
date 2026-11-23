@@ -67,19 +67,22 @@ class ProgramScreen extends ConsumerWidget {
 /// Bir günün takvimdeki konumu.
 enum _DayState { done, today, missed, upcoming }
 
+_DayState _stateOf(WeekPlan week, WeeklyPlanDay day) {
+  if (day.status == 'completed') return _DayState.done;
+  final today = week.todayIndex;
+  if (day.dayIndex == today) return _DayState.today;
+  return day.dayIndex < today ? _DayState.missed : _DayState.upcoming;
+}
+
 /// Bir plan gününün ayrıntı sayfasını açar. Ana ekrandaki hafta
 /// kutucukları da bunu kullanır.
-void showPlanDayDetails(BuildContext context, WeeklyPlanDay day) {
-  final todayIndex = clock.now().weekday - DateTime.monday;
-  final monday = mondayOf(clock.now());
-  final state = day.status == 'completed'
-      ? _DayState.done
-      : day.dayIndex == todayIndex
-      ? _DayState.today
-      : day.dayIndex < todayIndex
-      ? _DayState.missed
-      : _DayState.upcoming;
-  final date = DateTime(monday.year, monday.month, monday.day + day.dayIndex);
+void showPlanDayDetails(
+  BuildContext context,
+  WeekPlan week,
+  WeeklyPlanDay day,
+) {
+  final state = _stateOf(week, day);
+  final date = week.dateOf(day.dayIndex);
   Haptics.tap();
   showModalBottomSheet<void>(
     context: context,
@@ -96,21 +99,15 @@ class _Timeline extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final todayIndex = clock.now().weekday - DateTime.monday;
-    final monday = mondayOf(clock.now());
     final done = week.days.where((d) => d.status == 'completed').length;
-
-    _DayState stateOf(WeeklyPlanDay day) {
-      if (day.status == 'completed') return _DayState.done;
-      if (day.dayIndex == todayIndex) return _DayState.today;
-      return day.dayIndex < todayIndex ? _DayState.missed : _DayState.upcoming;
-    }
+    final reviewDay = AppConstants.weekdayNames[week.dateOf(6).weekday - 1];
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
       children: [
         _WeekHeader(
-          monday: monday,
+          start: week.start,
+          weekNumber: week.weekNumber,
           done: done,
           total: week.days.length,
           offline: week.offline,
@@ -119,19 +116,16 @@ class _Timeline extends StatelessWidget {
         for (final (i, day) in week.days.indexed)
           _TimelineRow(
             day: day,
-            date: DateTime(
-              monday.year,
-              monday.month,
-              monday.day + day.dayIndex,
-            ),
-            state: stateOf(day),
+            date: week.dateOf(day.dayIndex),
+            state: _stateOf(week, day),
             isFirst: i == 0,
             isLast: i == week.days.length - 1,
           ).entrance(i + 1),
         const SizedBox(height: 8),
         Text(
-          'Pazar günleri haftanın tekrarına ayrılır. Program her pazartesi '
-          'seviyene göre kendiliğinden yenilenir.',
+          'Haftanın son günü ($reviewDay) tekrara ayrılır. Program, '
+          'başladığın günden itibaren her 7 günde bir seviyene göre '
+          'kendiliğinden yenilenir.',
           textAlign: TextAlign.center,
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
@@ -144,13 +138,15 @@ class _Timeline extends StatelessWidget {
 
 class _WeekHeader extends StatelessWidget {
   const _WeekHeader({
-    required this.monday,
+    required this.start,
+    required this.weekNumber,
     required this.done,
     required this.total,
     required this.offline,
   });
 
-  final DateTime monday;
+  final DateTime start;
+  final int weekNumber;
   final int done;
   final int total;
   final bool offline;
@@ -174,7 +170,7 @@ class _WeekHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final sunday = DateTime(monday.year, monday.month, monday.day + 6);
+    final end = DateTime(start.year, start.month, start.day + 6);
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -188,7 +184,11 @@ class _WeekHeader extends StatelessWidget {
               : [
                   context.pace.accentDark,
                   // Beyaz yazı açık zeminde de okunsun diye koyuya kayar.
-                  Color.lerp(context.pace.accentDark, AppColors.graphite900, 0.35)!,
+                  Color.lerp(
+                    context.pace.accentDark,
+                    AppColors.graphite900,
+                    0.35,
+                  )!,
                 ],
         ),
       ),
@@ -196,8 +196,8 @@ class _WeekHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '${monday.day} ${_months[monday.month - 1]} – '
-            '${sunday.day} ${_months[sunday.month - 1]}',
+            '$weekNumber. hafta · ${start.day} ${_months[start.month - 1]} – '
+            '${end.day} ${_months[end.month - 1]}',
             style: theme.textTheme.labelLarge?.copyWith(
               color: Colors.white.withValues(alpha: 0.85),
             ),
@@ -385,7 +385,7 @@ class _TimelineRow extends StatelessWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              '${AppConstants.weekdayNames[day.dayIndex]} · '
+                              '${AppConstants.weekdayNames[date.weekday - 1]} · '
                               '${date.day}.${date.month}',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -485,7 +485,7 @@ class _DayDetails extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '${AppConstants.weekdayNames[day.dayIndex]}, ${date.day}.${date.month}',
+              '${AppConstants.weekdayNames[date.weekday - 1]}, ${date.day}.${date.month}',
               style: theme.textTheme.labelLarge?.copyWith(
                 color: theme.colorScheme.primary,
               ),

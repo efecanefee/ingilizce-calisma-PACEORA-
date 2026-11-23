@@ -25,15 +25,40 @@ DateTime dayOf(DateTime date) => DateTime(date.year, date.month, date.day);
 
 /// Tarihin içinde bulunduğu haftanın pazartesi günü (00:00).
 DateTime mondayOf(DateTime date) => DateTime(
-      date.year,
-      date.month,
-      date.day - (date.weekday - DateTime.monday),
-    );
+  date.year,
+  date.month,
+  date.day - (date.weekday - DateTime.monday),
+);
+
+/// Program haftasının ilk günü: [anchor] (programın başladığı gün) ile
+/// başlayan 7 günlük bloklardan [date]'i içereni. [anchor] yoksa program
+/// bugün başlıyor demektir.
+DateTime planWeekStartOf(DateTime date, DateTime? anchor) {
+  final day = dayOf(date);
+  if (anchor == null) return day;
+  final start = dayOf(anchor);
+  final diff = _daysBetween(start, day);
+  // Tarih başlangıçtan önceyse (saat geri alınmış) ilk hafta sayılır.
+  final weeks = diff < 0 ? 0 : diff ~/ 7;
+  return DateTime(start.year, start.month, start.day + weeks * 7);
+}
+
+/// Plan gününün takvim tarihi.
+DateTime planDateOf(WeeklyPlanDay day) => DateTime(
+  day.weekStart.year,
+  day.weekStart.month,
+  day.weekStart.day + day.dayIndex,
+);
+
+/// [from]'dan [to]'ya kaç takvim günü olduğu (yaz saatinden etkilenmez).
+int daysBetween(DateTime from, DateTime to) => _daysBetween(from, to);
 
 /// İki tarih arasındaki tam gün farkı (yaz saati kaymalarından etkilenmez).
-int _daysBetween(DateTime from, DateTime to) => DateTime.utc(to.year, to.month, to.day)
-    .difference(DateTime.utc(from.year, from.month, from.day))
-    .inDays;
+int _daysBetween(DateTime from, DateTime to) => DateTime.utc(
+  to.year,
+  to.month,
+  to.day,
+).difference(DateTime.utc(from.year, from.month, from.day)).inDays;
 
 /// Çalışılan günlerden en uzun kesintisiz seri.
 int bestStreakOf(Set<DateTime> days) {
@@ -79,8 +104,9 @@ class Repository {
   /// Eski sürümden kalan 10/20/45 dakikalık süre ilk okumada yeni
   /// seçeneklerden birine taşınır ve kaydedilir.
   Future<UserProfile?> profile() async {
-    final row =
-        await (_db.select(_db.userProfiles)..limit(1)).getSingleOrNull();
+    final row = await (_db.select(
+      _db.userProfiles,
+    )..limit(1)).getSingleOrNull();
     if (row == null) return null;
     final minutes = AppConstants.normalizeDailyMinutes(row.dailyMinutes);
     if (minutes == row.dailyMinutes) return row;
@@ -97,7 +123,9 @@ class Repository {
   }) async {
     final existing = await profile();
     if (existing == null) {
-      await _db.into(_db.userProfiles).insert(
+      await _db
+          .into(_db.userProfiles)
+          .insert(
             UserProfilesCompanion.insert(
               name: name,
               level: level,
@@ -105,8 +133,9 @@ class Repository {
             ),
           );
     } else {
-      await (_db.update(_db.userProfiles)..where((t) => t.id.equals(existing.id)))
-          .write(
+      await (_db.update(
+        _db.userProfiles,
+      )..where((t) => t.id.equals(existing.id))).write(
         UserProfilesCompanion(
           name: Value(name),
           level: Value(level),
@@ -117,9 +146,45 @@ class Repository {
     return (await profile())!;
   }
 
-  /// [date]'in içinde bulunduğu haftanın planı, pazartesiden pazara sıralı.
-  Future<List<WeeklyPlanDay>> planForWeek(DateTime date) {
-    final start = mondayOf(date);
+  /// Programın başladığı gün: yazılmış ilk plan haftasının ilk günü.
+  ///
+  /// Henüz plan yoksa null; ilk plan yazıldığı günden başlar. Eski sürümlerde
+  /// planlar pazartesiye göre yazıldığından onların haftaları pazartesi kalır.
+  Future<DateTime?> programStart() async {
+    final first = _db.weeklyPlanDays.weekStart.min();
+    final row = await (_db.selectOnly(
+      _db.weeklyPlanDays,
+    )..addColumns([first])).getSingleOrNull();
+    return row?.read(first);
+  }
+
+  /// [before]'dan önceki program haftalarında işlenen dilbilgisi konuları,
+  /// en yeniden eskiye, tekrarsız ve en çok [limit] tane.
+  Future<List<String>> pastGrammarTopics({
+    required DateTime before,
+    int limit = 28,
+  }) async {
+    final rows =
+        await (_db.select(_db.weeklyPlanDays)
+              ..where((t) => t.weekStart.isSmallerThanValue(before))
+              ..orderBy([
+                (t) => OrderingTerm(
+                  expression: t.weekStart,
+                  mode: OrderingMode.desc,
+                ),
+                (t) => OrderingTerm(expression: t.dayIndex),
+              ]))
+            .get();
+    return rows.map((r) => r.grammarTopic).toSet().take(limit).toList();
+  }
+
+  /// [date]'i içeren program haftasının ilk günü.
+  Future<DateTime> planWeekStart(DateTime date) async =>
+      planWeekStartOf(date, await programStart());
+
+  /// [date]'i içeren program haftasının planı, ilk günden yedinciye sıralı.
+  Future<List<WeeklyPlanDay>> planForWeek(DateTime date) async {
+    final start = await planWeekStart(date);
     return (_db.select(_db.weeklyPlanDays)
           ..where((t) => t.weekStart.equals(start))
           ..orderBy([(t) => OrderingTerm(expression: t.dayIndex)]))
@@ -128,7 +193,7 @@ class Repository {
 
   /// Haftanın planını baştan yazar (varsa eskisini siler).
   Future<void> replaceWeeklyPlan(DateTime date, List<PlanDaySpec> days) async {
-    final start = mondayOf(date);
+    final start = await planWeekStart(date);
     await _db.transaction(() async {
       // Zaten çalışılmış günlerin durumu korunur; plan yenilemek ilerlemeyi
       // ve dolayısıyla streak'i silmemeli.
@@ -136,8 +201,9 @@ class Repository {
         for (final day in await planForWeek(start)) day.dayIndex: day.status,
       };
 
-      await (_db.delete(_db.weeklyPlanDays)..where((t) => t.weekStart.equals(start)))
-          .go();
+      await (_db.delete(
+        _db.weeklyPlanDays,
+      )..where((t) => t.weekStart.equals(start))).go();
       await _db.batch((batch) {
         batch.insertAll(_db.weeklyPlanDays, [
           for (var i = 0; i < days.length; i++)
@@ -178,8 +244,9 @@ class Repository {
         freezes: freezes,
       );
       bridged = next.bridged;
-      await (_db.update(_db.userProfiles)..where((t) => t.id.equals(current.id)))
-          .write(
+      await (_db.update(
+        _db.userProfiles,
+      )..where((t) => t.id.equals(current.id))).write(
         UserProfilesCompanion(
           streak: Value(next.streak),
           lastStudyDate: Value(today),
@@ -192,10 +259,11 @@ class Repository {
   // --- Günlük ders ---------------------------------------------------------
 
   /// [date] gününe ait ders kaydı; henüz üretilmediyse null.
-  Future<Lesson?> lessonFor(DateTime date) => (_db.select(_db.lessons)
-        ..where((t) => t.lessonDate.equals(dayOf(date)))
-        ..limit(1))
-      .getSingleOrNull();
+  Future<Lesson?> lessonFor(DateTime date) =>
+      (_db.select(_db.lessons)
+            ..where((t) => t.lessonDate.equals(dayOf(date)))
+            ..limit(1))
+          .getSingleOrNull();
 
   /// Dersi kaydeder ya da var olanı günceller.
   ///
@@ -213,7 +281,9 @@ class Repository {
     final existing = await lessonFor(day);
 
     if (existing == null) {
-      await _db.into(_db.lessons).insert(
+      await _db
+          .into(_db.lessons)
+          .insert(
             LessonsCompanion.insert(
               lessonDate: day,
               contentJson: state.encode(),
@@ -225,15 +295,16 @@ class Repository {
       return;
     }
 
-    await (_db.update(_db.lessons)..where((t) => t.id.equals(existing.id))).write(
+    await (_db.update(
+      _db.lessons,
+    )..where((t) => t.id.equals(existing.id))).write(
       LessonsCompanion(
         contentJson: Value(state.encode()),
         score: score == null ? const Value.absent() : Value(score),
         durationSeconds: durationSeconds == null
             ? const Value.absent()
             : Value(durationSeconds),
-        completed:
-            completed == null ? const Value.absent() : Value(completed),
+        completed: completed == null ? const Value.absent() : Value(completed),
       ),
     );
   }
@@ -255,15 +326,21 @@ class Repository {
 
     await _db.transaction(() async {
       for (final outcome in outcomes) {
-        final existing = await (_db.select(_db.mistakes)
-              ..where((t) =>
-                  t.item.equals(outcome.item) & t.type.equals(outcome.type))
-              ..limit(1))
-            .getSingleOrNull();
+        final existing =
+            await (_db.select(_db.mistakes)
+                  ..where(
+                    (t) =>
+                        t.item.equals(outcome.item) &
+                        t.type.equals(outcome.type),
+                  )
+                  ..limit(1))
+                .getSingleOrNull();
 
         if (existing == null) {
           if (outcome.correct) continue;
-          await _db.into(_db.mistakes).insert(
+          await _db
+              .into(_db.mistakes)
+              .insert(
                 MistakesCompanion.insert(
                   item: outcome.item,
                   context: outcome.context,
@@ -275,14 +352,12 @@ class Repository {
         }
 
         final correctStreak = outcome.correct ? existing.timesCorrect + 1 : 0;
-        await (_db.update(_db.mistakes)
-              ..where((t) => t.id.equals(existing.id)))
-            .write(
+        await (_db.update(
+          _db.mistakes,
+        )..where((t) => t.id.equals(existing.id))).write(
           MistakesCompanion(
             timesCorrect: Value(correctStreak),
-            timesWrong: Value(
-              existing.timesWrong + (outcome.correct ? 0 : 1),
-            ),
+            timesWrong: Value(existing.timesWrong + (outcome.correct ? 0 : 1)),
             lastAskedAt: Value(at),
             resolved: Value(correctStreak >= 3),
           ),
@@ -297,17 +372,18 @@ class Repository {
   Future<List<String>> unresolvedMistakeItems({
     int limit = AppConstants.maxReviewItems,
   }) async {
-    final rows = await (_db.select(_db.mistakes)
-          ..where((t) => t.resolved.equals(false))
-          ..orderBy([
-            (t) => OrderingTerm(
+    final rows =
+        await (_db.select(_db.mistakes)
+              ..where((t) => t.resolved.equals(false))
+              ..orderBy([
+                (t) => OrderingTerm(
                   expression: t.timesWrong,
                   mode: OrderingMode.desc,
                 ),
-            (t) => OrderingTerm(expression: t.lastAskedAt),
-          ])
-          ..limit(limit))
-        .get();
+                (t) => OrderingTerm(expression: t.lastAskedAt),
+              ])
+              ..limit(limit))
+            .get();
     return [for (final row in rows) row.item];
   }
 
@@ -332,13 +408,16 @@ class Repository {
         final word = card.word.trim();
         if (word.isEmpty) continue;
 
-        final existing = await (_db.select(_db.flashcards)
-              ..where((t) => t.word.lower().equals(word.toLowerCase()))
-              ..limit(1))
-            .getSingleOrNull();
+        final existing =
+            await (_db.select(_db.flashcards)
+                  ..where((t) => t.word.lower().equals(word.toLowerCase()))
+                  ..limit(1))
+                .getSingleOrNull();
 
         if (existing == null) {
-          await _db.into(_db.flashcards).insert(
+          await _db
+              .into(_db.flashcards)
+              .insert(
                 FlashcardsCompanion.insert(
                   word: word,
                   meaning: card.meaning.trim(),
@@ -386,10 +465,11 @@ class Repository {
 
   /// Bu kelimenin kartı destede var mı (büyük/küçük harf duyarsız)?
   Future<bool> hasFlashcard(String word) async {
-    final row = await (_db.select(_db.flashcards)
-          ..where((t) => t.word.lower().equals(word.trim().toLowerCase()))
-          ..limit(1))
-        .getSingleOrNull();
+    final row =
+        await (_db.select(_db.flashcards)
+              ..where((t) => t.word.lower().equals(word.trim().toLowerCase()))
+              ..limit(1))
+            .getSingleOrNull();
     return row != null;
   }
 
@@ -428,8 +508,9 @@ class Repository {
       grade: grade,
       today: now ?? clock.now(),
     );
-    await (_db.update(_db.flashcards)..where((t) => t.id.equals(card.id)))
-        .write(
+    await (_db.update(
+      _db.flashcards,
+    )..where((t) => t.id.equals(card.id))).write(
       FlashcardsCompanion(
         ease: Value(schedule.ease),
         intervalDays: Value(schedule.intervalDays),
@@ -442,19 +523,24 @@ class Repository {
 
   // --- Günün hikayesi ------------------------------------------------------
 
-  Future<Story?> storyFor(DateTime date) => (_db.select(_db.stories)
-        ..where((t) => t.storyDate.equals(dayOf(date)))
-        ..limit(1))
-      .getSingleOrNull();
+  Future<Story?> storyFor(DateTime date) =>
+      (_db.select(_db.stories)
+            ..where((t) => t.storyDate.equals(dayOf(date)))
+            ..limit(1))
+          .getSingleOrNull();
 
   /// Hikayeyi ve cevapları kaydeder; test bittiyse skoru da yazar.
   Future<void> saveStory(DateTime date, StoryState state) async {
     final day = dayOf(date);
     final existing = await storyFor(day);
-    final score = state.isFinished ? Value(state.scorePercent) : const Value<double?>.absent();
+    final score = state.isFinished
+        ? Value(state.scorePercent)
+        : const Value<double?>.absent();
 
     if (existing == null) {
-      await _db.into(_db.stories).insert(
+      await _db
+          .into(_db.stories)
+          .insert(
             StoriesCompanion.insert(
               storyDate: day,
               title: state.story.title,
@@ -464,8 +550,9 @@ class Repository {
           );
       return;
     }
-    await (_db.update(_db.stories)..where((t) => t.id.equals(existing.id)))
-        .write(
+    await (_db.update(
+      _db.stories,
+    )..where((t) => t.id.equals(existing.id))).write(
       StoriesCompanion(
         title: Value(state.story.title),
         contentJson: Value(state.encode()),
@@ -481,28 +568,24 @@ class Repository {
   /// Gün elle işaretlenmiş olabilir (ders kaydı yok) ya da plan yenilenmiş
   /// olabilir; ikisinin birleşimi takvim için doğru kaynak.
   Future<Set<DateTime>> studiedDays() async {
-    final planDays = await (_db.select(_db.weeklyPlanDays)
-          ..where((t) => t.status.equals('completed')))
-        .get();
-    final lessons = await (_db.select(_db.lessons)
-          ..where((t) => t.completed.equals(true)))
-        .get();
+    final planDays = await (_db.select(
+      _db.weeklyPlanDays,
+    )..where((t) => t.status.equals('completed'))).get();
+    final lessons = await (_db.select(
+      _db.lessons,
+    )..where((t) => t.completed.equals(true))).get();
     return {
-      for (final day in planDays)
-        DateTime(
-          day.weekStart.year,
-          day.weekStart.month,
-          day.weekStart.day + day.dayIndex,
-        ),
+      for (final day in planDays) planDateOf(day),
       for (final lesson in lessons) dayOf(lesson.lessonDate),
     };
   }
 
   /// Tamamlanmış dersler, tarihe göre artan.
-  Future<List<Lesson>> completedLessons() => (_db.select(_db.lessons)
-        ..where((t) => t.completed.equals(true))
-        ..orderBy([(t) => OrderingTerm(expression: t.lessonDate)]))
-      .get();
+  Future<List<Lesson>> completedLessons() =>
+      (_db.select(_db.lessons)
+            ..where((t) => t.completed.equals(true))
+            ..orderBy([(t) => OrderingTerm(expression: t.lessonDate)]))
+          .get();
 
   /// [date]'in haftasının istatistikleri. [cardsReviewed] tekrar kaydı
   /// veritabanında tutulmadığı için dışarıdan verilir.
@@ -515,37 +598,45 @@ class Repository {
 
     bool inWeek(DateTime d) => !d.isBefore(start) && d.isBefore(end);
 
-    final plan = await planForWeek(start);
+    // Program haftaları pazartesiye bağlı değil; bu takvim haftasına düşen
+    // plan günleri hangi program haftasından olursa olsun sayılır.
+    final plan = (await _db.select(_db.weeklyPlanDays).get())
+        .where((d) => inWeek(planDateOf(d)))
+        .toList();
     final lessons = (await completedLessons())
         .where((l) => inWeek(l.lessonDate))
         .toList();
     final stories = (await _db.select(_db.stories).get())
         .where((s) => inWeek(s.storyDate) && s.quizScore != null)
         .toList();
-    final mistakes = await (_db.select(_db.mistakes)
-          ..where((t) => t.resolved.equals(false))
-          ..orderBy([
-            (t) => OrderingTerm(
+    final mistakes =
+        await (_db.select(_db.mistakes)
+              ..where((t) => t.resolved.equals(false))
+              ..orderBy([
+                (t) => OrderingTerm(
                   expression: t.timesWrong,
                   mode: OrderingMode.desc,
                 ),
-          ]))
-        .get();
+              ]))
+            .get();
 
-    final scores = [for (final l in lessons) if (l.score != null) l.score!];
+    final scores = [
+      for (final l in lessons)
+        if (l.score != null) l.score!,
+    ];
     final storyScores = [for (final s in stories) s.quizScore!];
 
-    double? average(List<double> values) => values.isEmpty
-        ? null
-        : values.reduce((a, b) => a + b) / values.length;
+    double? average(List<double> values) =>
+        values.isEmpty ? null : values.reduce((a, b) => a + b) / values.length;
 
     return WeeklyStats(
       weekStart: start,
       daysCompleted: plan.where((d) => d.status == 'completed').length,
       lessonsCompleted: lessons.length,
       averageLessonScore: average(scores),
-      studyMinutes: (lessons.fold<int>(0, (sum, l) => sum + l.durationSeconds) / 60)
-          .round(),
+      studyMinutes:
+          (lessons.fold<int>(0, (sum, l) => sum + l.durationSeconds) / 60)
+              .round(),
       storiesRead: stories.length,
       averageStoryScore: average(storyScores),
       cardsReviewed: cardsReviewed,
@@ -557,20 +648,23 @@ class Repository {
   // --- Haftalık rapor ------------------------------------------------------
 
   /// Kayıtlı raporlar, en yeni hafta önce.
-  Future<List<WeeklyReview>> weeklyReviews() => (_db.select(_db.weeklyReviews)
-        ..orderBy([
-          (t) => OrderingTerm(expression: t.weekStart, mode: OrderingMode.desc),
-        ]))
-      .get();
+  Future<List<WeeklyReview>> weeklyReviews() =>
+      (_db.select(_db.weeklyReviews)..orderBy([
+            (t) =>
+                OrderingTerm(expression: t.weekStart, mode: OrderingMode.desc),
+          ]))
+          .get();
 
   /// Haftanın raporunu yazar; aynı hafta için önceki rapor değiştirilir.
   Future<void> saveWeeklyReport(WeeklyReport report) async {
     final start = mondayOf(report.stats.weekStart);
     await _db.transaction(() async {
-      await (_db.delete(_db.weeklyReviews)
-            ..where((t) => t.weekStart.equals(start)))
-          .go();
-      await _db.into(_db.weeklyReviews).insert(
+      await (_db.delete(
+        _db.weeklyReviews,
+      )..where((t) => t.weekStart.equals(start))).go();
+      await _db
+          .into(_db.weeklyReviews)
+          .insert(
             WeeklyReviewsCompanion.insert(
               weekStart: start,
               reportJson: report.encode(),
@@ -626,13 +720,17 @@ class Repository {
   }
 
   /// Hata defteri: henüz pekişmemiş olanlar önce, en çok yanlış yapılan üstte.
-  Future<List<Mistake>> mistakes() => (_db.select(_db.mistakes)
-        ..orderBy([
-          (t) => OrderingTerm(expression: t.resolved),
-          (t) => OrderingTerm(expression: t.timesWrong, mode: OrderingMode.desc),
-          (t) => OrderingTerm(expression: t.lastAskedAt, mode: OrderingMode.desc),
-        ]))
-      .get();
+  Future<List<Mistake>> mistakes() =>
+      (_db.select(_db.mistakes)..orderBy([
+            (t) => OrderingTerm(expression: t.resolved),
+            (t) =>
+                OrderingTerm(expression: t.timesWrong, mode: OrderingMode.desc),
+            (t) => OrderingTerm(
+              expression: t.lastAskedAt,
+              mode: OrderingMode.desc,
+            ),
+          ]))
+          .get();
 
   /// Profilin seviyesini değiştirir (adaptif seviye ayarı).
   Future<void> updateLevel(String level) async {
