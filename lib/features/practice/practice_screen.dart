@@ -52,6 +52,16 @@ class PracticeScreen extends ConsumerWidget {
         stat: rally.games > 0 ? 'Rekorun: ${rally.bestScore} puan' : null,
         onTap: () => open('/match'),
       ),
+      _FeaturedCard(
+        feature: Feature.writing,
+        description:
+            'Birkaç cümle yaz; yapay zeka hatalarını işaretlesin ve '
+            'Türkçe açıklasın.',
+        stat: writing.count > 0
+            ? '${writing.count} yazı · en iyi puanın %${writing.bestScore}'
+            : null,
+        onTap: () => open('/writing'),
+      ),
     ];
 
     final tiles = [
@@ -64,13 +74,6 @@ class PracticeScreen extends ConsumerWidget {
             : 'Bugünlük tamam',
         badge: due > 0 ? '$due' : null,
         onTap: () => open('/flashcards'),
-      ),
-      _PracticeTile(
-        feature: Feature.writing,
-        subtitle: writing.count > 0
-            ? 'En iyi puanın: %${writing.bestScore}'
-            : 'Yaz, Pace düzeltsin',
-        onTap: () => open('/writing'),
       ),
       _PracticeTile(
         feature: Feature.story,
@@ -186,17 +189,12 @@ class _FeaturedCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           child: Ink(
             padding: const EdgeInsets.all(18),
+            // Sakin zemin: renk yalnızca simgede. Önceki sürümde her kartın
+            // renkli degrade zemini ve kenarlığı ekranı kalabalıklaştırıyordu.
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(24),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  feature.tint(context),
-                  theme.colorScheme.surfaceContainer,
-                ],
-              ),
-              border: Border.all(color: feature.border(context), width: 1.5),
+              color: theme.colorScheme.surfaceContainer,
+              border: Border.all(color: theme.colorScheme.outlineVariant),
             ),
             child: Row(
               children: [
@@ -206,7 +204,6 @@ class _FeaturedCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: feature.tint(context),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: feature.border(context)),
                   ),
                   child: Icon(feature.icon, size: 30, color: color),
                 ),
@@ -253,7 +250,10 @@ class _FeaturedCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                Icon(Icons.chevron_right_rounded, color: color),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: theme.colorScheme.outline,
+                ),
               ],
             ),
           ),
@@ -293,7 +293,7 @@ class _PracticeTile extends StatelessWidget {
             decoration: BoxDecoration(
               color: theme.colorScheme.surfaceContainer,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: feature.border(context)),
+              border: Border.all(color: theme.colorScheme.outlineVariant),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

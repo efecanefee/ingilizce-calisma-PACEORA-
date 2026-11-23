@@ -55,6 +55,7 @@ Future<void> main() async {
   // Saat dilimi ya da cihaz değişmiş olabilir; açık hatırlatma yeniden kurulur.
   container.read(reminderProvider.notifier).resync().ignore();
   container.read(extraNotificationsProvider.notifier).resync().ignore();
+  HomeWidgetSync.enabled = true;
 
   runApp(
     UncontrolledProviderScope(
@@ -130,7 +131,7 @@ class _PaceoraAppState extends ConsumerState<PaceoraApp>
   Future<void> _syncHomeWidget(
     ({int streak, StreakStatus status, int freezesNeeded}) streak,
   ) async {
-    if (defaultTargetPlatform != TargetPlatform.android || kIsWeb) return;
+    if (!HomeWidgetSync.supported) return;
     final db = ref.read(databaseProvider);
     final deck = [
       for (final c in await db.select(db.flashcards).get())

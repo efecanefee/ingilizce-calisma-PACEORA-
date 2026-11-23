@@ -14,8 +14,11 @@ class HomeWidgetSync {
   /// Son yazılan değerler; aynı veri tekrar tekrar yazılmasın.
   static String? _last;
 
-  static bool get _supported =>
-      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+  /// Gerçek açılışta (main) açılır; testlerde ve önizlemelerde kapalı.
+  static bool enabled = false;
+
+  static bool get supported =>
+      enabled && !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
 
   static Future<void> update({
     required int streak,
@@ -23,7 +26,7 @@ class HomeWidgetSync {
     required String word,
     required String meaning,
   }) async {
-    if (!_supported) return;
+    if (!supported) return;
     final key = '$streak|$doneToday|$word|$meaning';
     if (key == _last) return;
     try {

@@ -204,17 +204,23 @@ class _HeroCardState extends State<_HeroCard>
             gradient: LinearGradient(
               begin: Alignment(-1 + t, -1),
               end: Alignment(1, 1 - t),
+              // Vurgu yalnızca köşede bir parıltı: ana ekranda bugünün
+              // kartı ve düğmesi de yeşil, üç büyük yeşil alan gözü yoruyordu.
               colors: [
                 AppColors.graphite900,
                 AppColors.graphite700,
-                context.pace.accentDark,
+                Color.lerp(
+                  AppColors.graphite700,
+                  context.pace.accentDark,
+                  0.55,
+                )!,
               ],
-              stops: [0, 0.55 + 0.15 * t, 1],
+              stops: [0, 0.65 + 0.15 * t, 1],
             ),
             boxShadow: [
               BoxShadow(
                 color: context.pace.accentDark.withValues(
-                  alpha: 0.25 + 0.15 * t,
+                  alpha: 0.12 + 0.08 * t,
                 ),
                 blurRadius: 24,
                 offset: const Offset(0, 10),

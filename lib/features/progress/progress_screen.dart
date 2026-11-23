@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/badge_medal.dart';
 import '../../app/error_view.dart';
+import '../../app/mascot.dart';
 import '../../app/motion.dart';
 import '../../app/theme.dart';
 import '../../data/providers.dart';
@@ -55,86 +56,91 @@ class _ProgressBody extends StatelessWidget {
           _LevelCard(game: game!).entrance(0),
           const SizedBox(height: 16),
         ],
-        GridView(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            mainAxisExtent: 36 + MediaQuery.textScalerOf(context).scale(76),
-          ),
-          children: [
-            _StatTile(
-              icon: Icons.local_fire_department,
-              label: 'Şu anki seri',
-              value: data.currentStreak,
-              suffix: ' gün',
-              color: AppColors.warning,
+        // Yeni kullanıcı: sıfırlarla dolu tablolar yerine Pace yol gösterir.
+        if (data.lessonsCompleted == 0 && data.studiedDays.isEmpty)
+          const _FirstStepsCard().entrance(1)
+        else ...[
+          GridView(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              mainAxisExtent: 36 + MediaQuery.textScalerOf(context).scale(76),
             ),
-            _StatTile(
-              icon: Icons.emoji_events,
-              label: 'En uzun seri',
-              value: data.bestStreak,
-              suffix: ' gün',
-              color: AppColors.success,
-            ),
-            _StatTile(
-              icon: Icons.school,
-              label: 'Biten ders',
-              value: data.lessonsCompleted,
-              color: theme.colorScheme.primary,
-            ),
-            _StatTile(
-              icon: Icons.style,
-              label: 'Öğrenilen kart',
-              value: data.cardsMature,
-              suffix: '/${data.cardsTotal}',
-              color: context.pace.accentDim,
-            ),
-          ].indexed.map((e) => e.$2.entrance(e.$1)).toList(),
-        ),
-        const SizedBox(height: 28),
-        Text('Seri takvimi', style: title).entrance(4),
-        const SizedBox(height: 4),
-        Text(
-          'Son 5 hafta — çalıştığın her gün yanar.',
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
+            children: [
+              _StatTile(
+                icon: Icons.local_fire_department,
+                label: 'Şu anki seri',
+                value: data.currentStreak,
+                suffix: ' gün',
+                color: AppColors.warning,
+              ),
+              _StatTile(
+                icon: Icons.emoji_events,
+                label: 'En uzun seri',
+                value: data.bestStreak,
+                suffix: ' gün',
+                color: AppColors.success,
+              ),
+              _StatTile(
+                icon: Icons.school,
+                label: 'Biten ders',
+                value: data.lessonsCompleted,
+                color: theme.colorScheme.primary,
+              ),
+              _StatTile(
+                icon: Icons.style,
+                label: 'Öğrenilen kart',
+                value: data.cardsMature,
+                suffix: '/${data.cardsTotal}',
+                color: context.pace.accentDim,
+              ),
+            ].indexed.map((e) => e.$2.entrance(e.$1)).toList(),
           ),
-        ).entrance(4),
-        const SizedBox(height: 12),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: _StreakCalendar(
-              days: data.studiedDays,
-              frozen: data.frozenDays,
+          const SizedBox(height: 28),
+          Text('Seri takvimi', style: title).entrance(4),
+          const SizedBox(height: 4),
+          Text(
+            'Son 5 hafta — çalıştığın her gün yanar.',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
             ),
-          ),
-        ).entrance(5),
-        const SizedBox(height: 28),
-        Text('Haftalık skor', style: title).entrance(6),
-        const SizedBox(height: 4),
-        Text(
-          'Ders testlerindeki ortalama başarı, son 8 hafta.',
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
-          ),
-        ).entrance(6),
-        const SizedBox(height: 12),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 20, 12, 12),
-            child: _WeeklyScoreChart(scores: data.weeklyScores),
-          ),
-        ).entrance(7),
-        const SizedBox(height: 12),
-        Text(
-          'Toplam ders süresi: ${data.totalMinutes} dakika',
-          textAlign: TextAlign.center,
-          style: theme.textTheme.bodySmall,
-        ).entrance(8),
+          ).entrance(4),
+          const SizedBox(height: 12),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: _StreakCalendar(
+                days: data.studiedDays,
+                frozen: data.frozenDays,
+              ),
+            ),
+          ).entrance(5),
+          const SizedBox(height: 28),
+          Text('Haftalık skor', style: title).entrance(6),
+          const SizedBox(height: 4),
+          Text(
+            'Ders testlerindeki ortalama başarı, son 8 hafta.',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
+            ),
+          ).entrance(6),
+          const SizedBox(height: 12),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 20, 12, 12),
+              child: _WeeklyScoreChart(scores: data.weeklyScores),
+            ),
+          ).entrance(7),
+          const SizedBox(height: 12),
+          Text(
+            'Toplam ders süresi: ${data.totalMinutes} dakika',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodySmall,
+          ).entrance(8),
+        ],
         if (game != null) ...[
           const SizedBox(height: 28),
           Row(
@@ -165,6 +171,48 @@ class _ProgressBody extends StatelessWidget {
           onTap: () => context.push('/review'),
         ).entrance(11),
       ],
+    );
+  }
+}
+
+/// Henüz hiç çalışılmamışken: istatistikler yerine kısa bir yol gösterici.
+class _FirstStepsCard extends StatelessWidget {
+  const _FirstStepsCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            const EquippedPace(mood: PaceMood.run, size: 120),
+            const SizedBox(height: 12),
+            Text(
+              'Yolculuk ilk dersle başlar',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'İlk dersini bitirince serin, skorların ve seri takvimin '
+              'burada görünecek.',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              style: FilledButton.styleFrom(minimumSize: const Size(0, 48)),
+              onPressed: () => context.push('/lesson'),
+              icon: const Icon(Icons.play_arrow_rounded),
+              label: const Text('Bugünün dersine başla'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -329,11 +377,10 @@ class _BadgeGrid extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: theme.textTheme.labelMedium?.copyWith(
                               fontWeight: FontWeight.w700,
+                              // Kilitli rozet adı soluk ama okunur (WCAG AA).
                               color: earned
                                   ? null
-                                  : theme.colorScheme.onSurface.withValues(
-                                      alpha: 0.55,
-                                    ),
+                                  : theme.colorScheme.onSurfaceVariant,
                             ),
                           ),
                           const SizedBox(height: 6),
@@ -669,8 +716,14 @@ class _WeeklyScoreChart extends StatelessWidget {
                               begin: Alignment.bottomCenter,
                               end: Alignment.topCenter,
                               colors: isDark
-                                  ? [context.pace.accentDark, context.pace.accent]
-                                  : [context.pace.accentDim, context.pace.accentDark],
+                                  ? [
+                                      context.pace.accentDark,
+                                      context.pace.accent,
+                                    ]
+                                  : [
+                                      context.pace.accentDim,
+                                      context.pace.accentDark,
+                                    ],
                             ),
                       color: week.average == null
                           ? theme.colorScheme.surfaceContainerHighest
