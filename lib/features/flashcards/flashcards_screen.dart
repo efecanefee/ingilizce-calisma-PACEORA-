@@ -10,6 +10,7 @@ import '../../app/mascot.dart';
 import '../../app/motion.dart';
 import '../../app/speak_button.dart';
 import '../../app/theme.dart';
+import '../../app/translate_help.dart';
 import '../../data/database.dart';
 import '../../data/providers.dart';
 import '../../data/srs.dart';
@@ -270,27 +271,44 @@ class _CardFace extends StatelessWidget {
               ),
             ],
           ),
-          const Spacer(),
-          Text(
-            back ? card.meaning : card.word,
-            textAlign: TextAlign.center,
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: !back && !isDark ? AppColors.graphite900 : null,
-            ),
-          ),
-          if (back && card.exampleSentence.isNotEmpty) ...[
-            const SizedBox(height: 18),
-            Text(
-              card.exampleSentence,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                fontStyle: FontStyle.italic,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
+          // Çeviri açılınca içerik uzar; taşmak yerine kart içinde kayar.
+          Expanded(
+            child: Center(
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      back ? card.meaning : card.word,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: !back && !isDark ? AppColors.graphite900 : null,
+                      ),
+                    ),
+                    if (back && card.exampleSentence.isNotEmpty) ...[
+                      const SizedBox(height: 18),
+                      Text(
+                        card.exampleSentence,
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          fontStyle: FontStyle.italic,
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.75,
+                          ),
+                        ),
+                      ),
+                      TranslateHelp(
+                        key: ValueKey('tr-${card.id}'),
+                        english: card.exampleSentence,
+                        label: 'Cümlenin Türkçesi',
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ),
-          ],
-          const Spacer(),
+          ),
           Text(
             back ? 'Ne kadar iyi hatırladın?' : 'Çevirmek için dokun',
             style: theme.textTheme.labelMedium?.copyWith(

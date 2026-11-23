@@ -209,6 +209,9 @@ enum PacePose {
 }
 
 /// Kutlama afişi: ders ya da gün bitince, başarı anlarında.
+const paceCelebrateGif = 'assets/pace/celebrate.gif';
+
+/// Aynı afişin durağan karesi ("Animasyonları azalt" açıkken).
 const paceCelebrateBanner = 'assets/pace/celebrate_banner.webp';
 
 /// Tek bir [PacePose] görseli; isteğe bağlı hafif nefes animasyonu.

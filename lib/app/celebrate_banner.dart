@@ -28,24 +28,25 @@ void celebrateWithBanner(
   );
 }
 
-/// Afiş görseli: hafifçe büyüyerek gelir, üstünden parıltı geçer.
+/// Afiş: Pace'in hareketli GIF'i, hafifçe büyüyerek gelir.
 class CelebrateBannerArt extends StatelessWidget {
   const CelebrateBannerArt({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final still = MediaQuery.disableAnimationsOf(context);
     Widget banner = ClipRRect(
       borderRadius: BorderRadius.circular(18),
       child: AspectRatio(
         aspectRatio: 16 / 9,
         child: Image.asset(
-          paceCelebrateBanner,
+          still ? paceCelebrateBanner : paceCelebrateGif,
           fit: BoxFit.cover,
           semanticLabel: 'Paceora: şimşekler arasında Pace',
         ),
       ),
     );
-    if (!MediaQuery.disableAnimationsOf(context)) {
+    if (!still) {
       banner = banner
           .animate()
           .scale(
@@ -53,12 +54,7 @@ class CelebrateBannerArt extends StatelessWidget {
             duration: Motion.slow,
             curve: Curves.easeOutBack,
           )
-          .fadeIn(duration: Motion.fast)
-          .then(delay: 200.ms)
-          .shimmer(
-            duration: 1400.ms,
-            color: const Color(0xFFC6F432).withValues(alpha: 0.35),
-          );
+          .fadeIn(duration: Motion.fast);
     }
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 320),

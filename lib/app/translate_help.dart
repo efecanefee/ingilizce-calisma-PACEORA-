@@ -40,7 +40,17 @@ class _TranslateHelpState extends ConsumerState<TranslateHelp> {
     } else {
       body = switch (ref.watch(turkishProvider(widget.english))) {
         AsyncData(:final value) => _Box(text: value),
-        AsyncError(:final error) => _Box(text: '$error', error: true),
+        AsyncError(:final error, isLoading: false) => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _Box(text: '$error', error: true),
+            TextButton.icon(
+              onPressed: () => ref.invalidate(turkishProvider(widget.english)),
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: const Text('Tekrar dene'),
+            ),
+          ],
+        ),
         _ => const Padding(
           padding: EdgeInsets.symmetric(vertical: 8),
           child: SizedBox(

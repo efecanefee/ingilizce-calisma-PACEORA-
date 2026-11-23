@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/error_view.dart';
+import '../../app/mascot.dart';
 import '../../app/motion.dart';
 import '../../app/sounds.dart';
 import '../../app/theme.dart';
@@ -599,6 +600,8 @@ class _Results extends StatelessWidget {
         ),
         if (s.isNewBest) ...[
           const SizedBox(height: 12),
+          const Center(child: PaceSticker(PacePose.flip, size: 130)),
+          const SizedBox(height: 8),
           Center(
             child: Chip(
               avatar: const Icon(

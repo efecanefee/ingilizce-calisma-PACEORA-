@@ -126,7 +126,7 @@ class _UnavailableViewState extends ConsumerState<_UnavailableView> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.cloud_off, size: 40, color: theme.colorScheme.outline),
+            const PaceSticker(PacePose.facepalm, size: 120),
             const SizedBox(height: 16),
             Text(
               'Ders hazırlanamadı',
@@ -166,11 +166,15 @@ class _UnavailableViewState extends ConsumerState<_UnavailableView> {
                 label: const Text('Gemini anahtarı ekle'),
               ),
             ],
-            const SizedBox(height: 8),
-            TextButton(
-              onPressed: _busy ? null : _markDone,
-              child: const Text('Günü elle tamamlandı işaretle'),
-            ),
+            // Yalnızca bugünün dersinde: telafi ya da tekrar dersinden
+            // basılırsa yanlış günü (bugünü) tamamlar ve seriyi uzatırdı.
+            if (ref.read(lessonProvider.notifier).isToday) ...[
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: _busy ? null : _markDone,
+                child: const Text('Günü elle tamamlandı işaretle'),
+              ),
+            ],
           ],
         ),
       ),
@@ -766,7 +770,7 @@ class _StepPace extends StatelessWidget {
       ),
       LessonStepKind.translate => (
         PacePose.selfie,
-        'Şimdi sen çevir! "İpucu" kelimeleri gösterir, istersen başını yazar.',
+        'Başını ben verdim, gerisi sende! Takılırsan "İpucu"na dokun.',
       ),
       LessonStepKind.quiz => (
         PacePose.salute,

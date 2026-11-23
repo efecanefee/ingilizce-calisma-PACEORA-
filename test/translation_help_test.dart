@@ -92,6 +92,48 @@ void main() {
     );
   });
 
+  testWidgets('hata gerçek sebebi gösterir, kendiliğinden tekrar istemez', (
+    tester,
+  ) async {
+    var fail = true;
+    var posts = 0;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          geminiServiceProvider.overrideWithValue(
+            GeminiService(
+              apiKey: 'test',
+              client: MockClient((request) async {
+                if (request.method == 'POST') posts++;
+                return fail && request.method == 'POST'
+                    ? http.Response('{}', 429)
+                    : http.Response.bytes(
+                        utf8.encode(_envelope({'tr': 'Gittim.'})),
+                        200,
+                      );
+              }),
+            ),
+          ),
+        ],
+        child: const MaterialApp(
+          home: Scaffold(body: TranslateHelp(english: 'I went.')),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Türkçesi'));
+    await _advance(tester);
+    expect(find.textContaining('Kota doldu'), findsOneWidget);
+    final before = posts;
+    await tester.pump(const Duration(seconds: 30));
+    expect(posts, before);
+
+    fail = false;
+    await tester.tap(find.text('Tekrar dene'));
+    await _advance(tester);
+    expect(find.text('Gittim.'), findsOneWidget);
+  });
+
   test('önbellek en eski kayıtları atar', () async {
     final cache = TranslationCache(prefs);
     for (var i = 0; i < TranslationCache.maxEntries + 5; i++) {
@@ -101,7 +143,7 @@ void main() {
     expect(cache.get('en ${TranslationCache.maxEntries + 4}'), isNotNull);
   });
 
-  testWidgets('çeviri sorusunda ipucu: kelime kutusu, sonra cümlenin başı', (
+  testWidgets('çeviride başlangıç verilir; ipuçları yazılanı silmez', (
     tester,
   ) async {
     String? submitted;
@@ -120,6 +162,8 @@ void main() {
         ),
       ),
     );
+    // Altı kelimenin üçte biri baştan açık.
+    expect(find.text('I went ___ ___ ___ ___'), findsOneWidget);
     await tester.tap(find.text('İpucu'));
     await _advance(tester);
     for (final w in ['I', 'went', 'to', 'the', 'park', 'yesterday']) {
@@ -132,7 +176,9 @@ void main() {
     await tester.tap(find.text('Biraz daha yardım'));
     await _advance(tester);
     final field = tester.widget<TextField>(find.byType(TextField));
-    expect(field.controller!.text, 'I went to ');
+    // Yazdığı kelime yerinde durur; yarısı üstteki satırda açılır.
+    expect(field.controller!.text, 'went ');
+    expect(find.text('I went to ___ ___ ___'), findsOneWidget);
     expect(find.text('Biraz daha yardım'), findsNothing);
 
     await tester.enterText(

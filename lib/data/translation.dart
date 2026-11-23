@@ -53,22 +53,25 @@ class TranslationUnavailable implements Exception {
 }
 
 /// [english] metninin Türkçesi; önce önbellek, yoksa yapay zeka.
-final turkishProvider = FutureProvider.autoDispose.family<String, String>((
-  ref,
-  english,
-) async {
-  final cache = TranslationCache(ref.read(sharedPreferencesProvider));
-  final cached = cache.get(english);
-  if (cached != null) return cached;
-  final result = await ref
-      .read(geminiServiceProvider)
-      .translateToTurkish(english);
-  final text = result.text;
-  if (text == null) {
-    throw const TranslationUnavailable(
-      'Çeviri şu an alınamadı. İnternet bağlantını kontrol edip tekrar dene.',
-    );
-  }
-  await cache.put(english, text);
-  return text;
-});
+///
+/// Otomatik yeniden deneme kapalı: kota dolduysa ya da internet yoksa arka
+/// planda tekrar istek atılmasın. Düğme kapatılıp açılınca yeniden denenir.
+final turkishProvider = FutureProvider.autoDispose.family<String, String>(
+  retry: (_, _) => null,
+  (ref, english) async {
+    final cache = TranslationCache(ref.read(sharedPreferencesProvider));
+    final cached = cache.get(english);
+    if (cached != null) return cached;
+    final result = await ref
+        .read(geminiServiceProvider)
+        .translateToTurkish(english);
+    final text = result.text;
+    if (text == null) {
+      // Gerçek sebep gösterilir: her hata internet kaynaklı değil (kota,
+      // yanıt vermeyen model).
+      throw TranslationUnavailable(result.error ?? 'Çeviri şu an alınamadı.');
+    }
+    await cache.put(english, text);
+    return text;
+  },
+);

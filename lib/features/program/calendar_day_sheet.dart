@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/constants.dart';
+import '../../app/mascot.dart';
 import '../../app/motion.dart';
 import '../../data/database.dart';
 import '../../data/lesson_models.dart';
@@ -297,6 +298,8 @@ class _BodyState extends ConsumerState<_Body> {
             ),
           ],
           CalendarDayKind.missed => [
+            const Center(child: PaceSticker(PacePose.sleep, size: 100)),
+            const SizedBox(height: 12),
             _Action(
               icon: Icons.history_rounded,
               label: 'Telafi et',

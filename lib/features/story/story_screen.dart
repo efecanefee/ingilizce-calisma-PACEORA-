@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/error_view.dart';
+import '../../app/mascot.dart';
 import '../../app/motion.dart';
 import '../../app/speak_button.dart';
 import '../../app/theme.dart';
@@ -46,14 +47,7 @@ class _LoadingView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.auto_stories, size: 48, color: theme.colorScheme.primary)
-              .animate(onPlay: Motion.loop(reverse: true))
-              .moveY(
-                begin: -4,
-                end: 4,
-                duration: 700.ms,
-                curve: Curves.easeInOut,
-              ),
+          const PaceSticker(PacePose.peek, size: 150),
           const SizedBox(height: 20),
           Text(
             'Hikayen yazılıyor…',

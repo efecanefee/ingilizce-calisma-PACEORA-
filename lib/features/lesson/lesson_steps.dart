@@ -292,7 +292,7 @@ class _TranslateQuestionCardState extends State<TranslateQuestionCard> {
 
   bool get _answered => widget.given != null;
 
-  /// 0: ipucu yok, 1: kelime kutusu, 2: cümlenin başı yazıldı.
+  /// 0: yalnızca başlangıç, 1: kelime kutusu, 2: cümlenin yarısı açık.
   var _hintLevel = 0;
 
   /// Beklenen cevabın kelimeleri (noktalamasız).
@@ -308,18 +308,21 @@ class _TranslateQuestionCardState extends State<TranslateQuestionCard> {
   void _hint() {
     Haptics.tap();
     setState(() => _hintLevel = min(_hintLevel + 1, 2));
-    if (_hintLevel == 2) {
-      // Cümlenin ilk yarısı yazılır; gerisini öğrenci tamamlar.
-      final half = (_words.length / 2).ceil();
-      final start = _words.take(half).join(' ');
-      if (!_controller.text.toLowerCase().startsWith(start.toLowerCase())) {
-        _controller.text = '$start ';
-        _controller.selection = TextSelection.collapsed(
-          offset: _controller.text.length,
-        );
-      }
-    }
   }
+
+  /// Baştan açık verilen kelime sayısı: üçte biri, son ipucunda yarısı.
+  /// Çok kısa cümlede hiçbiri; yoksa cevabın kendisi görünürdü.
+  int get _shownWords {
+    final n = _words.length;
+    if (n < 3) return 0;
+    return _hintLevel == 2 ? (n / 2).ceil() : max(1, n ~/ 3);
+  }
+
+  /// "I went ___ ___ ___ ___": verilen kısım ve kalan boşluklar. Yazı
+  /// alanına dokunmaz; öğrencinin yazdığı silinmez.
+  String get _scaffold => [
+    for (final (i, w) in _words.indexed) i < _shownWords ? w : '___',
+  ].join(' ');
 
   void _addWord(String word) {
     Haptics.tap();
@@ -349,6 +352,19 @@ class _TranslateQuestionCardState extends State<TranslateQuestionCard> {
                 height: 1.4,
               ),
             ),
+            if (!_answered && _shownWords > 0) ...[
+              const SizedBox(height: 10),
+              Text(
+                _scaffold,
+                semanticsLabel:
+                    'Başlangıcı: ${_words.take(_shownWords).join(' ')}, '
+                    'kalan ${_words.length - _shownWords} kelime',
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ],
             const SizedBox(height: 14),
             TextField(
               controller: _controller,
@@ -370,7 +386,7 @@ class _TranslateQuestionCardState extends State<TranslateQuestionCard> {
               Text(
                 _hintLevel == 1
                     ? 'Bu kelimeleri kullan; dokundukça yazına eklenir:'
-                    : 'Başını yazdık, gerisini sen tamamla:',
+                    : 'Yarısını açtık; cümlenin tamamını sen yaz:',
                 style: theme.textTheme.bodySmall,
               ),
               const SizedBox(height: 6),
