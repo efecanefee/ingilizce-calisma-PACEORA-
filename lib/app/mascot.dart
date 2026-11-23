@@ -174,3 +174,81 @@ class EquippedPace extends ConsumerWidget {
     return PaceMascot(mood: mood, kit: kit, size: size, animate: animate);
   }
 }
+
+/// Pace'in çıkartma pozları (assets/pace). [PaceMood]'dan farkı: forma
+/// renklendirme maskesi yok, her zaman klasik formayla görünür. Tanıtım,
+/// ders arası, sonuç ve boş ekranlarda çeşitlilik için kullanılır.
+enum PacePose {
+  trophy('Pace kupayı kaldırıyor'),
+  cool('Pace güneş gözlüğüyle başparmak kaldırıyor'),
+  sleep('Pace uyuyor'),
+  confused('Pace kafası karışmış'),
+  strong('Pace kaslarını gösteriyor'),
+  flip('Pace takla atıyor'),
+  idea('Pace\'in aklına bir fikir geldi'),
+  confident('Pace kollarını kavuşturmuş, kendinden emin'),
+  facepalm('Pace elini alnına koymuş'),
+  wink('Pace göz kırpıp gösteriyor'),
+  meditate('Pace meditasyon yapıyor'),
+  skate('Pace kaykayla hızlanıyor'),
+  late('Pace saate bakıyor'),
+  wave('Pace el sallıyor'),
+  graduate('Pace mezuniyet kepiyle'),
+  peek('Pace şimşeğin arkasından bakıyor'),
+  dance('Pace dans ediyor'),
+  selfie('Pace özçekim yapıyor'),
+  salute('Pace selam veriyor'),
+  tired('Pace yorulmuş');
+
+  const PacePose(this.label);
+
+  /// Ekran okuyucunun söyleyeceği açıklama.
+  final String label;
+
+  String get asset => 'assets/pace/$name.png';
+}
+
+/// Kutlama afişi: ders ya da gün bitince, başarı anlarında.
+const paceCelebrateBanner = 'assets/pace/celebrate_banner.webp';
+
+/// Tek bir [PacePose] görseli; isteğe bağlı hafif nefes animasyonu.
+class PaceSticker extends StatelessWidget {
+  const PaceSticker(
+    this.pose, {
+    super.key,
+    this.size = 120,
+    this.animate = true,
+  });
+
+  final PacePose pose;
+
+  /// Görselin yüksekliği.
+  final double size;
+  final bool animate;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget image = Image.asset(
+      pose.asset,
+      height: size,
+      fit: BoxFit.contain,
+      filterQuality: FilterQuality.medium,
+      excludeFromSemantics: true,
+      // Görsel yüklenirken düzen kaymasın.
+      frameBuilder: (context, child, frame, sync) =>
+          SizedBox(height: size, child: child),
+    );
+    if (animate && !MediaQuery.disableAnimationsOf(context)) {
+      image = image
+          .animate(onPlay: Motion.loop(reverse: true))
+          .scaleXY(
+            begin: 1,
+            end: 1.03,
+            duration: 1600.ms,
+            curve: Curves.easeInOut,
+            alignment: Alignment.bottomCenter,
+          );
+    }
+    return Semantics(label: pose.label, image: true, child: image);
+  }
+}

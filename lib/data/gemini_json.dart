@@ -55,3 +55,17 @@ List<String> readStringList(Map<String, dynamic> map, String key) {
       if (item is String && item.trim().isNotEmpty) item.trim(),
   ];
 }
+
+/// `{"tr": "..."}` biçimindeki çeviri yanıtını açar; okunamazsa null.
+String? parseTranslationResponse(String responseBody) {
+  final text = extractModelText(responseBody);
+  if (text == null) return null;
+  try {
+    final decoded = jsonDecode(text);
+    if (decoded is! Map<String, dynamic>) return null;
+    final tr = decoded['tr'];
+    return tr is String && tr.trim().isNotEmpty ? tr.trim() : null;
+  } catch (_) {
+    return null;
+  }
+}

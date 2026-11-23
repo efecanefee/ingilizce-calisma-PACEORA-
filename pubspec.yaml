@@ -90,6 +90,7 @@ flutter:
   assets:
     - assets/images/
     - assets/mascot/
+    - assets/pace/
     - assets/lessons/
     - assets/placement/
     - assets/sounds/

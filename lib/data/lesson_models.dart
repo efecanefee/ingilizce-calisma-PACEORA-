@@ -54,7 +54,12 @@ class VocabItem {
     required this.word,
     required this.meaning,
     required this.example,
+    this.exampleTr = '',
   });
+
+  /// Örnek cümlenin Türkçesi; eski derslerde boş (çeviri düğmesi yapay
+  /// zekaya sorar).
+  final String exampleTr;
 
   /// İngilizce kelime veya kalıp
   final String word;
@@ -74,11 +79,16 @@ class VocabItem {
       word: word,
       meaning: meaning,
       example: readString(raw, 'example'),
+      exampleTr: readString(raw, 'exampleTr'),
     );
   }
 
-  Map<String, dynamic> toJson() =>
-      {'word': word, 'meaning': meaning, 'example': example};
+  Map<String, dynamic> toJson() => {
+    'word': word,
+    'meaning': meaning,
+    'example': example,
+    if (exampleTr.isNotEmpty) 'exampleTr': exampleTr,
+  };
 }
 
 /// Boşluk doldurma sorusu: cümledeki `___` yerine doğru seçenek bulunur.
@@ -184,7 +194,12 @@ class QuizItem {
     required this.options,
     required this.answer,
     required this.explanationTr,
+    this.questionTr = '',
   });
+
+  /// Sorunun Türkçesi; eski derslerde boş (çeviri düğmesi yapay zekaya
+  /// sorar).
+  final String questionTr;
 
   final String question;
   final List<String> options;
@@ -207,6 +222,7 @@ class QuizItem {
       options: _shuffled(options, question),
       answer: options[index],
       explanationTr: readString(raw, 'explanationTr'),
+      questionTr: readString(raw, 'questionTr'),
     );
   }
 
@@ -219,6 +235,7 @@ class QuizItem {
         // yeniden hesaplayarak yazıyoruz.
         'answerIndex': options.indexOf(answer),
         'explanationTr': explanationTr,
+        if (questionTr.isNotEmpty) 'questionTr': questionTr,
       };
 }
 

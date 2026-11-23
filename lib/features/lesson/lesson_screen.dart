@@ -278,6 +278,7 @@ class _LessonBody extends ConsumerWidget {
               options: lesson.quiz[i].options,
               answer: lesson.quiz[i].answer,
               given: progress.given[quizKey(i)],
+              hint: lesson.quiz[i].questionTr,
               explanation: lesson.quiz[i].explanationTr,
               onSelected: (option) => notifier.answer(
                 quizKey(i),

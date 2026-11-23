@@ -74,7 +74,7 @@ CalendarDayKind kindOf(CalendarDay day, DateTime today) {
 }
 
 /// "2026-11-16" — ders rotasındaki tarih.
-String _routeDate(DateTime d) =>
+String routeDate(DateTime d) =>
     '${d.year}-${d.month.toString().padLeft(2, '0')}-'
     '${d.day.toString().padLeft(2, '0')}';
 
@@ -265,7 +265,7 @@ class _BodyState extends ConsumerState<_Body> {
                       icon: Icons.replay_rounded,
                       label: 'Bu dersi tekrar çöz',
                       onPressed: () =>
-                          _open('/lesson/replay/${_routeDate(day.date)}'),
+                          _open('/lesson/replay/${routeDate(day.date)}'),
                     ),
                     const SizedBox(height: 6),
                     Text(
@@ -300,7 +300,7 @@ class _BodyState extends ConsumerState<_Body> {
             _Action(
               icon: Icons.history_rounded,
               label: 'Telafi et',
-              onPressed: () => _open('/lesson/makeup/${_routeDate(day.date)}'),
+              onPressed: () => _open('/lesson/makeup/${routeDate(day.date)}'),
             ),
             const SizedBox(height: 6),
             Text(

@@ -1,9 +1,12 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../app/motion.dart';
 import '../../app/sounds.dart';
 import '../../app/theme.dart';
+import '../../app/translate_help.dart';
 import '../../data/lesson_models.dart';
 
 /// Kelime tanıtım kartı. Puanlanmaz; ders öncesi hazırlık.
@@ -25,14 +28,16 @@ class VocabCard extends StatelessWidget {
           children: [
             Text(
               item.word,
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w700),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
               item.meaning,
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: theme.colorScheme.primary),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.primary,
+              ),
             ),
             if (item.example.isNotEmpty) ...[
               const SizedBox(height: 10),
@@ -42,6 +47,11 @@ class VocabCard extends StatelessWidget {
                   fontStyle: FontStyle.italic,
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
                 ),
+              ),
+              TranslateHelp(
+                english: item.example,
+                known: item.exampleTr,
+                label: 'Cümlenin Türkçesi',
               ),
             ],
           ],
@@ -95,19 +105,15 @@ class ChoiceQuestionCard extends StatelessWidget {
           children: [
             Text(
               '$number. $prompt',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w600, height: 1.4),
-            ),
-            if (hint != null && hint!.isNotEmpty) ...[
-              const SizedBox(height: 6),
-              Text(
-                hint!,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                ),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                height: 1.4,
               ),
-            ],
-            const SizedBox(height: 14),
+            ),
+            // Soru İngilizce; Türkçesi bir dokunuşla açılır. Dersin kendi
+            // Türkçe alanı varsa o, yoksa yapay zeka çevirisi gösterilir.
+            TranslateHelp(english: prompt, known: hint),
+            const SizedBox(height: 8),
             for (final option in options)
               _OptionTile(
                 label: option,
@@ -158,25 +164,25 @@ class _OptionTile extends StatelessWidget {
 
     final (border, background, icon) = switch (state) {
       _OptionState.idle => (
-          theme.colorScheme.outlineVariant,
-          theme.colorScheme.surfaceContainer,
-          null,
-        ),
+        theme.colorScheme.outlineVariant,
+        theme.colorScheme.surfaceContainer,
+        null,
+      ),
       _OptionState.correct => (
-          AppColors.success,
-          AppColors.success.withValues(alpha: 0.12),
-          Icons.check_circle,
-        ),
+        AppColors.success,
+        AppColors.success.withValues(alpha: 0.12),
+        Icons.check_circle,
+      ),
       _OptionState.wrong => (
-          AppColors.error,
-          AppColors.error.withValues(alpha: 0.12),
-          Icons.cancel,
-        ),
+        AppColors.error,
+        AppColors.error.withValues(alpha: 0.12),
+        Icons.cancel,
+      ),
       _OptionState.muted => (
-          theme.colorScheme.outlineVariant,
-          Colors.transparent,
-          null,
-        ),
+        theme.colorScheme.outlineVariant,
+        Colors.transparent,
+        null,
+      ),
     };
 
     final tile = Padding(
@@ -211,9 +217,10 @@ class _OptionTile extends StatelessWidget {
                 ),
               ),
               if (icon != null)
-                Icon(icon, size: 20, color: border)
-                    .animate()
-                    .scale(duration: Motion.medium, curve: Curves.elasticOut),
+                Icon(icon, size: 20, color: border).animate().scale(
+                  duration: Motion.medium,
+                  curve: Curves.elasticOut,
+                ),
             ],
           ),
         ),
@@ -222,13 +229,22 @@ class _OptionTile extends StatelessWidget {
 
     // Yanlış seçim hafifçe sallanır; doğru cevap kısa bir parlama alır.
     return switch (state) {
-      _OptionState.wrong => tile.animate().shakeX(hz: 5, amount: 4, duration: 400.ms),
-      _OptionState.correct => tile.animate().scaleXY(
-          begin: 1,
-          end: 1.02,
-          duration: Motion.fast,
-          curve: Curves.easeOut,
-        ).then().scaleXY(begin: 1.02, end: 1, duration: Motion.fast),
+      _OptionState.wrong => tile.animate().shakeX(
+        hz: 5,
+        amount: 4,
+        duration: 400.ms,
+      ),
+      _OptionState.correct =>
+        tile
+            .animate()
+            .scaleXY(
+              begin: 1,
+              end: 1.02,
+              duration: Motion.fast,
+              curve: Curves.easeOut,
+            )
+            .then()
+            .scaleXY(begin: 1.02, end: 1, duration: Motion.fast),
       _ => tile,
     };
   }
@@ -264,8 +280,9 @@ class TranslateQuestionCard extends StatefulWidget {
 }
 
 class _TranslateQuestionCardState extends State<TranslateQuestionCard> {
-  late final TextEditingController _controller =
-      TextEditingController(text: widget.given ?? '');
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.given ?? '',
+  );
 
   @override
   void dispose() {
@@ -274,6 +291,44 @@ class _TranslateQuestionCardState extends State<TranslateQuestionCard> {
   }
 
   bool get _answered => widget.given != null;
+
+  /// 0: ipucu yok, 1: kelime kutusu, 2: cümlenin başı yazıldı.
+  var _hintLevel = 0;
+
+  /// Beklenen cevabın kelimeleri (noktalamasız).
+  List<String> get _words => widget.item.en
+      .split(RegExp(r'\s+'))
+      .map((w) => w.replaceAll(RegExp(r'[.,!?;:"]'), ''))
+      .where((w) => w.isNotEmpty)
+      .toList();
+
+  /// Kelime kutusu: karışık sırada, her açılışta aynı.
+  late final List<String> _bank = [..._words]..shuffle(Random(widget.number));
+
+  void _hint() {
+    Haptics.tap();
+    setState(() => _hintLevel = min(_hintLevel + 1, 2));
+    if (_hintLevel == 2) {
+      // Cümlenin ilk yarısı yazılır; gerisini öğrenci tamamlar.
+      final half = (_words.length / 2).ceil();
+      final start = _words.take(half).join(' ');
+      if (!_controller.text.toLowerCase().startsWith(start.toLowerCase())) {
+        _controller.text = '$start ';
+        _controller.selection = TextSelection.collapsed(
+          offset: _controller.text.length,
+        );
+      }
+    }
+  }
+
+  void _addWord(String word) {
+    Haptics.tap();
+    final text = _controller.text.trimRight();
+    _controller.text = text.isEmpty ? '$word ' : '$text $word ';
+    _controller.selection = TextSelection.collapsed(
+      offset: _controller.text.length,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -289,8 +344,10 @@ class _TranslateQuestionCardState extends State<TranslateQuestionCard> {
           children: [
             Text(
               '${widget.number}. ${widget.item.tr}',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w600, height: 1.4),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                height: 1.4,
+              ),
             ),
             const SizedBox(height: 14),
             TextField(
@@ -308,11 +365,49 @@ class _TranslateQuestionCardState extends State<TranslateQuestionCard> {
                     : null,
               ),
             ),
+            if (!_answered && _hintLevel >= 1) ...[
+              const SizedBox(height: 10),
+              Text(
+                _hintLevel == 1
+                    ? 'Bu kelimeleri kullan; dokundukça yazına eklenir:'
+                    : 'Başını yazdık, gerisini sen tamamla:',
+                style: theme.textTheme.bodySmall,
+              ),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  for (final word in _bank)
+                    ActionChip(
+                      label: Text(word),
+                      onPressed: () => _addWord(word),
+                    ),
+                ],
+              ),
+            ],
             const SizedBox(height: 12),
             if (!_answered)
-              FilledButton.tonal(
-                onPressed: () => _submit(_controller.text),
-                child: const Text('Kontrol et'),
+              Row(
+                children: [
+                  if (_hintLevel < 2)
+                    TextButton.icon(
+                      onPressed: _hint,
+                      icon: const Icon(Icons.lightbulb_outline_rounded),
+                      label: Text(
+                        _hintLevel == 0 ? 'İpucu' : 'Biraz daha yardım',
+                      ),
+                    ),
+                  const Spacer(),
+                  FilledButton.tonal(
+                    // Tema düğmeleri tam genişlik; satır içinde sınırlanır.
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(0, 48),
+                    ),
+                    onPressed: () => _submit(_controller.text),
+                    child: const Text('Kontrol et'),
+                  ),
+                ],
               )
             else ...[
               Text(
@@ -322,8 +417,9 @@ class _TranslateQuestionCardState extends State<TranslateQuestionCard> {
               const SizedBox(height: 4),
               Text(
                 widget.item.en,
-                style: theme.textTheme.bodyLarge
-                    ?.copyWith(fontWeight: FontWeight.w600),
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               if (widget.item.accepted.isNotEmpty) ...[
                 const SizedBox(height: 8),
@@ -367,8 +463,11 @@ class _ExplanationBox extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.lightbulb_outline,
-              size: 18, color: theme.colorScheme.primary),
+          Icon(
+            Icons.lightbulb_outline,
+            size: 18,
+            color: theme.colorScheme.primary,
+          ),
           const SizedBox(width: 10),
           Expanded(child: Text(text, style: theme.textTheme.bodySmall)),
         ],

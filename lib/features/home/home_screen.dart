@@ -22,6 +22,7 @@ import '../../data/profile_style.dart';
 import '../../data/providers.dart';
 import '../../data/rewards.dart';
 import '../../data/streak_freeze.dart';
+import '../program/calendar_day_sheet.dart' show routeDate;
 import '../program/program_screen.dart';
 import '../wardrobe/wardrobe_sheet.dart';
 
@@ -98,6 +99,9 @@ class _HomeBody extends ConsumerWidget {
                     : user.dailyMinutes,
                 lesson: lesson,
                 onStudy: () => context.push('/lesson'),
+                // Bitmiş dersi sıfırdan yeniden çözmek: puan ve seri değişmez.
+                onRetake: () =>
+                    context.push('/lesson/replay/${routeDate(DateTime.now())}'),
                 // "Vaktim az": ders henüz üretilmediyse 5 dakikalık açılır.
                 onShort:
                     user.dailyMinutes > 5 &&
@@ -1445,7 +1449,11 @@ class _TodayCard extends StatelessWidget {
     required this.onStudy,
     required this.onComplete,
     this.onShort,
+    this.onRetake,
   });
+
+  /// Bitmiş dersi baştan çöz; ders kaydı yoksa null.
+  final VoidCallback? onRetake;
 
   final WeeklyPlanDay day;
   final int dailyMinutes;
@@ -1560,12 +1568,23 @@ class _TodayCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 6),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton(
-                  onPressed: onStudy,
-                  child: const Text('Dersi tekrar aç'),
-                ),
+              Wrap(
+                spacing: 8,
+                children: [
+                  if (lesson != null && onRetake != null)
+                    FilledButton.tonalIcon(
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size(0, 44),
+                      ),
+                      onPressed: onRetake,
+                      icon: const Icon(Icons.replay_rounded),
+                      label: const Text('Tekrar çöz'),
+                    ),
+                  TextButton(
+                    onPressed: onStudy,
+                    child: const Text('Sonuçları gör'),
+                  ),
+                ],
               ),
             ] else ...[
               FilledButton.icon(

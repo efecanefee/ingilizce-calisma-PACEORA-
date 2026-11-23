@@ -417,6 +417,32 @@ Kurallar: Doğru olanı hata sayma. Cümle sonu noktalaması ya da büyük harf 
     return (feedback: feedback, error: null);
   }
 
+  /// İngilizce bir metni Türkçeye çevirir (yardım düğmeleri için).
+  ///
+  /// Hata fırlatmaz; ulaşılamazsa `text` null, `error` dolu döner.
+  Future<({String? text, String? error})> translateToTurkish(
+    String english,
+  ) async {
+    final response = await _post(
+      prompt:
+          '''
+Aşağıdaki İngilizce metni Türkçeye çevir. Bir İngilizce öğrencisi anlamayı kolaylaştırmak için okuyacak: doğal ve anlaşılır Türkçe kullan, anlamı koru. Metinde "___" boşluğu varsa çeviride de "___" olarak bırak ve boşluğa ne geleceğini söyleme. Yalnızca JSON döndür: {"tr": "..."}.
+
+Metin:
+"""
+$english
+"""
+''',
+      schema: _translationSchema,
+      timeout: const Duration(seconds: 30),
+      temperature: 0.2,
+    );
+    if (response.body == null) return (text: null, error: response.error);
+    final text = parseTranslationResponse(response.body!);
+    if (text == null) return (text: null, error: 'Çeviri okunamadı');
+    return (text: text, error: null);
+  }
+
   /// Hikayede dokunulan kelimenin cümledeki anlamını Türkçe verir.
   ///
   /// Hata fırlatmaz; ulaşılamazsa `meaning` null, `error` dolu döner.
@@ -583,8 +609,15 @@ Verilerde olmayan bir şey uydurma. Veri azsa bunu nazikçe belirt.
             },
             'answerIndex': {'type': 'INTEGER'},
             'explanationTr': {'type': 'STRING'},
+            'questionTr': {'type': 'STRING'},
           },
-          'required': ['question', 'options', 'answerIndex', 'explanationTr'],
+          'required': [
+            'question',
+            'options',
+            'answerIndex',
+            'explanationTr',
+            'questionTr',
+          ],
         },
       },
     },
@@ -601,6 +634,14 @@ Verilerde olmayan bir şey uydurma. Veri azsa bunu nazikçe belirt.
       'goalReached': {'type': 'BOOLEAN'},
     },
     'required': ['reply', 'hasError', 'goalReached'],
+  };
+
+  static const Map<String, dynamic> _translationSchema = {
+    'type': 'OBJECT',
+    'properties': {
+      'tr': {'type': 'STRING'},
+    },
+    'required': ['tr'],
   };
 
   static const Map<String, dynamic> _writingSchema = {
@@ -821,6 +862,7 @@ $review
    - word: İngilizce kelime veya kalıp
    - meaning: TÜRKÇE karşılığı
    - example: kelimeyi kullanan, bugünün dilbilgisi konusuna uygun İngilizce örnek cümle
+   - exampleTr: örnek cümlenin TÜRKÇE çevirisi
 
 2) gapFill — tam ${size.gapFill} boşluk doldurma sorusu:
    - sentence: içinde tam olarak bir tane "___" geçen İngilizce cümle
@@ -838,6 +880,7 @@ $review
 
 4) quiz — tam ${size.quiz} çoktan seçmeli soru:
    - question: bugünün dilbilgisi konusunu ölçen İngilizce soru
+   - questionTr: sorunun TÜRKÇE çevirisi (cevabı ele vermeden; boşluk varsa "___" olarak bırak)
    - options: 4 seçenek
    - answerIndex: doğru seçeneğin 0'dan başlayan sırası
    - explanationTr: doğru cevabın neden doğru olduğunun TÜRKÇE açıklaması
@@ -873,8 +916,9 @@ Kurallar:
             'word': {'type': 'STRING'},
             'meaning': {'type': 'STRING'},
             'example': {'type': 'STRING'},
+            'exampleTr': {'type': 'STRING'},
           },
-          'required': ['word', 'meaning', 'example'],
+          'required': ['word', 'meaning', 'example', 'exampleTr'],
         },
       },
       'gapFill': {
