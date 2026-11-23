@@ -79,7 +79,7 @@ void main() {
           await tester.tap(find.text('Program'));
           await _advance(tester);
 
-          expect(find.text('Haftalık program'), findsOneWidget);
+          expect(find.text('Çalışma programı'), findsOneWidget);
           expect(find.text('/ 7 gün tamam'), findsOneWidget);
 
           final row = find.text('Konu $weekday');
@@ -102,6 +102,29 @@ void main() {
       },
     );
   }
+
+  testWidgets('Program sekmesinde ay görünümü çalışılan günleri sayar', (
+    tester,
+  ) async {
+    final today = (await repository.planForWeek(DateTime.now())).first;
+    await repository.completeDay(today);
+    await pumpApp(tester);
+
+    await tester.tap(find.text('Program'));
+    await _advance(tester);
+    expect(find.textContaining('1. hafta'), findsOneWidget);
+
+    await tester.tap(find.text('Ay'));
+    await _advance(tester);
+
+    expect(find.text('1 gün çalıştın'), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('programın ilk günü')), findsOneWidget);
+    // Programdan önceki aya geri gidilemez.
+    final back = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.chevron_left_rounded),
+    );
+    expect(back.onPressed, isNull);
+  });
 
   testWidgets('ana ekrandaki gün kutucuğu o günün konusunu açar', (
     tester,

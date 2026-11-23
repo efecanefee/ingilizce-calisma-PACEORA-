@@ -11,6 +11,7 @@ import '../../app/theme.dart';
 import '../../data/database.dart';
 import '../../data/providers.dart';
 import '../../data/repository.dart';
+import 'month_calendar.dart';
 
 /// Haftalık program: günler bir zaman çizelgesinde, bugün öne çıkarılmış.
 class ProgramScreen extends ConsumerWidget {
@@ -40,7 +41,7 @@ class ProgramScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Haftalık program'),
+        title: const Text('Çalışma programı'),
         actions: [
           IconButton(
             tooltip: 'Programı yenile',
@@ -57,7 +58,7 @@ class ProgramScreen extends ConsumerWidget {
         AsyncData(:final value) when value.days.isEmpty => const Center(
           child: Text('Bu hafta için program yok. Yenile düğmesine dokun.'),
         ),
-        AsyncData(:final value) => _Timeline(week: value),
+        AsyncData(:final value) => _ProgramBody(week: value),
         _ => const Center(child: CircularProgressIndicator()),
       },
     );
@@ -91,10 +92,56 @@ void showPlanDayDetails(
   );
 }
 
-class _Timeline extends StatelessWidget {
-  const _Timeline({required this.week});
+/// Hafta ve ay görünümü arasında geçiş.
+class _ProgramBody extends StatefulWidget {
+  const _ProgramBody({required this.week});
 
   final WeekPlan week;
+
+  @override
+  State<_ProgramBody> createState() => _ProgramBodyState();
+}
+
+class _ProgramBodyState extends State<_ProgramBody> {
+  var _month = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final toggle = Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: SegmentedButton<bool>(
+        segments: const [
+          ButtonSegment(
+            value: false,
+            label: Text('Hafta'),
+            icon: Icon(Icons.view_agenda_rounded),
+          ),
+          ButtonSegment(
+            value: true,
+            label: Text('Ay'),
+            icon: Icon(Icons.calendar_month_rounded),
+          ),
+        ],
+        selected: {_month},
+        showSelectedIcon: false,
+        onSelectionChanged: (v) => setState(() => _month = v.first),
+      ),
+    );
+    if (_month) {
+      return ListView(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+        children: [toggle, const MonthCalendar()],
+      );
+    }
+    return _Timeline(week: widget.week, header: toggle);
+  }
+}
+
+class _Timeline extends StatelessWidget {
+  const _Timeline({required this.week, required this.header});
+
+  final WeekPlan week;
+  final Widget header;
 
   @override
   Widget build(BuildContext context) {
@@ -105,6 +152,7 @@ class _Timeline extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
       children: [
+        header,
         _WeekHeader(
           start: week.start,
           weekNumber: week.weekNumber,

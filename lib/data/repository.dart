@@ -178,6 +178,10 @@ class Repository {
     return rows.map((r) => r.grammarTopic).toSet().take(limit).toList();
   }
 
+  /// Tüm plan günleri (bütün haftalar).
+  Future<List<WeeklyPlanDay>> allPlanDays() =>
+      _db.select(_db.weeklyPlanDays).get();
+
   /// [date]'i içeren program haftasının ilk günü.
   Future<DateTime> planWeekStart(DateTime date) async =>
       planWeekStartOf(date, await programStart());
