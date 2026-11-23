@@ -23,10 +23,11 @@ class LessonScreen extends ConsumerWidget {
     final lesson = ref.watch(lessonProvider);
 
     final offline = lesson.value?.offline ?? false;
+    final title = ref.read(lessonProvider.notifier).title;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(offline ? 'Bugünün dersi · hazır ders' : 'Bugünün dersi'),
+        title: Text(offline ? '$title · hazır ders' : title),
         leading: IconButton(
           tooltip: 'Kapat',
           icon: const Icon(Icons.close),
@@ -58,8 +59,9 @@ class _PreparingView extends StatelessWidget {
             const SizedBox(height: 24),
             Text(
               'Bugünün dersi hazırlanıyor…',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w600),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
@@ -120,8 +122,9 @@ class _UnavailableViewState extends ConsumerState<_UnavailableView> {
             const SizedBox(height: 16),
             Text(
               'Ders hazırlanamadı',
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w700),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
@@ -223,69 +226,67 @@ class _LessonBody extends ConsumerWidget {
 
     return switch (kind) {
       LessonStepKind.vocab => Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (final item in lesson.vocab) VocabCard(item: item),
-          ],
-        ),
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [for (final item in lesson.vocab) VocabCard(item: item)],
+      ),
       LessonStepKind.gapFill => Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (var i = 0; i < lesson.gapFill.length; i++)
-              ChoiceQuestionCard(
-                number: i + 1,
-                prompt: lesson.gapFill[i].sentence,
-                hint: lesson.gapFill[i].hintTr,
-                options: lesson.gapFill[i].options,
-                answer: lesson.gapFill[i].answer,
-                given: progress.given[gapFillKey(i)],
-                onSelected: (option) => notifier.answer(
-                  gapFillKey(i),
-                  correct: lesson.gapFill[i].isCorrect(option),
-                  input: option,
-                ),
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var i = 0; i < lesson.gapFill.length; i++)
+            ChoiceQuestionCard(
+              number: i + 1,
+              prompt: lesson.gapFill[i].sentence,
+              hint: lesson.gapFill[i].hintTr,
+              options: lesson.gapFill[i].options,
+              answer: lesson.gapFill[i].answer,
+              given: progress.given[gapFillKey(i)],
+              onSelected: (option) => notifier.answer(
+                gapFillKey(i),
+                correct: lesson.gapFill[i].isCorrect(option),
+                input: option,
               ),
-          ],
-        ),
+            ),
+        ],
+      ),
       LessonStepKind.translate => Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (var i = 0; i < lesson.translate.length; i++)
-              TranslateQuestionCard(
-                // Cevap verildikten sonra kart yeniden kurulmasın diye anahtar
-                // soruya sabitlendi.
-                key: ValueKey(translateKey(i)),
-                number: i + 1,
-                item: lesson.translate[i],
-                given: progress.given[translateKey(i)],
-                correct: progress.answers[translateKey(i)] ?? false,
-                onSubmit: (input) => notifier.answer(
-                  translateKey(i),
-                  correct: lesson.translate[i].isCorrect(input),
-                  input: input,
-                ),
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var i = 0; i < lesson.translate.length; i++)
+            TranslateQuestionCard(
+              // Cevap verildikten sonra kart yeniden kurulmasın diye anahtar
+              // soruya sabitlendi.
+              key: ValueKey(translateKey(i)),
+              number: i + 1,
+              item: lesson.translate[i],
+              given: progress.given[translateKey(i)],
+              correct: progress.answers[translateKey(i)] ?? false,
+              onSubmit: (input) => notifier.answer(
+                translateKey(i),
+                correct: lesson.translate[i].isCorrect(input),
+                input: input,
               ),
-          ],
-        ),
+            ),
+        ],
+      ),
       LessonStepKind.quiz => Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (var i = 0; i < lesson.quiz.length; i++)
-              ChoiceQuestionCard(
-                number: i + 1,
-                prompt: lesson.quiz[i].question,
-                options: lesson.quiz[i].options,
-                answer: lesson.quiz[i].answer,
-                given: progress.given[quizKey(i)],
-                explanation: lesson.quiz[i].explanationTr,
-                onSelected: (option) => notifier.answer(
-                  quizKey(i),
-                  correct: lesson.quiz[i].isCorrect(option),
-                  input: option,
-                ),
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var i = 0; i < lesson.quiz.length; i++)
+            ChoiceQuestionCard(
+              number: i + 1,
+              prompt: lesson.quiz[i].question,
+              options: lesson.quiz[i].options,
+              answer: lesson.quiz[i].answer,
+              given: progress.given[quizKey(i)],
+              explanation: lesson.quiz[i].explanationTr,
+              onSelected: (option) => notifier.answer(
+                quizKey(i),
+                correct: lesson.quiz[i].isCorrect(option),
+                input: option,
               ),
-          ],
-        ),
+            ),
+        ],
+      ),
     };
   }
 }
@@ -367,17 +368,17 @@ class _StepFooter extends ConsumerWidget {
     return switch (kind) {
       LessonStepKind.vocab => true,
       LessonStepKind.gapFill => List.generate(
-          state.lesson.gapFill.length,
-          gapFillKey,
-        ).every(progress.answers.containsKey),
+        state.lesson.gapFill.length,
+        gapFillKey,
+      ).every(progress.answers.containsKey),
       LessonStepKind.translate => List.generate(
-          state.lesson.translate.length,
-          translateKey,
-        ).every(progress.answers.containsKey),
+        state.lesson.translate.length,
+        translateKey,
+      ).every(progress.answers.containsKey),
       LessonStepKind.quiz => List.generate(
-          state.lesson.quiz.length,
-          quizKey,
-        ).every(progress.answers.containsKey),
+        state.lesson.quiz.length,
+        quizKey,
+      ).every(progress.answers.containsKey),
     };
   }
 
@@ -406,8 +407,9 @@ class _StepFooter extends ConsumerWidget {
             Expanded(
               flex: 2,
               child: FilledButton(
-                onPressed:
-                    _canContinue ? () => notifier.goToStep(index + 1) : null,
+                onPressed: _canContinue
+                    ? () => notifier.goToStep(index + 1)
+                    : null,
                 child: Text(isLast ? 'Sonucu gör' : 'Devam'),
               ),
             ),
@@ -435,9 +437,15 @@ class _ResultViewState extends ConsumerState<_ResultView> {
     setState(() => _busy = true);
     final router = GoRouter.of(context);
     final messenger = ScaffoldMessenger.of(context);
+    final notifier = ref.read(lessonProvider.notifier);
     try {
-      await ref.read(lessonProvider.notifier).finish();
-      router.go('/');
+      await notifier.finish();
+      // Takvimden açılan dersler takvime döner.
+      if (!notifier.isToday && router.canPop()) {
+        router.pop();
+      } else {
+        router.go('/');
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() => _busy = false);
@@ -453,7 +461,12 @@ class _ResultViewState extends ConsumerState<_ResultView> {
     final wrong = state.outcomes().where((o) => !o.correct).toList();
     // XP ders başına bir kez verilir; zaten bitmiş ders tekrar açıldıysa
     // "+XP" gösterilmez.
-    final earnsXp = !(ref.watch(todayLessonProvider).value?.completed ?? false);
+    final notifier = ref.read(lessonProvider.notifier);
+    final earnsXp =
+        notifier.persists &&
+        (!notifier.isToday ||
+            !(ref.watch(todayLessonProvider).value?.completed ?? false));
+    final vocab = state.lesson.vocab;
     // Ara ton açık zeminde soluk kalıyor; açık temada koyu tonu kullan.
     final xpTone = theme.brightness == Brightness.dark
         ? context.pace.accentDim
@@ -475,10 +488,10 @@ class _ResultViewState extends ConsumerState<_ResultView> {
                 child: Column(
                   children: [
                     Icon(
-                      score >= 85 ? Icons.emoji_events : Icons.star_rounded,
-                      size: 56,
-                      color: color,
-                    )
+                          score >= 85 ? Icons.emoji_events : Icons.star_rounded,
+                          size: 56,
+                          color: color,
+                        )
                         .animate()
                         .scale(duration: Motion.slow, curve: Curves.elasticOut)
                         .then()
@@ -497,53 +510,102 @@ class _ResultViewState extends ConsumerState<_ResultView> {
                     Text(
                       '${state.correctCount}/${state.lesson.questionCount} doğru',
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color:
-                            theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.7,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 12),
                     Text(
                       message,
-                      style: theme.textTheme.titleMedium
-                          ?.copyWith(fontWeight: FontWeight.w600),
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     if (earnsXp) ...[
-                    const SizedBox(height: 14),
-                    // Kazanılan XP: dersi bitirince ödül sistemine işlenir.
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: context.pace.accent.withValues(alpha: 0.18),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: xpTone),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.bolt_rounded,
-                              size: 20, color: xpTone),
-                          const SizedBox(width: 6),
-                          CountUpText(
-                            value: lessonXp(state.scorePercent),
-                            prefix: '+',
-                            suffix: ' XP',
-                            duration: const Duration(milliseconds: 1100),
-                            style: theme.textTheme.titleSmall
-                                ?.copyWith(fontWeight: FontWeight.w800),
+                      const SizedBox(height: 14),
+                      // Kazanılan XP: dersi bitirince ödül sistemine işlenir.
+                      Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: context.pace.accent.withValues(
+                                alpha: 0.18,
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: xpTone),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.bolt_rounded,
+                                  size: 20,
+                                  color: xpTone,
+                                ),
+                                const SizedBox(width: 6),
+                                CountUpText(
+                                  value: lessonXp(state.scorePercent),
+                                  prefix: '+',
+                                  suffix: ' XP',
+                                  duration: const Duration(milliseconds: 1100),
+                                  style: theme.textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                          .animate(delay: 500.ms)
+                          .fadeIn()
+                          .scale(
+                            curve: Curves.elasticOut,
+                            duration: Motion.slow,
                           ),
-                        ],
-                      ),
-                    )
-                        .animate(delay: 500.ms)
-                        .fadeIn()
-                        .scale(curve: Curves.elasticOut, duration: Motion.slow),
                     ],
                   ],
                 ),
               ),
+              if (vocab.isNotEmpty) ...[
+                const SizedBox(height: 28),
+                Text(
+                  notifier.persists
+                      ? 'Bugün öğrendiğin ${vocab.length} kelime'
+                      : 'Bu dersin ${vocab.length} kelimesi',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                if (notifier.persists) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Dersi bitirince kart destene eklenir; aralıklı tekrarla '
+                    'karşına çıkar.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.65,
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final v in vocab)
+                      Tooltip(
+                        message: v.example,
+                        child: Chip(
+                          avatar: const Icon(Icons.style_rounded, size: 16),
+                          label: Text('${v.word} · ${v.meaning}'),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 28),
               if (wrong.isEmpty)
                 Card(
@@ -551,8 +613,10 @@ class _ResultViewState extends ConsumerState<_ResultView> {
                     padding: const EdgeInsets.all(20),
                     child: Row(
                       children: [
-                        const Icon(Icons.emoji_events,
-                            color: AppColors.success),
+                        const Icon(
+                          Icons.emoji_events,
+                          color: AppColors.success,
+                        ),
                         const SizedBox(width: 12),
                         const Expanded(
                           child: Text('Tüm soruları doğru yaptın.'),
@@ -564,20 +628,26 @@ class _ResultViewState extends ConsumerState<_ResultView> {
               else ...[
                 Text(
                   'Tekrar edilecekler',
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w700),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Bunlar hata defterine eklendi; sonraki derslerde karşına çıkacak.',
+                  notifier.persists
+                      ? 'Bunlar hata defterine eklendi; sonraki derslerde '
+                            'karşına çıkacak.'
+                      : 'Tekrar çözme kaydedilmez; bunlara bir göz at.',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
                   ),
                 ),
                 const SizedBox(height: 12),
                 for (final (i, outcome) in wrong.indexed)
-                  _WrongItemTile(item: outcome.item, context: outcome.context)
-                      .entrance(i + 2),
+                  _WrongItemTile(
+                    item: outcome.item,
+                    context: outcome.context,
+                  ).entrance(i + 2),
               ],
             ],
           ),
@@ -596,7 +666,7 @@ class _ResultViewState extends ConsumerState<_ResultView> {
                         width: 22,
                         child: CircularProgressIndicator(strokeWidth: 2.5),
                       )
-                    : const Text('Dersi bitir'),
+                    : Text(notifier.persists ? 'Dersi bitir' : 'Kapat'),
               ),
             ),
           ),
@@ -630,8 +700,9 @@ class _WrongItemTile extends StatelessWidget {
         children: [
           Text(
             item,
-            style: theme.textTheme.bodyLarge
-                ?.copyWith(fontWeight: FontWeight.w600),
+            style: theme.textTheme.bodyLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 4),
           Text(

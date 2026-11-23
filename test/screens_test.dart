@@ -124,6 +124,17 @@ void main() {
       find.widgetWithIcon(IconButton, Icons.chevron_left_rounded),
     );
     expect(back.onPressed, isNull);
+
+    // Bugüne dokununca günün sayfası açılır: çalışılmış, tekrar çözülebilir.
+    final todayCell = find.bySemanticsLabel(RegExp('bugün'));
+    await tester.ensureVisible(todayCell);
+    await _advance(tester);
+    await tester.tap(todayCell);
+    await _advance(tester);
+    expect(find.text('Çalıştın'), findsWidgets);
+    expect(find.text('Bu dersi tekrar çöz'), findsNothing);
+    expect(find.textContaining('elle'), findsNothing);
+    expect(find.textContaining('işaretlendi'), findsOneWidget);
   });
 
   testWidgets('ana ekrandaki gün kutucuğu o günün konusunu açar', (

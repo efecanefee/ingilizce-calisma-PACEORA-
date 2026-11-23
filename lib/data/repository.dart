@@ -178,6 +178,30 @@ class Repository {
     return rows.map((r) => r.grammarTopic).toSet().take(limit).toList();
   }
 
+  /// [date] gününe denk gelen plan günü; yoksa null.
+  Future<WeeklyPlanDay?> planDayOn(DateTime date) async {
+    final day = dayOf(date);
+    for (final row in await allPlanDays()) {
+      if (planDateOf(row) == day) return row;
+    }
+    return null;
+  }
+
+  /// Günü seriye dokunmadan tamamlandı işaretler (telafi dersi).
+  Future<void> markPlanDayCompleted(WeeklyPlanDay day) =>
+      (_db.update(_db.weeklyPlanDays)..where((t) => t.id.equals(day.id))).write(
+        const WeeklyPlanDaysCompanion(status: Value('completed')),
+      );
+
+  /// Tek bir plan gününün konusunu değiştirir.
+  Future<void> updatePlanDay(WeeklyPlanDay day, PlanDaySpec spec) =>
+      (_db.update(_db.weeklyPlanDays)..where((t) => t.id.equals(day.id))).write(
+        WeeklyPlanDaysCompanion(
+          grammarTopic: Value(spec.grammarTopic),
+          vocabTheme: Value(spec.vocabTheme),
+        ),
+      );
+
   /// Tüm plan günleri (bütün haftalar).
   Future<List<WeeklyPlanDay>> allPlanDays() =>
       _db.select(_db.weeklyPlanDays).get();

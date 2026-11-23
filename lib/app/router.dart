@@ -1,5 +1,7 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../data/providers.dart';
 import '../features/flashcards/flashcards_screen.dart';
 import '../features/home/home_screen.dart';
 import '../features/lesson/lesson_screen.dart';
@@ -71,6 +73,22 @@ GoRouter createRouter({required bool onboardingDone}) {
       ),
       // Çalışma ekranları sekmelerin üstünde tam ekran açılır.
       fullScreen('/lesson', (_, _) => const LessonScreen()),
+      // Takvimden: eski dersi tekrar çöz ya da kaçırılan günü telafi et.
+      // Aynı ders ekranı, o güne bağlı bir ders durumuyla açılır.
+      fullScreen('/lesson/:mode/:date', (_, state) {
+        final date = DateTime.parse(state.pathParameters['date']!);
+        final replay = state.pathParameters['mode'] == 'replay';
+        return ProviderScope(
+          overrides: [
+            lessonProvider.overrideWith(
+              () => replay
+                  ? ReplayLessonNotifier(date)
+                  : MakeupLessonNotifier(date),
+            ),
+          ],
+          child: const LessonScreen(),
+        );
+      }),
       fullScreen('/flashcards', (_, _) => const FlashcardsScreen()),
       fullScreen('/story', (_, _) => const StoryScreen()),
       fullScreen('/review', (_, _) => const WeeklyReviewScreen()),

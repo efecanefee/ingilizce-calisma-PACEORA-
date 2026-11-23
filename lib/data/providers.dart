@@ -214,6 +214,42 @@ class WeekPlanNotifier extends AsyncNotifier<WeekPlan> {
     return result;
   }
 
+  /// Gelecekteki bir günün konusunu başka bir konuyla değiştirir.
+  ///
+  /// Gemini'den yeni bir hafta istenir ve plandaki konulardan farklı ilk
+  /// gün alınır; ulaşılamazsa yedek programdan seçilir. Yeni konu döner;
+  /// uygun konu bulunamazsa null.
+  Future<String?> replaceDay(WeeklyPlanDay day) async {
+    final repository = ref.read(repositoryProvider);
+    final profile = await repository.profile();
+    if (profile == null) return null;
+    final used = {
+      for (final d in await repository.allPlanDays()) d.grammarTopic,
+    };
+    final result = await ref
+        .read(geminiServiceProvider)
+        .generateWeeklyPlan(
+          level: profile.level,
+          dailyMinutes: profile.dailyMinutes,
+          weekNumber: 2,
+          previousTopics: used.toList(),
+        );
+    final candidates = [...result.days, ...fallbackWeeklyPlan(profile.level)];
+    PlanDaySpec? pick;
+    for (final spec in candidates) {
+      final review = spec.grammarTopic.toLowerCase().contains('review') ||
+          spec.grammarTopic.toLowerCase().contains('tekrar');
+      if (!review && !used.contains(spec.grammarTopic)) {
+        pick = spec;
+        break;
+      }
+    }
+    if (pick == null) return null;
+    await repository.updatePlanDay(day, pick);
+    state = await AsyncValue.guard(_load);
+    return pick.grammarTopic;
+  }
+
   /// Uygulama öne geldiğinde çağrılır; gün değiştiyse planı tazeler.
   ///
   /// Uygulama açık bırakılıp gece yarısı geçildiğinde "bugün" dünde takılı
@@ -273,14 +309,38 @@ class LessonUnavailable implements Exception {
 }
 
 /// Bugünkü ders: varsa veritabanından devam eder, yoksa Gemini'den üretir.
+///
+/// Alt sınıflar aynı ders ekranını başka günler için kullanır:
+/// [ReplayLessonNotifier] eski bir dersi kaydetmeden yeniden çözdürür,
+/// [MakeupLessonNotifier] kaçırılan bir günün dersini telafi ettirir.
 class LessonNotifier extends AsyncNotifier<LessonState> {
   DateTime? _sessionStart;
+
+  /// Dersin ait olduğu gün.
+  DateTime get lessonDate => clock.now();
+
+  /// Ders ekranının başlığı.
+  String get title => 'Bugünün dersi';
+
+  /// false ise ilerleme ve sonuç hiçbir yere yazılmaz (tekrar çözme).
+  bool get persists => true;
+
+  /// Bugünün dersi mi (telafi ve tekrar dersleri değil)?
+  bool get isToday => true;
+
+  /// Dersin plan günü; konuyu ve hazır dersi seçmek için.
+  Future<WeeklyPlanDay?> planDay() async =>
+      (await ref.read(weekPlanProvider.future)).today;
+
+  /// Ders bitince plan gününü tamamlar. Bugünün dersi seriyi de işler.
+  Future<void> completePlanDay(WeeklyPlanDay day) =>
+      ref.read(weekPlanProvider.notifier).completeDay(day);
 
   @override
   Future<LessonState> build() async {
     _sessionStart = clock.now();
 
-    final existing = await ref.read(repositoryProvider).lessonFor(clock.now());
+    final existing = await ref.read(repositoryProvider).lessonFor(lessonDate);
     if (existing != null) {
       final decoded = LessonState.decode(existing.contentJson);
       // Kayıt bozuksa sessizce yeniden üretilir.
@@ -297,7 +357,7 @@ class LessonNotifier extends AsyncNotifier<LessonState> {
       throw const LessonUnavailable('Önce profilini oluşturman gerekiyor.');
     }
 
-    final today = (await ref.read(weekPlanProvider.future)).today;
+    final today = await planDay();
     if (today == null) {
       throw const LessonUnavailable(
         'Bugün için plan bulunamadı. Ana ekrandan programı yenile.',
@@ -320,7 +380,7 @@ class LessonNotifier extends AsyncNotifier<LessonState> {
     }
 
     final lessonState = LessonState(lesson: lesson);
-    await repository.saveLesson(clock.now(), lessonState);
+    if (persists) await repository.saveLesson(lessonDate, lessonState);
     return lessonState;
   }
 
@@ -330,7 +390,7 @@ class LessonNotifier extends AsyncNotifier<LessonState> {
     state = await AsyncValue.guard(() async {
       final repository = ref.read(repositoryProvider);
       final profile = await repository.profile();
-      final today = (await ref.read(weekPlanProvider.future)).today;
+      final today = await planDay();
       if (profile == null || today == null) {
         throw const LessonUnavailable('Bugün için plan bulunamadı.');
       }
@@ -345,7 +405,7 @@ class LessonNotifier extends AsyncNotifier<LessonState> {
         throw const LessonUnavailable('Hazır ders bulunamadı.');
       }
       final lessonState = LessonState(lesson: lesson, offline: true);
-      await repository.saveLesson(clock.now(), lessonState);
+      if (persists) await repository.saveLesson(lessonDate, lessonState);
       return lessonState;
     });
   }
@@ -388,25 +448,27 @@ class LessonNotifier extends AsyncNotifier<LessonState> {
 
   Future<void> _persist(LessonState next) async {
     state = AsyncValue.data(next);
-    await ref.read(repositoryProvider).saveLesson(clock.now(), next);
+    if (!persists) return;
+    await ref.read(repositoryProvider).saveLesson(lessonDate, next);
   }
 
   /// Dersi bitirir: skoru ve süreyi yazar, hataları deftere işler, günü kapatır.
   Future<void> finish() async {
     final current = state.value;
-    if (current == null) return;
+    if (current == null || !persists) return;
 
     final repository = ref.read(repositoryProvider);
     final now = clock.now();
+    final date = lessonDate;
 
     // Ders yarıda bırakılıp geri dönülmüş olabilir; süreler toplanır.
-    final previous = (await repository.lessonFor(now))?.durationSeconds ?? 0;
+    final previous = (await repository.lessonFor(date))?.durationSeconds ?? 0;
     final elapsed = _sessionStart == null
         ? 0
         : now.difference(_sessionStart!).inSeconds;
 
     await repository.saveLesson(
-      now,
+      date,
       current,
       score: current.scorePercent,
       durationSeconds: previous + elapsed,
@@ -432,14 +494,75 @@ class LessonNotifier extends AsyncNotifier<LessonState> {
       now: now,
     );
 
-    final today = (await ref.read(weekPlanProvider.future)).today;
-    if (today != null && today.status != 'completed') {
-      await ref.read(weekPlanProvider.notifier).completeDay(today);
+    final day = await planDay();
+    if (day != null && day.status != 'completed') {
+      await completePlanDay(day);
     }
     ref.invalidate(todayLessonProvider);
     ref.invalidate(flashcardSummaryProvider);
     ref.invalidate(progressProvider);
     ref.invalidate(gameProvider);
+  }
+}
+
+/// Eski bir dersi kaydetmeden yeniden çözdürür: sorular aynı, ilerleme
+/// sıfırdan; skor, seri, XP ve kartlar etkilenmez.
+class ReplayLessonNotifier extends LessonNotifier {
+  ReplayLessonNotifier(this.date);
+
+  final DateTime date;
+
+  @override
+  DateTime get lessonDate => date;
+
+  @override
+  String get title => 'Tekrar çöz';
+
+  @override
+  bool get persists => false;
+
+  @override
+  bool get isToday => false;
+
+  @override
+  Future<LessonState> build() async {
+    final existing = await ref.read(repositoryProvider).lessonFor(date);
+    final decoded = existing == null
+        ? null
+        : LessonState.decode(existing.contentJson);
+    if (decoded == null) {
+      throw const LessonUnavailable('Bu günün dersi bulunamadı.');
+    }
+    return LessonState(lesson: decoded.lesson, offline: decoded.offline);
+  }
+}
+
+/// Kaçırılan bir plan gününün dersini sonradan çözdürür.
+///
+/// Ders o güne kaydedilir ve gün tamamlandı sayılır; ama seri yalnızca
+/// gününde çalışınca uzadığı için profildeki seri değişmez.
+class MakeupLessonNotifier extends LessonNotifier {
+  MakeupLessonNotifier(DateTime date) : date = dayOf(date);
+
+  final DateTime date;
+
+  @override
+  DateTime get lessonDate => date;
+
+  @override
+  String get title => 'Telafi dersi';
+
+  @override
+  bool get isToday => false;
+
+  @override
+  Future<WeeklyPlanDay?> planDay() =>
+      ref.read(repositoryProvider).planDayOn(date);
+
+  @override
+  Future<void> completePlanDay(WeeklyPlanDay day) async {
+    await ref.read(repositoryProvider).markPlanDayCompleted(day);
+    ref.invalidate(weekPlanProvider);
   }
 }
 
