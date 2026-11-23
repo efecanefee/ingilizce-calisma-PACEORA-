@@ -44,6 +44,11 @@ class ProgramScreen extends ConsumerWidget {
         title: const Text('Çalışma programı'),
         actions: [
           IconButton(
+            tooltip: 'Ara',
+            onPressed: () => context.push('/search'),
+            icon: const Icon(Icons.search_rounded),
+          ),
+          IconButton(
             tooltip: 'Programı yenile',
             onPressed: plan.isLoading ? null : () => _regenerate(context, ref),
             icon: const Icon(Icons.autorenew_rounded),

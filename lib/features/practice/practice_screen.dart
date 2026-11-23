@@ -107,7 +107,16 @@ class PracticeScreen extends ConsumerWidget {
     final scaler = MediaQuery.textScalerOf(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Pratik')),
+      appBar: AppBar(
+        title: const Text('Pratik'),
+        actions: [
+          IconButton(
+            tooltip: 'Ara',
+            onPressed: () => context.push('/search'),
+            icon: const Icon(Icons.search_rounded),
+          ),
+        ],
+      ),
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(flashcardSummaryProvider);
