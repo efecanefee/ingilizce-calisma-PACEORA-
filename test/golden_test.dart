@@ -38,7 +38,10 @@ void main() {
     addTearDown(db.close);
     final repository = Repository(db);
     await repository.saveProfile(name: 'Yağız', level: 'B1', dailyMinutes: 20);
-    await repository.replaceWeeklyPlan(_now, [
+    // Program pazartesi (16 Kasım) başladı: bugün haftanın 3. günü, ilk iki
+    // gün çalışıldı. Program başlangıç gününe bağlı olduğu için plan
+    // pazartesiye yazılır.
+    await repository.replaceWeeklyPlan(DateTime(2026, 11, 16), [
       for (final (t, v) in [
         ('Present Simple vs Continuous', 'Günlük rutin'),
         ('Past Simple', 'Seyahat'),
