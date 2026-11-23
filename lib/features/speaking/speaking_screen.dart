@@ -7,6 +7,7 @@ import '../../app/error_view.dart';
 import '../../app/motion.dart';
 import '../../app/speak_button.dart';
 import '../../app/theme.dart';
+import '../../app/translate_help.dart';
 import '../../data/pronunciation.dart';
 import '../../data/providers.dart';
 import '../../data/speech_service.dart';
@@ -277,6 +278,12 @@ class _SessionState extends ConsumerState<_Session> {
                       fontWeight: FontWeight.w700,
                       height: 1.35,
                     ),
+                  ),
+                // Dikte modunda cümle gizli; Türkçesi de cevabı ele verir.
+                if (!dictation || score != null)
+                  TranslateHelp(
+                    key: ValueKey('tr-$_index'),
+                    english: _sentence,
                   ),
                 const SizedBox(height: 16),
                 // Temadaki düğmeler tam genişlik; Wrap'ta alt alta diziliyordu.

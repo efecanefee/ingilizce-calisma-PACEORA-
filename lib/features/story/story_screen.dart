@@ -7,6 +7,7 @@ import '../../app/error_view.dart';
 import '../../app/motion.dart';
 import '../../app/speak_button.dart';
 import '../../app/theme.dart';
+import '../../app/translate_help.dart';
 import '../../data/providers.dart';
 import '../../data/speech_service.dart';
 import '../../data/story_models.dart';
@@ -125,6 +126,20 @@ class _StoryBody extends ConsumerWidget {
               ),
             ),
           ),
+        // Hikayenin tamamının Türkçesi: zorlanan okur için alt kısımda.
+        item(
+          Card(
+            margin: EdgeInsets.zero,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
+              child: TranslateHelp(
+                english: [story.title, ...story.paragraphs].join('\n\n'),
+                label: 'Hikayenin Türkçesini göster',
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
         if (story.glossary.isNotEmpty) ...[
           const SizedBox(height: 8),
           item(_Glossary(items: story.glossary)),
@@ -158,6 +173,7 @@ class _StoryBody extends ConsumerWidget {
               options: story.questions[i].options,
               answer: story.questions[i].answer,
               given: state.answers[i],
+              hint: story.questions[i].questionTr,
               explanation: story.questions[i].explanationTr,
               onSelected: (option) => notifier.answer(i, option),
             ),

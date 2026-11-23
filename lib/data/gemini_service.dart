@@ -536,6 +536,7 @@ $words
   - options: 4 İngilizce seçenek
   - answerIndex: doğru seçeneğin 0'dan başlayan sırası
   - explanationTr: cevabın metnin neresinden çıktığını anlatan TÜRKÇE açıklama
+  - questionTr: sorunun TÜRKÇE çevirisi
 
 Kurallar:
 - Hikaye ve sorular $level seviyesine uygun olsun.
@@ -964,8 +965,15 @@ Kurallar:
             },
             'answerIndex': {'type': 'INTEGER'},
             'explanationTr': {'type': 'STRING'},
+            'questionTr': {'type': 'STRING'},
           },
-          'required': ['question', 'options', 'answerIndex', 'explanationTr'],
+          'required': [
+            'question',
+            'options',
+            'answerIndex',
+            'explanationTr',
+            'questionTr',
+          ],
         },
       },
     },

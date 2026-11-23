@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/motion.dart';
 import '../../app/speak_button.dart';
 import '../../app/theme.dart';
+import '../../app/translate_help.dart';
 import '../../data/providers.dart';
 import '../../data/roleplay.dart';
 import '../../data/speech_service.dart';
@@ -406,6 +407,12 @@ class _Bubble extends StatelessWidget {
             : CrossAxisAlignment.start,
         children: [
           bubble,
+          // Karakterin İngilizce cümlesi bir dokunuşla Türkçe okunabilir.
+          if (!mine)
+            ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: maxWidth),
+              child: TranslateHelp(english: message.text),
+            ),
           if (mine && correction != null)
             _CorrectionNote(correction: correction, maxWidth: maxWidth)
           else if (mine && evaluated)

@@ -7,6 +7,7 @@ import '../../app/feature_colors.dart';
 import '../../app/mascot.dart';
 import '../../app/motion.dart';
 import '../../app/theme.dart';
+import '../../app/translate_help.dart';
 import '../../data/lesson_models.dart';
 import '../../data/providers.dart';
 import '../../data/writing.dart';
@@ -441,6 +442,7 @@ class _Result extends StatelessWidget {
             ),
           ),
         ),
+        TranslateHelp(english: feedback.corrected),
         const SizedBox(height: 20),
         FilledButton.icon(
           style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
