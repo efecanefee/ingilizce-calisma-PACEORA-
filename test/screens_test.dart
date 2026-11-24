@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:paceora/app/sounds.dart';
 import 'package:paceora/data/database.dart';
 import 'package:paceora/data/placement.dart';
 import 'package:paceora/data/providers.dart';
@@ -25,6 +26,13 @@ Future<void> _advance(WidgetTester tester) async {
   for (var i = 0; i < 15; i++) {
     await tester.pump(const Duration(milliseconds: 100));
   }
+}
+
+class _RecordingPlayer implements SoundPlayer {
+  final played = <SoundEffect>[];
+
+  @override
+  void play(SoundEffect effect) => played.add(effect);
 }
 
 void main() {
@@ -291,6 +299,8 @@ void main() {
   });
 
   testWidgets('yeni seviye ve rozet sırayla kutlanır', (tester) async {
+    final sounds = _RecordingPlayer();
+    Sounds.player = sounds;
     // 50 kart tekrarı = 100 XP: seviye 2 ve "Hafıza avcısı" rozeti.
     final prefs = await pumpApp(tester, {
       'seen_player_level': 1,
@@ -303,6 +313,7 @@ void main() {
     await _advance(tester);
 
     expect(find.text('Yeni rozet: Hafıza avcısı'), findsOneWidget);
+    expect(sounds.played, [SoundEffect.levelUp, SoundEffect.badge]);
     await tester.tap(find.text('Harika!'));
     await _advance(tester);
 

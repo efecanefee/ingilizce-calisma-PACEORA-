@@ -296,12 +296,14 @@ class _CelebrationHostState extends ConsumerState<CelebrationHost> {
   }
 
   void _dismiss() {
+    // Hızlı çift dokunuş: kutlama zaten kapanmış olabilir.
+    if (_queue.isEmpty) return;
     final done = _queue.first;
     setState(() {
       _queue.removeAt(0);
       _shown++;
     });
-    if (_queue.isNotEmpty) Sounds.play(_queue.first.sound);
+    if (_queue.isNotEmpty) Sounds.play(_queue.first.sound, force: true);
     done.onDismissed?.call();
   }
 

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/error_view.dart';
 import '../../app/mascot.dart';
 import '../../app/motion.dart';
+import '../../app/sounds.dart';
 import '../../app/speak_button.dart';
 import '../../app/theme.dart';
 import '../../app/translate_help.dart';
@@ -22,6 +23,12 @@ class StoryScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final story = ref.watch(storyProvider);
+    // Son soru cevaplanınca bitiş sesi (önceden bitmiş hikaye açılınca değil).
+    ref.listen(storyProvider, (previous, next) {
+      final before = previous?.value;
+      if (before == null || before.isFinished) return;
+      if (next.value?.isFinished ?? false) Sounds.finished();
+    });
 
     return Scaffold(
       appBar: AppBar(title: const Text('Günün hikayesi')),

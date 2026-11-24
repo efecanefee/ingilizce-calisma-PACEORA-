@@ -140,6 +140,7 @@ class _PlacementSessionState extends ConsumerState<_PlacementSession> {
       }
     });
     if (_done) {
+      Sounds.finished();
       await PlacementRecord.save(
         ref.read(sharedPreferencesProvider),
         scorePlacement(_questions, _answers).level,

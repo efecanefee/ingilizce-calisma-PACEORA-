@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/celebrate_banner.dart';
 import '../../app/constants.dart';
 import '../../app/error_view.dart';
 import '../../app/mascot.dart';
 import '../../app/motion.dart';
+import '../../app/sounds.dart';
 import '../../app/theme.dart';
 import '../../data/providers.dart';
 import '../../data/repository.dart';
@@ -438,6 +440,14 @@ class _LevelSuggestion extends ConsumerWidget {
                     .applyLevel(report);
                 // Yeni seviye sonraki derslerde ve programda kullanılır.
                 ref.invalidate(weekPlanProvider);
+                if (up && context.mounted) {
+                  celebrateWithBanner(
+                    context,
+                    title: 'Yeni seviye: ${to.label}!',
+                    message: 'Bu haftaki çalışman seni bir kademe yükseltti.',
+                    sound: SoundEffect.levelUp,
+                  );
+                }
               },
               child: Text('Seviyemi ${to.code} yap'),
             ),

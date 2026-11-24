@@ -3,6 +3,7 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:paceora/app/sounds.dart';
 import 'package:paceora/data/database.dart';
 import 'package:paceora/data/lesson_models.dart';
 import 'package:paceora/data/providers.dart';
@@ -24,6 +25,13 @@ Future<void> _advance(WidgetTester tester) async {
 Future<void> _scrollTo(WidgetTester tester, Finder finder) async {
   await scrollIntoView(tester, finder);
   await _advance(tester);
+}
+
+class _RecordingPlayer implements SoundPlayer {
+  final played = <SoundEffect>[];
+
+  @override
+  void play(SoundEffect effect) => played.add(effect);
 }
 
 void main() {
@@ -92,6 +100,8 @@ void main() {
     expect(find.text('Ali lost his key in the park.'), findsOneWidget);
     expect(find.text('0/1'), findsOneWidget);
 
+    final sounds = _RecordingPlayer();
+    Sounds.player = sounds;
     await _scrollTo(tester, find.text('In the park'));
     await tester.tap(find.text('In the park'));
     await _advance(tester);
@@ -102,6 +112,7 @@ void main() {
 
     final saved = await repository.storyFor(DateTime.now());
     expect(saved!.quizScore, 100);
+    expect(sounds.played, [SoundEffect.correct, SoundEffect.finished]);
   });
 
   group('günün hikayesi: dokun-çevir', () {
@@ -316,8 +327,12 @@ void main() {
     // Anahtar yok: yorum yerel şablondan, öneri cihazdaki kuraldan.
     expect(find.text('BU HAFTA'), findsOneWidget);
     await _scrollTo(tester, find.text('Seviyemi B1+ yap'));
+    final sounds = _RecordingPlayer();
+    Sounds.player = sounds;
     await tester.tap(find.text('Seviyemi B1+ yap'));
     await _advance(tester);
+    expect(find.textContaining('Yeni seviye: '), findsOneWidget);
+    expect(sounds.played, contains(SoundEffect.levelUp));
 
     expect((await repository.profile())!.level, 'B1+');
   });

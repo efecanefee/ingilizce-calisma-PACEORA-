@@ -8,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../app/constants.dart';
 import '../../../data/backup.dart';
+import '../../../data/level_exam.dart';
 import '../../../data/placement.dart';
 import '../../../data/profile_style.dart';
 import '../../../data/providers.dart';
@@ -71,11 +72,14 @@ class _DataGroupState extends ConsumerState<DataGroup> {
             key.startsWith('match_') ||
             key.startsWith('speech_') ||
             key.startsWith('roleplay_') ||
+            key.startsWith('writing_') ||
+            key.startsWith(AppConstants.prefShortDayPrefix) ||
             key.startsWith('streak_') ||
             key.startsWith('profile_') ||
             key.startsWith('wardrobe_') ||
             key == PlacementRecord.levelKey ||
             key == levelUpsKey ||
+            key == levelExamAtKey ||
             key == 'seen_player_level' ||
             key == 'seen_badges') {
           await prefs.remove(key);
@@ -181,6 +185,7 @@ class _DataGroupState extends ConsumerState<DataGroup> {
       ref.invalidate(themeModeProvider);
       ref.invalidate(accentProvider);
       ref.invalidate(hapticsProvider);
+      ref.invalidate(soundsProvider);
       ref.invalidate(reminderProvider);
       messenger.showSnackBar(
         const SnackBar(content: Text('Yedek geri yüklendi.')),

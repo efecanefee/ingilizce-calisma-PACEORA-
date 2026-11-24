@@ -40,6 +40,12 @@
 ### Düzeltilen
 - Sesler telefon titreşimdeyken duyulmuyordu; ders bitişi, rozet ve seviye
   sesleri eklendi. Yavaş okuma gerçekten yavaşladı.
+- Bitiş, rozet ve seviye sesleri üst üste biniyordu; artık önemli olan çalar.
+- Hikaye, sohbet, konuşma, seviye testi, sınav, tekrar ve telafi dersi sessiz
+  bitiyordu. Raporla seviye atlama da artık kutlanır.
+- Doğru/yanlış sesleri diğerlerinden çok kısıktı.
+- Verileri sıfırlayınca yazma XP'si kalıyordu; yedek geri yüklenince ses ayarı
+  yeniden açılışa kadar uygulanmıyordu.
 - Ana ekran widget'ı yüklenmiyordu.
 - AI sohbet anlamadığı mesajda sahneye devam ediyordu.
 - Telafi dersi hazırlanamayınca bugünü tamamlayabiliyordu.

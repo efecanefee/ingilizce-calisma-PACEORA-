@@ -297,6 +297,8 @@ void main() {
           PlacementRecord.levelKey: 'B1',
           'streak_seen_milestone': 7,
           'wardrobe_owned': ['crimson'],
+          'writing_xp': 40,
+          'level_exam_at': '2026-11-20T10:00:00.000',
           'seen_badges': ['ilk_ders'],
           AppConstants.prefThemeMode: 'dark',
         },
@@ -314,6 +316,8 @@ void main() {
         PlacementRecord.levelKey,
         'streak_seen_milestone',
         'wardrobe_owned',
+        'writing_xp',
+        'level_exam_at',
       ]) {
         expect(prefs.containsKey(key), isFalse, reason: key);
       }

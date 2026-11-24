@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/motion.dart';
+import '../../app/sounds.dart';
 import '../../app/speak_button.dart';
 import '../../app/theme.dart';
 import '../../app/translate_help.dart';
@@ -240,6 +241,9 @@ class _RoleplayChatScreenState extends ConsumerState<RoleplayChatScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(roleplayProvider(widget.scenarioId));
+    ref.listen(roleplayProvider(widget.scenarioId), (previous, next) {
+      if (next.finished && !(previous?.finished ?? false)) Sounds.finished();
+    });
     final s = state.scenario;
     final needsConfirm = !state.finished && state.userMessages > 0;
 

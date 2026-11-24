@@ -191,7 +191,11 @@ class _SessionState extends ConsumerState<_Session> {
       _error = null;
       _input.clear();
     });
-    if (!_done && widget.mode == PracticeMode.dictation) _play();
+    if (_done) {
+      Sounds.finished();
+    } else if (widget.mode == PracticeMode.dictation) {
+      _play();
+    }
   }
 
   void _restart() {

@@ -1,15 +1,19 @@
 <div align="center">
 
-<img src="assets/images/paceora_logo.png" alt="Paceora" width="320">
+<img src="assets/images/paceora_logo.png" alt="Paceora" width="280">
+<img src="assets/pace/wave.png" alt="Maskot Pace el sallıyor" height="200">
 
 **Türkçe konuşanlar için günlük İngilizce çalışma uygulaması**
 
 Seviyene göre haftalık program üretir, her gün ne çalışacağını söyler,
-serini (streak) takip eder. Veriler tamamen cihazında kalır.
+serini (streak) takip eder. Hesap gerekmez; ilerlemen cihazında kalır.
+
+**Sürüm 1.4.0** · [Değişiklik günlüğü](CHANGELOG.md)
 
 ![Flutter](https://img.shields.io/badge/Flutter-3.44-02569B?logo=flutter&logoColor=white)
 ![Dart](https://img.shields.io/badge/Dart-3-0175C2?logo=dart&logoColor=white)
 ![Gemini](https://img.shields.io/badge/Gemini-Flash-8E75B2?logo=googlegemini&logoColor=white)
+![Firebase](https://img.shields.io/badge/Firebase-AI%20Logic-FFCA28?logo=firebase&logoColor=black)
 ![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS%20%7C%20Web%20%7C%20Windows-informational)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -20,92 +24,98 @@ serini (streak) takip eder. Veriler tamamen cihazında kalır.
 ## Neden?
 
 Kurs uygulamalarının çoğu seni genel bir müfredata sokar. Paceora bunun tersini
-yapar: adını, CEFR seviyeni ve günde kaç dakika ayırabildiğini sorar, sonra
-**sana özel** bir haftalık program üretir. Pazartesiden pazara her günün bir
-dilbilgisi konusu ve bir kelime teması olur; pazar günü haftanın tekrarına ayrılır.
+yapar: adını, seviyeni ve günde kaç dakika ayırabildiğini sorar, sonra **sana
+özel** bir program üretir. Program takvim haftasına değil, **başladığın güne**
+bağlıdır: ilk günden itibaren 7 günlük bloklar halinde ilerler, her günün bir
+dilbilgisi konusu ve bir kelime teması olur.
+
+## 1.4.0 ile gelenler
+
+- **Anahtarsız yapay zeka** — Firebase AI Logic ile çalışır; kullanıcıdan API
+  anahtarı istenmez.
+- **Program ilk günden başlar** — önceki günler "kaçırıldı" sayılmaz.
+- **Aylık takvim** — güne dokun: dersi tekrar çöz, kaçırdığını telafi et ya da
+  konuyu değiştir.
+- **Pace her yerde** — tanıtım turu, 20 yeni poz ve hareketli kutlama.
+- **Türkçe yardım** — ders, hikaye, sohbet, konuşma, yazma ve kartlarda
+  "Türkçesi" düğmesi; çeviri sorularında kelime ipuçları.
+- **Yazma pratiği, seviye atlama sınavı, arama** ve 5 dakikalık "Vaktim az" dersi.
+- **Uyarlanan seviye testi** — sorular cevaplarına göre zorlaşır ya da kolaylaşır.
+- **Sesler** — cevap, bitiş, rozet ve seviye sesleri; üst üste binmez.
+- **Bildirimler ve Android ana ekran widget'ı.**
+
+Tamamı: [CHANGELOG.md](CHANGELOG.md)
 
 ## Öne çıkanlar
 
-- **Kişiye özel haftalık program** — Gemini (Flash), seviyene ve süreni göre
-  7 günlük konu akışı üretir; konular kolaydan zora ilerler ve tekrar etmez.
-- **Çok adımlı günlük ders** — o günün konusundan kelime kartları → boşluk
-  doldurma → Türkçe'den İngilizce'ye çeviri → çoktan seçmeli test üretilir.
-  Soru sayısı seçtiğin günlük süreye göre ölçeklenir.
-- **Hata defteri ve adaptif tekrar** — yanlış yaptığın kelime/kalıplar kaydedilir
-  ve sonraki dersin üretimine beslenir. Üç kez üst üste doğru yapınca kayıt
-  kapanır; araya bir yanlış girerse seri sıfırlanır.
-- **Yarıda bırakabilirsin** — her cevap anında cihaza yazılır; dersi kapatıp
-  geri döndüğünde kaldığın adımdan devam edersin ve aynı gün için ikinci kez
-  Gemini'ye istek gitmez.
-- **Kendi API anahtarını kullanabilirsin** — Ayarlar'dan girdiğin anahtar
-  uygulamayla gelene göre önceliklidir ve yalnızca cihazında saklanır.
-- **Anahtarsız da çalışır** — API anahtarı yoksa, ağ koparsa ya da yanıt bozuksa
-  uygulama kilitlenmez: haftalık program B1/B2 için yerleşik yedek listeden gelir
-  ve ana ekranda *çevrimdışı plan* rozeti görünür.
-- **Seri (streak) takibi** — gün atlarsan sıfırlanır, aynı gün iki kez
-  tamamlarsan şişmez; yaz saati kaymalarından etkilenmeyen gün hesabı kullanır.
-- **İlerlemen korunur** — programı yenilediğinde çalıştığın günlerin durumu
-  silinmez, dolayısıyla serin de bozulmaz. Yeni haftaya geçtiğinde program
-  kendiliğinden üretilir.
-- **Yedekleme** — Ayarlar'dan tüm ilerlemeyi tek bir JSON dosyasına dışa aktar,
-  yeni telefonda geri yükle (hesap gerekmez).
-- **Tamamen yerel veri** — her şey cihazdaki SQLite'ta (drift). Hesap yok,
-  sunucu yok; Gemini'ye yalnızca içerik üretirken istek gider.
-- **8 kademeli seviye** — A2, B1-, B1, B1+, B2-, B2, B2+, C1 (B1 ve B2'de
-  adaptif zorluk için ara kademeler).
-- **Açık/koyu tema ve vurgu rengi** — "Lime Spark + Graphite" paleti; Ayarlar'dan
-  açık/koyu mod ve 6 vurgu rengi (Lime, Okyanus, Gökyüzü, Gün batımı, Lavanta,
-  Gül) seçilebilir. Tüm vurgular WCAG AA kontrast testinden geçer.
-- **Maskot Pace** — çita Pace koşar, kutlar, ders çalışır ya da şaşırır; ana
-  ekranda serinin durumuna göre poz değiştirir. Dokununca dolabı açılır.
-- **Pace'in dolabı** — harcanabilir XP ile 6 forma; çizim aynı kalır, forma
-  renkleri değişir. Bakiye seri dondurma haklarıyla ortaktır.
-- **Seviye testi ve önizleme** — onboarding'de kısa test (her
-  seferinde havuzdan karışık 16 soru, sonunda yanlışların incelemesi) ya da
-  elle seçim; seçilen seviyenin odak konuları ve 4 soruluk kontrol. Ayarlar'dan
-  seviye, test çözülmeden değiştirilemez.
-- **SM-2 flash kartlar** — dersi bitirince o günün kelimeleri ve yanlış yaptığın
-  ifadeler desteye girer. Kart çevrilir, "Tekrar / Zor / İyi / Kolay" ile
-  notlanır; her düğmenin altında kartın ne zaman yeniden geleceği yazar.
-- **Günün hikayesi** — günün teması ve kelimeleriyle kısa bir okuma parçası,
-  sözlükçe ve okuduğunu anlama testi. Anahtar yoksa yerleşik yedek hikaye gelir.
-- **İlerleme ekranı** — 5 haftalık seri takvimi, son 8 haftanın ortalama skor
-  grafiği, en uzun seri ve öğrenilen kart sayısı.
-- **Haftalık rapor ve adaptif seviye** — haftanın verisinden güçlü yönler ve
-  odak noktaları çıkarılır. Seviye önerisi cihazda kuralla hesaplanır (en az 3
-  ders ve %85+ ortalama → bir kademe yukarı; en az 2 ders ve %55 altı → bir
-  kademe aşağı); öneriyi tek dokunuşla uygularsın.
-- **Günlük hatırlatma** — seçtiğin saatte yerel bildirim. Sunucu yok;
-  "Alarmlar ve hatırlatıcılar" izni verilirse tam saatinde gelir.
-- **XP, seviye ve rozetler** — ders, hikaye, kart tekrarı ve çalışılan her gün
-  XP kazandırır; "Çaylak"tan "Efsane"ye oyuncu seviyeleri ve ilerleme çubuklu
-  10 rozet var. Yeni seviye ya da rozet hangi ekranda olursan ol konfetili
-  bir kutlamayla gelir. XP ayrı tutulmaz, çalışma geçmişinden hesaplanır.
-- **Bugünkü hedef ve yönlendirme** — ders, hikaye ve kart tekrarından oluşan
-  günlük hedef halkası; "sıradaki" adım işaretlenir ve tek dokunuşla açılır.
-- **Program sekmesi** — haftanın zaman çizelgesi: tamamlanan, kaçırılan,
-  bugünkü ve yaklaşan günler; güne dokununca ayrıntılar. Ana ekrandaki "Bu
-  hafta" kutucukları da aynı ayrıntıyı açar.
-- **Seri hedefleri** — seri rozetinde dönen alev çerçevesi ve 3, 7, 14, 30…
-  güne doğru dolan bar; hedefe ulaşınca kutlama.
-- **Animasyonlu arayüz** — alt gezinme çubuğu, hareketli gradyanlı karşılama
-  kartı, sayfa geçişleri, sırayla beliren kartlar, dönen flash kart, sayarak
-  artan skorlar ve XP, "nefes alan" seri alevi, titreşimli dokunuşlar.
-  Sistemde "animasyonları azalt" açıksa Pace ve seri animasyonları durur.
+### Öğrenme
+- **Kişiye özel program** — Gemini (Flash), seviyene ve sürene göre 7 günlük
+  konu akışı üretir; yeni blok gelince program kendiliğinden yenilenir.
+- **Çok adımlı günlük ders** — kelime kartları → boşluk doldurma → Türkçeden
+  İngilizceye çeviri → test. Soru sayısı günlük süreye göre değişir (5, 15, 30
+  ya da 60 dakika). Zamanın yoksa "Vaktim az" ile 5 dakikalık ders açılır.
+- **Yarıda bırakabilirsin** — her cevap anında cihaza yazılır; kaldığın adımdan
+  devam edersin. Yarının dersi bugünden hazırlanır.
+- **Hata defteri** — yanlışların 1, 3 ve 7 gün sonra derse döner; üst üste üç
+  doğruda kapanır.
+- **Aralıklı tekrar kartları** — SM-2 temelli. "Tekrar / Zor / İyi / Kolay"
+  notuna göre yeni kart bugün, 1, 3 ya da 5 gün sonra yeniden gelir.
+- **Günün hikayesi** — günün kelimeleriyle okuma parçası, sözlükçe ve anlama
+  testi. Kelimeye dokun anlamını gör, istersen tamamını Türkçe oku ya da dinle.
+- **8 kademeli seviye** — A2, B1-, B1, B1+, B2-, B2, B2+, C1.
+- **Seviye testi** — 116 soruluk havuzdan 20 soru: dilbilgisi, kelime, okuma,
+  dinleme. Her bölüm önceki cevaplara göre seçilir.
+- **Seviye atlama** — 10 soruluk sınav (7 doğru geçer) ya da haftalık raporun
+  önerisi. Öneri cihazda kuralla hesaplanır: en az 3 ders ve %85+ ortalama →
+  yukarı; en az 2 ders ve %55 altı → aşağı.
+
+### Pratik
+- **AI ile sohbet** — 8 senaryo (kafe, otel, doktor, iş görüşmesi, havalimanı…);
+  hatalar anında düzeltilir.
+- **Konuşma ve dinle-yaz** — cümle kelime kelime puanlanır; yanlış kelimeye
+  dokununca okunur, zorlandıkların listelenir. Yavaş okuma düğmesi var.
+- **Yazma** — birkaç cümle yaz; hatalar işaretlenir ve Türkçe açıklanır.
+- **Kelime Rallisi** — 60 saniyelik eşleştirme oyunu.
+
+### Motivasyon
+- **Seri** — gün atlarsan sıfırlanır; XP ile alınan **seri dondurma** kaçırılan
+  bir günü korur. 3, 7, 14, 30… günde kutlama.
+- **XP, seviye ve 13 rozet** — "Çaylak"tan "Efsane"ye. XP ayrı saklanmaz,
+  çalışma geçmişinden hesaplanır. Yeni seviye ve rozet, hangi ekranda olursan ol
+  konfeti ve kendi sesiyle gelir.
+- **Maskot Pace** — çita Pace yol gösterir, kutlar, serine göre poz değiştirir.
+  Dokununca dolabı açılır: XP ile 6 forma.
+- **Bugünkü hedef ve aylık takvim** — sıradaki adım tek dokunuşla açılır.
+- **Bildirimler** — günlük hatırlatma, günün kelimesi (09.00) ve pazar raporu
+  (19.00). İlk açılışta izin istenir; sunucu kullanılmaz.
+- **Android ana ekran widget'ı** — seri ve günün kelimesi.
+
+### Güvenilirlik ve gizlilik
+- **İnternetsiz de çalışır** — telefondaki 24 hazır ders ve yedek program
+  devreye girer. Model yoğunsa sıradakine geçilir; hata açıkça yazılır.
+- **Yerel veri** — ilerleme cihazdaki SQLite'ta. Yapay zekaya yalnızca içerik
+  üretirken konu ve cevaplar gider; adın gitmez.
+  ([Gizlilik politikası](docs/gizlilik-politikasi.md))
+- **Yedekleme** — tüm ilerlemeyi tek bir JSON dosyasına aktar, yeni telefonda
+  geri yükle.
+- **Koyu/açık tema, 6 vurgu rengi** — koyu tema varsayılan. Renkler WCAG AA
+  kontrast testinden geçer; "animasyonları azalt" ayarına uyulur.
 
 ## Ekranlar
 
+Alt çubukta 5 sekme var: **Bugün, Pratik, Program, İlerleme, Ayarlar**.
+
 | Ekran | İçerik |
 |---|---|
-| **Onboarding** | İsim → seviye → günlük süre (10/15/20 dk); sonunda program üretilir |
-| **Ana ekran** | Seri sayacı, bugünün konusu ve skoru, pratik alanı, haftanın tamamı |
-| **Ders** | Adım adım kelime / boşluk doldurma / çeviri / test, anında geri bildirim |
-| **Sonuç** | Yüzdelik skor, doğru sayısı ve tekrar edilecekler listesi |
-| **Flash kartlar** | SM-2 tekrar oturumu: çevir, notla, bir sonraki karta geç |
-| **Günün hikayesi** | Okuma parçası, sözlükçe, okuduğunu anlama testi ve skor |
-| **İlerlemem** | Seri takvimi, haftalık skor grafiği, istatistikler |
-| **Haftalık rapor** | Haftanın değerlendirmesi ve seviye önerisi |
-| **Ayarlar** | Profil, Gemini anahtarı, günlük hatırlatma, tema, verileri sıfırlama |
+| **Onboarding** | İsim → seviye (test ya da seçim) → günlük süre; sonra Pace turu |
+| **Bugün** | Seri, seviye, günün dersi, günlük hedef, haftanın günleri |
+| **Ders ve sonuç** | Dört adım, anında geri bildirim, skor ve tekrar listesi |
+| **Pratik** | Sohbet, Kelime Rallisi, yazma, kartlar, hikaye, konuşma, dinle-yaz |
+| **Program** | Hafta ve ay görünümü, gün ayrıntısı, telafi, arama |
+| **İlerleme** | Seri takvimi, haftalık skorlar, biten dersler; kutular dokunulabilir |
+| **Haftalık rapor** | Güçlü yönler, odak noktaları ve seviye önerisi |
+| **Profil** | Avatar, rozet vitrini, XP |
+| **Ayarlar** | Çalışma, Görünüm, Bildirimler, Verilerim, Gelişmiş, Hakkında |
 
 ## Kurulum
 
@@ -116,35 +126,37 @@ flutter pub get
 Drift kod üretimi (`lib/data/database.g.dart`):
 
 ```bash
-dart run build_runner build --force-jit
+dart run build_runner build
 ```
 
-> `--force-jit` gerekli: proje yolu ASCII olmayan karakter içerdiği için
-> (`Masaüstü`) build_runner'ın AOT derlemesi bu makinede başarısız oluyor.
+> Proje yolunda ASCII olmayan karakter varsa (ör. `Masaüstü`) `--force-jit` ekle.
 
-### Gemini API anahtarı
+### Yapay zeka bağlantısı
 
-Anahtar derleme zamanında verilir, koda gömülmez. Proje kökünde `env.json`
-oluştur (bu dosya `.gitignore`'da, depoya girmez):
+Uygulama şu sırayla bağlanır:
+
+1. **Kullanıcının kendi Gemini anahtarı** (isteğe bağlı) — Ayarlar → Gelişmiş.
+   Telefonun güvenli kasasında saklanır.
+2. **Firebase AI Logic** — anahtarsız, varsayılan yol (Android ve iOS). Gemini
+   anahtarı Firebase'de durur; istekler App Check jetonuyla gider.
+3. **Derlemeye verilen anahtar** — Firebase'in olmadığı platformlar için.
+
+Üçüncü yol için proje kökünde `env.json` oluştur (`.gitignore`'da, depoya
+girmez):
 
 ```json
 { "GEMINI_API_KEY": "anahtarınız" }
 ```
 
-Anahtarı [Google AI Studio](https://aistudio.google.com/apikey)'dan
-ücretsiz alabilirsin. Alternatif olarak uygulama içinden **Ayarlar → Gemini API
-anahtarı** alanına yapıştırabilirsin; oradaki anahtar derlemeye gömülü olana göre
-önceliklidir ve yalnızca o cihazda saklanır.
+Anahtar [Google AI Studio](https://aistudio.google.com/apikey)'dan alınır.
+Bağlantı sorunu olursa Ayarlar → Gelişmiş → **Bağlantıyı test et** nedeni
+gösterir. Hiçbir bağlantı yoksa hazır dersler ve yedek program kullanılır.
 
 > **Güvenlik:** `--dart-define` ile verilen anahtar derlenen uygulamanın içine
 > girer ve APK/IPA'dan çıkarılabilir. GitHub iş akışlarını elle çalıştırırken
 > **sürüm** seçeneğini kullan: `kisisel` anahtarı gömer (yalnızca kendi
-> telefonun için), `paylasim` gömmez; başkalarına verilecek sürümde kullanıcı
-> kendi anahtarını Ayarlar'dan girer. `main`'e push'ta kişisel sürüm üretilir.
-
-Hiç anahtar vermezsen haftalık program yerleşik yedek listeden gelir, ancak
-günlük ders üretimi çalışmaz — ders ekranı bunu söyler ve günü elle
-işaretlemene izin verir.
+> telefonun için), `paylasim` gömmez. `main`'e push'ta kişisel sürüm üretilir;
+> o APK'yı başkasına verme.
 
 ### Çalıştırma
 
@@ -166,7 +178,7 @@ Windows'ta iOS derlemesi yapılamaz (Xcode yalnızca macOS'ta çalışır), bu y
 IPA GitHub Actions'ın macOS runner'ında üretilir; imzalamayı Windows'ta
 Sideloadly kendi Apple ID'nle yapar.
 
-1. **Anahtarı secret olarak ekle:** GitHub → Settings → Secrets and variables →
+1. **Anahtarı secret olarak ekle (isteğe bağlı):** GitHub → Settings → Secrets and variables →
    Actions → New repository secret → ad `GEMINI_API_KEY`, değer anahtarın.
    Anahtar koda girmez, yalnızca derleme sırasında `--dart-define` ile enjekte
    edilir.
@@ -184,11 +196,11 @@ uygulamayla ilgisi yoktur.
 
 ## Android'e kurulum
 
-Uygulama Flutter olduğu için Android sürümü aynı koddan derlenir. Bu makinede
-Android SDK kurulu olmadığından APK, iOS'taki gibi GitHub Actions'ta üretilir.
+Android sürümü aynı koddan derlenir. APK, GitHub Actions'tan indirilebilir ya da
+Android SDK kuruluysa yerelde üretilebilir.
 
-1. **Anahtar:** `GEMINI_API_KEY` secret'ı iOS için eklendiyse Android de onu
-   kullanır.
+1. **Anahtar (isteğe bağlı):** `GEMINI_API_KEY` secret'ı iOS için eklendiyse
+   Android de onu kullanır; eklenmediyse Firebase yolu çalışır.
 2. **Derlemeyi başlat:** Actions sekmesi → *Android APK* → Run workflow
    (`main`'e her push'ta da kendiliğinden çalışır).
 3. **Çıktıyı indir:** Artifacts altındaki `Paceora-apk` → içinden `Paceora.apk`.
@@ -217,7 +229,8 @@ bu dosya ve `.jks` `.gitignore`'dadır.
 Yerelde Android SDK kuruluysa:
 
 ```bash
-flutter build apk --release --dart-define-from-file=env.json
+flutter build apk --release                                  # anahtarsız (Firebase)
+flutter build apk --release --dart-define-from-file=env.json # gömülü anahtarla
 ```
 
 ## Testler
@@ -229,12 +242,13 @@ flutter test --tags golden --update-goldens    # görüntüleri yenile
 flutter test integration_test -d <cihaz>       # uçtan uca, temiz kurulumda
 ```
 
-275+ test, tamamı geçer. Ekran görüntüsü testleri Linux'ta üretildiği için
+400+ test. Ekran görüntüsü testleri Linux'ta üretildiği için
 diğer sistemlerde atlanır; uçtan uca test GitHub Actions'ta "Entegrasyon testi"
 iş akışıyla Android emülatöründe elle çalıştırılır. Ek kapsam: erişilebilirlik
 yönergeleri (etiket, 48 dp dokunma alanı, WCAG kontrastı), vurgu renkleri
 kontrastı, yedekleme/geri yükleme, veritabanı şeması, gizlilik (adın Gemini'ye
-gitmemesi), hazır ders havuzu, saat sabitlenerek haftanın her günü.
+gitmemesi), hazır ders havuzu, sesler (öncelik, dosya süresi ve düzeyi), uyarlanan seviye
+testi, saat sabitlenerek haftanın her günü.
 
 Kapsam: Gemini yanıt ayrıştırma ve yedek plana düşme, ders JSON'unun
 bozuk öğelere dayanıklı okunması, çeviri puanlaması (noktalama, büyük/küçük harf,
@@ -244,32 +258,37 @@ hikaye ayrıştırma ve puanlama, adaptif seviye kuralı, haftalık istatistikle
 XP/seviye/rozet kuralları, günlük hedef ve
 uçtan uca ders / onboarding / flash kart widget testleri.
 
-> `flutter analyze` bu makinede analiz sunucusunu çökertiyor (yine ASCII
-> olmayan proje yolu yüzünden). Bunun yerine `dart analyze` kullanın.
+> Analiz: `dart analyze --fatal-infos`. Proje yolunda ASCII olmayan karakter
+> varsa `flutter analyze` çökebilir.
 
 ## Yapı
 
 ```
 lib/
-  app/          sabitler, tema, router, logo widget'ları, ortak animasyonlar (motion)
-  data/         drift şeması, repository, Riverpod provider'ları, Gemini servisi,
-                ders / hikaye / rapor modelleri, SM-2, hatırlatma servisi
+  app/          tema, router, sekmeler, Pace, kutlamalar, sesler, Türkçe yardım,
+                tanıtım turu, ana ekran widget'ı
+  data/         drift şeması, repository, Riverpod provider'ları, Gemini servisi
+                (Firebase / kendi anahtarın), seviye testi, SM-2, rozetler,
+                bildirimler, yedekleme
   features/
-    onboarding/ isim + seviye + günlük süre akışı
-    home/       streak, bugünün planı, pratik alanı, haftalık program
-    lesson/     adım adım ders akışı ve sonuç ekranı
-    flashcards/ SM-2 tekrar oturumu
-    story/      günün hikayesi ve okuduğunu anlama testi
-    progress/   seri takvimi ve haftalık skor grafiği
-    review/     haftalık rapor ve adaptif seviye
-    settings/   profil, API anahtarı, hatırlatma, tema, veri sıfırlama
-assets/images/  paceora_mark.png (amblem), paceora_logo.png (tam logo)
-assets/mascot/  pace_*.png (maskot Pace pozları), pace_badge.png (logo rozeti)
+    onboarding/ placement/ level_exam/        tanışma, seviye testi, sınav
+    home/ lesson/ program/                    bugün, ders, takvim
+    practice/ roleplay/ speaking/ writing/    pratik sekmesi
+    flashcards/ story/ match/ mistakes/       kartlar, hikaye, oyun, hata defteri
+    progress/ review/ profile/ wardrobe/      ilerleme, rapor, profil, dolap
+    search/ settings/                         arama, ayarlar
+assets/
+  pace/ mascot/  Pace pozları, kutlama GIF'i, formalar
+  sounds/        doğru, yanlış, ders bitti, rozet, seviye
+  placement/     seviye testi soruları (116)
+  lessons/       internetsiz hazır dersler (24)
+  fonts/         Inter (OFL)
 ```
 
-**Teknolojiler:** Flutter · Riverpod (durum yönetimi) · drift + SQLite
-(yerel veritabanı, web'de WASM) · Google Fonts · `http` · Gemini REST API ·
-flutter_animate · flutter_local_notifications.
+**Teknolojiler:** Flutter · Riverpod 3 · go_router · drift + SQLite (web'de
+WASM) · Firebase AI Logic + App Check · Gemini REST API · flutter_animate ·
+flutter_tts · speech_to_text · audioplayers · flutter_local_notifications ·
+home_widget · flutter_secure_storage.
 
 ### Veri modeli
 
@@ -278,7 +297,7 @@ flutter_animate · flutter_local_notifications.
 | `UserProfiles` | ad, CEFR seviyesi, günlük dakika, streak | ✅ kullanımda |
 | `WeeklyPlanDays` | haftanın 7 günü: dilbilgisi konusu + kelime teması, durum | ✅ kullanımda |
 | `Lessons` | günlük ders içeriği + ilerleme (JSON), skor, süre | ✅ kullanımda |
-| `Mistakes` | yanlış yapılan kelime/kalıplar, 3 doğruda çözülür | ✅ kullanımda |
+| `Mistakes` | yanlış yapılan kelime/kalıplar; 1-3-7 gün sonra sorulur, 3 doğruda çözülür | ✅ kullanımda |
 | `Flashcards` | SM-2 aralıklı tekrar kartları | ✅ kullanımda |
 | `Stories` | günün hikayesi + cevaplar (JSON), test skoru | ✅ kullanımda |
 | `WeeklyReviews` | haftalık değerlendirme raporu (JSON) | ✅ kullanımda |
@@ -299,7 +318,15 @@ devam edebiliyor.
 - [x] Haftalık değerlendirme raporu ve adaptif seviye ayarı (B1- ↔ B2+)
 - [x] Animasyonlu arayüz ve Türkçe sistem metinleri
 - [x] Maskot Pace, forma dolabı ve seri hedefi kutlamaları
-- [x] Seviye testi, seviye önizlemesi ve vurgu rengi seçimi
+- [x] Konuşma, dinle-yaz, AI ile sohbet, Kelime Rallisi
+- [x] Seri dondurma, profil ve rozet vitrini, yedekleme
+- [x] Anahtarsız yapay zeka (Firebase AI Logic + App Check)
+- [x] Aylık takvim, telafi dersi, yazma pratiği, arama
+- [x] Uyarlanan seviye testi ve seviye atlama sınavı
+- [x] Türkçe yardım, sesler, bildirimler, Android widget'ı
+- [ ] Yayın imza anahtarı ve mağaza yayını
+- [ ] iOS ana ekran widget'ı
+- [ ] Arkadaş sistemi
 
 ## Logo
 

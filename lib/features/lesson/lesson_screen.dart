@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/celebrate_banner.dart';
 import '../../app/mascot.dart';
 import '../../app/motion.dart';
+import '../../app/sounds.dart';
 import '../../app/theme.dart';
 import '../../data/lesson_models.dart';
 import '../../data/providers.dart';
@@ -467,6 +468,9 @@ class _ResultViewState extends ConsumerState<_ResultView> {
           title: 'Bugün tamam!',
           message: 'Günün dersini bitirdin. Serin büyüyor; yarın görüşürüz!',
         );
+      } else {
+        // Tekrar çözme ve telafi: afiş yok, bitiş sesi var.
+        Sounds.finished();
       }
       // Takvimden açılan dersler takvime döner.
       if (!notifier.isToday && router.canPop()) {

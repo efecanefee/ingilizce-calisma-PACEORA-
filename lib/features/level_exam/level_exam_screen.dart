@@ -107,7 +107,12 @@ class _ExamState extends ConsumerState<_Exam> {
       await ref
           .read(sharedPreferencesProvider)
           .setString(levelExamAtKey, clock.now().toIso8601String());
-      if (_passed) Haptics.success();
+      if (_passed) {
+        Haptics.success();
+        Sounds.badge();
+      } else {
+        Sounds.finished();
+      }
     }
   }
 
