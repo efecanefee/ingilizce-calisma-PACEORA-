@@ -414,3 +414,30 @@ final reminderSuggestionProvider = FutureProvider.autoDispose<TimeOfDay?>((
       (current.hour * 60 + current.minute);
   return diff.abs() < 45 ? null : suggestion;
 });
+
+/// Bildirim izni kullanıcıya bir kez kendiliğinden sorulduğunu tutar.
+const notificationsAskedKey = 'notifications_asked';
+
+/// Günlük bildirimleri (hatırlatma ve günün kelimesi) varsayılan olarak açar:
+/// bir kez izin ister, verilirse ikisini de kurar.
+///
+/// Kullanıcı hatırlatmayı daha önce kendi açıp kapattıysa tercihine
+/// dokunulmaz. İzin verilmezse kapalı kalırlar ve bir daha kendiliğinden
+/// sorulmaz; Ayarlar > Bildirimler'den açılabilir.
+Future<void> enableDefaultNotifications(WidgetRef ref) async {
+  final prefs = ref.read(sharedPreferencesProvider);
+  final service = ref.read(reminderServiceProvider);
+  // Bildirim desteklenmeyen platform (web, testler): soru da kayıt da yok.
+  if (service is NoopReminderService) return;
+  if (prefs.getBool(notificationsAskedKey) ?? false) return;
+  await prefs.setBool(notificationsAskedKey, true);
+  // Tercihler izin beklenirken okunmuş olsun: soru sırasında ekran kapanabilir.
+  final reminder = ref.read(reminderProvider.notifier);
+  final extras = ref.read(extraNotificationsProvider.notifier);
+  final reminderChosen = prefs.containsKey(AppConstants.prefReminderEnabled);
+  final wordChosen = prefs.containsKey(ExtraNotificationsNotifier.wordKey);
+  if (reminderChosen && wordChosen) return;
+  if (!await service.requestPermission()) return;
+  if (!reminderChosen) await reminder.setEnabled(true);
+  if (!wordChosen) await extras.setWordOfDay(true);
+}

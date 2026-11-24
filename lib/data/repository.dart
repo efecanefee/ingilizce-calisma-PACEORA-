@@ -588,6 +588,11 @@ class Repository {
     return schedule;
   }
 
+  /// Kartın güncel kaydı.
+  Future<Flashcard?> flashcardById(int id) => (_db.select(
+    _db.flashcards,
+  )..where((t) => t.id.equals(id))).getSingleOrNull();
+
   // --- Günün hikayesi ------------------------------------------------------
 
   Future<Story?> storyFor(DateTime date) =>

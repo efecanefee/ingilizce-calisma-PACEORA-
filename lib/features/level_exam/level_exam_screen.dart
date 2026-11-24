@@ -131,6 +131,7 @@ class _ExamState extends ConsumerState<_Exam> {
       context,
       title: 'Yeni seviye: ${widget.target.label}!',
       message: 'Sınavı geçtin. Programın yeni seviyene göre hazırlandı.',
+      sound: SoundEffect.levelUp,
     );
     messenger.showSnackBar(
       SnackBar(

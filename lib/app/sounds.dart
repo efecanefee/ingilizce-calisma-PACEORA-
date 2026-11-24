@@ -1,7 +1,9 @@
+import 'dart:async';
+
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 
-/// Doğru ve yanlış cevap sesleri.
+/// Uygulama sesleri: cevap, ders bitişi, rozet ve seviye.
 ///
 /// [Haptics] gibi uygulamanın her yerinden çağrılır. Testlerde ses çalınmaz:
 /// gerçek oynatıcı yalnızca `main()` içinde [Sounds.useDevicePlayer] ile
@@ -15,17 +17,24 @@ abstract class Sounds {
   @visibleForTesting
   static set player(SoundPlayer value) => _player = value;
 
-  /// Cihazın ses sistemini kullanır; telefon sessizdeyse ses çıkmaz, çalan
-  /// müziği durdurmaz.
+  /// Cihazın ses sistemini kullanır; çalan müziği durdurmaz.
   static void useDevicePlayer() => _player = _DevicePlayer();
 
-  static void correct() {
-    if (enabled) _player.play(SoundEffect.correct);
+  static void play(SoundEffect effect) {
+    if (enabled) _player.play(effect);
   }
 
-  static void wrong() {
-    if (enabled) _player.play(SoundEffect.wrong);
-  }
+  static void correct() => play(SoundEffect.correct);
+  static void wrong() => play(SoundEffect.wrong);
+
+  /// Ders, hikaye, kart oturumu gibi bir çalışma bitti.
+  static void finished() => play(SoundEffect.finished);
+
+  /// Rozet, seri hedefi, rekor, yeni forma.
+  static void badge() => play(SoundEffect.badge);
+
+  /// Oyuncu ya da İngilizce seviyesi yükseldi.
+  static void levelUp() => play(SoundEffect.levelUp);
 
   /// Cevaba göre doğru ya da yanlış sesi.
   static void answer({required bool correct}) =>
@@ -34,7 +43,10 @@ abstract class Sounds {
 
 enum SoundEffect {
   correct('sounds/dogru.wav'),
-  wrong('sounds/yanlis.wav');
+  wrong('sounds/yanlis.wav'),
+  finished('sounds/ders_bitti.wav'),
+  badge('sounds/rozet.wav'),
+  levelUp('sounds/seviye.wav');
 
   const SoundEffect(this.asset);
 
@@ -54,32 +66,44 @@ class _SilentPlayer implements SoundPlayer {
 }
 
 class _DevicePlayer implements SoundPlayer {
-  _DevicePlayer() {
-    for (final player in _players.values) {
-      player
-        ..setPlayerMode(PlayerMode.lowLatency)
-        ..setReleaseMode(ReleaseMode.stop)
-        ..setAudioContext(_context).ignore();
-    }
+  /// Medya kanalı: ses düzeyini medya tuşu belirler. Önceki sürüm zil sesi
+  /// kanalını kullanıyordu; telefon titreşim ya da sessizdeyken hiçbir ses
+  /// duyulmuyordu. Odak istenmez: arkada çalan müzik kesilmez.
+  static final _context = AudioContext(
+    android: const AudioContextAndroid(
+      contentType: AndroidContentType.sonification,
+      audioFocus: AndroidAudioFocus.none,
+    ),
+    iOS: AudioContextIOS(
+      category: AVAudioSessionCategory.playback,
+      options: const {AVAudioSessionOptions.mixWithOthers},
+    ),
+  );
+
+  final _players = <SoundEffect, Future<AudioPlayer>>{};
+
+  /// Oynatıcı ilk kullanımda kurulur; ayarlar sırayla beklenir. Kurulum
+  /// bitmeden çalınan ses (önceki sürümde) kayboluyordu.
+  Future<AudioPlayer> _create(SoundEffect effect) async {
+    final player = AudioPlayer();
+    await player.setAudioContext(_context);
+    await player.setReleaseMode(ReleaseMode.stop);
+    await player.setSource(AssetSource(effect.asset));
+    return player;
   }
 
-  static final _context = AudioContextConfig(
-    // Sessiz moda uyar, arka planda çalan müziği kesmez.
-    respectSilence: true,
-    focus: AudioContextConfigFocus.mixWithOthers,
-  ).build();
-
-  final _players = {
-    for (final effect in SoundEffect.values) effect: AudioPlayer(),
-  };
-
   @override
-  void play(SoundEffect effect) {
-    final player = _players[effect]!;
-    // Ses isteğe bağlı bir geri bildirim; hata olursa sessizce geçilir.
-    player
-        .stop()
-        .then((_) => player.play(AssetSource(effect.asset), volume: 0.6))
-        .catchError((Object _) {});
+  void play(SoundEffect effect) => unawaited(_play(effect));
+
+  Future<void> _play(SoundEffect effect) async {
+    try {
+      final player = await (_players[effect] ??= _create(effect));
+      await player.stop();
+      await player.play(AssetSource(effect.asset), volume: 0.8);
+    } catch (e) {
+      // Ses isteğe bağlı bir geri bildirim; sonraki seferde yeniden kurulur.
+      _players.remove(effect)?.ignore();
+      debugPrint('Ses çalınamadı (${effect.name}): $e');
+    }
   }
 }

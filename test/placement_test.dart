@@ -55,44 +55,68 @@ class _FakeSpeech implements SpeechService {
   bool Function(PlacementQuestion q, int i) answerRight,
 ) {
   final draw = PlacementDraw(bank, Random(seed));
-  final questions = draw.fixedBlocks();
+  final questions = <PlacementQuestion>[];
   final answers = <int>[];
-  int pick(PlacementQuestion q, int i) =>
-      answerRight(q, i) ? q.answer : (q.answer + 1) % q.options.length;
-  for (var i = 0; i < questions.length; i++) {
-    answers.add(pick(questions[i], i));
-  }
-  questions.addAll(draw.finalBlock(questions, answers));
-  for (var i = answers.length; i < questions.length; i++) {
-    answers.add(pick(questions[i], i));
+  while (questions.length < placementQuestionCount) {
+    questions.addAll(draw.nextBlock([...questions], answers));
+    while (answers.length < questions.length) {
+      final i = answers.length;
+      final q = questions[i];
+      answers.add(
+        answerRight(q, i) ? q.answer : (q.answer + 1) % q.options.length,
+      );
+    }
   }
   return (questions: questions, answers: answers);
 }
 
 void main() {
   group('soru seçimi', () {
-    test('ilk 16 soru blok düzenine uyar, 1. blok kolaydan zora', () {
-      final fixed = PlacementDraw(_bank(), Random(1)).fixedBlocks();
-      expect(fixed, hasLength(16));
-      expect(placementFixedCount, 16);
+    test('ilk bölüm 2 kolay 2 orta, sırayla', () {
+      final first = PlacementDraw(_bank(), Random(1)).nextBlock([], []);
+      expect(first.map((q) => q.band), placementWarmup);
+      expect(placementBlockSizes.reduce((a, b) => a + b), 20);
+    });
 
-      var start = 0;
-      for (final block in placementBlocks) {
-        final bands = fixed
-            .sublist(start, start + block.length)
-            .map((q) => q.band)
-            .toList();
+    test('zorlanan öğrenciye üst düzey soru gelmez, iyi gidene gelir', () {
+      for (var seed = 0; seed < 20; seed++) {
+        final weak = _simulate(_bank(), seed, (q, i) => false);
         expect(
-          bands..sort((a, b) => a.index - b.index),
-          [...block]..sort((a, b) => a.index - b.index),
+          weak.questions.where((q) => q.band.index >= PlacementBand.hard.index),
+          isEmpty,
+          reason: 'hepsi yanlış: zor soru yok',
         );
-        start += block.length;
+        // B1 düzeyi: kolay ve ortayı bilir, zoru bilmez.
+        final mid = _simulate(
+          _bank(),
+          seed,
+          (q, i) => q.level.index <= DifficultyLevel.b1.index,
+        );
+        expect(
+          mid.questions.where((q) => q.band == PlacementBand.veryHard).length,
+          lessThanOrEqualTo(1),
+        );
+        expect(
+          mid.questions
+              .where((q) => q.band.index >= PlacementBand.hard.index)
+              .length,
+          lessThanOrEqualTo(8),
+        );
+        final strong = _simulate(_bank(), seed, (q, i) => true);
+        expect(
+          strong.questions.where((q) => q.band == PlacementBand.veryHard),
+          isNotEmpty,
+        );
       }
-      expect(
-        fixed.take(4).map((q) => q.band),
-        placementBlocks.first,
-        reason: 'ısınma bloğu sırayla gelir',
-      );
+    });
+
+    test('geri alınan bölümün soruları havuza döner', () {
+      final draw = PlacementDraw(_bank(), Random(2));
+      final first = draw.nextBlock([], []);
+      for (var i = 0; i < 200; i++) {
+        draw.nextBlock(first, [for (final q in first) q.answer]);
+        draw.dropLastBlock();
+      }
     });
 
     test('20 soruda beceri kotası ve konu sınırı tutar', () {
@@ -116,26 +140,29 @@ void main() {
       }
     });
 
-    test('son bölüm tahmini seviyenin çevresinden seçilir', () {
-      // Hepsi doğru → çok zor bant; son bölümde 3 çok zor + 1 zor.
-      final strong = _simulate(_bank(), 3, (q, i) => true);
-      final strongFinal = strong.questions.skip(16).map((q) => q.band);
-      expect(
-        strongFinal.where((b) => b == PlacementBand.veryHard),
-        hasLength(3),
-      );
-      expect(strongFinal, contains(PlacementBand.hard));
-
-      // Hepsi yanlış → kolay bant; son bölümde 3 kolay + 1 orta.
-      final weak = _simulate(_bank(), 3, (q, i) => false);
-      final weakFinal = weak.questions.skip(16).map((q) => q.band);
-      expect(weakFinal.where((b) => b == PlacementBand.easy), hasLength(3));
-      expect(weakFinal, contains(PlacementBand.medium));
+    test('gerçek seviyeyi yakalar', () {
+      for (final target in DifficultyLevel.values) {
+        var error = 0.0;
+        for (var seed = 0; seed < 60; seed++) {
+          final luck = Random(seed + 77);
+          final run = _simulate(_bank(), seed, (q, i) {
+            final p =
+                0.25 +
+                0.75 / (1 + exp(-1.1 * (target.index - q.level.index + 0.4)));
+            return luck.nextDouble() < p;
+          });
+          error +=
+              (scorePlacement(run.questions, run.answers).level.index -
+                      target.index)
+                  .abs();
+        }
+        expect(error / 60, lessThan(1.3), reason: target.code);
+      }
     });
 
     test('karıştırma doğru cevabı korur', () {
       final bank = _bank();
-      for (final q in PlacementDraw(bank, Random(9)).fixedBlocks()) {
+      for (final q in PlacementDraw(bank, Random(9)).nextBlock([], [])) {
         final original = bank.questions.firstWhere((o) => o.prompt == q.prompt);
         expect(q.correctOption, original.correctOption);
       }

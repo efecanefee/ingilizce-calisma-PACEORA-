@@ -137,42 +137,20 @@ class PlacementQuestion {
   }
 }
 
-/// Testteki soru sayısı: 16 sabit bloklu soru + 4 uyarlanan kontrol sorusu.
+/// Testteki soru sayısı.
 const placementQuestionCount = 20;
 
-/// İlk üç blok (16 soru). Zorluk düz artmaz, dalgalanır:
-/// 1) 2 kolay, 1 orta, 1 zor · 2) 3 orta, 3 zor ·
-/// 3) 2 orta, 2 zor, 2 çok zor. 4. blok cevaplara göre seçilir.
-const placementBlocks = [
-  [
-    PlacementBand.easy,
-    PlacementBand.easy,
-    PlacementBand.medium,
-    PlacementBand.hard,
-  ],
-  [
-    PlacementBand.medium,
-    PlacementBand.medium,
-    PlacementBand.medium,
-    PlacementBand.hard,
-    PlacementBand.hard,
-    PlacementBand.hard,
-  ],
-  [
-    PlacementBand.medium,
-    PlacementBand.medium,
-    PlacementBand.hard,
-    PlacementBand.hard,
-    PlacementBand.veryHard,
-    PlacementBand.veryHard,
-  ],
-];
+/// Bölümlerin soru sayısı. İlk bölüm herkese aynı zorlukta (kolaydan ortaya)
+/// gelir; sonraki her bölüm o ana kadarki cevaplara göre seçilir.
+const placementBlockSizes = [4, 6, 6, 4];
 
-/// Sabit blokların soru sayısı.
-final placementFixedCount = placementBlocks.fold<int>(
-  0,
-  (sum, b) => sum + b.length,
-);
+/// Isınma bölümü: 2 kolay, 2 orta.
+const placementWarmup = [
+  PlacementBand.easy,
+  PlacementBand.easy,
+  PlacementBand.medium,
+  PlacementBand.medium,
+];
 
 /// 20 soruda beceri dağılımı hedefi.
 const placementSkillQuota = {
@@ -212,8 +190,9 @@ final placementBankProvider = FutureProvider<PlacementBank>(
   (ref) => PlacementBank.load(),
 );
 
-/// Bir test oturumunun soru seçimi: önce 16 bloklu soru, cevaplar gelince
-/// tahmini seviyenin çevresinden 4 kontrol sorusu.
+/// Bir test oturumunun soru seçimi. Bölüm bölüm ilerler; her bölümün
+/// zorluğu o ana kadarki cevaplara göre belirlenir, böylece zorlanan
+/// öğrenciye üst düzey soru yağmaz, iyi giden de kolaylarda oyalanmaz.
 class PlacementDraw {
   PlacementDraw(this.bank, [Random? random]) : _random = random ?? Random();
 
@@ -224,27 +203,52 @@ class PlacementDraw {
   final _skills = <PlacementSkill, int>{};
   final _topics = <String, int>{};
 
-  /// 1-3. bloklar. 1. blok kolaydan zora sıralı kalır (ısınma), diğer
-  /// blokların içi karışık gelir.
-  List<PlacementQuestion> fixedBlocks() => [
-    for (var b = 0; b < placementBlocks.length; b++)
-      ...() {
-        final block = [for (final band in placementBlocks[b]) _pick(band)];
-        if (b > 0) block.shuffle(_random);
-        return block;
-      }(),
-  ];
+  /// Seçilen bölümlerin (karıştırılmamış) soruları; geri alınca iade edilir.
+  final _blocks = <List<PlacementQuestion>>[];
+  var _current = <PlacementQuestion>[];
 
-  /// 4. blok: ilk 16 cevaba göre tahmin edilen bandın çevresinden 2 aynı,
-  /// 1 üst, 1 alt bant sorusu; sırası karışık.
-  List<PlacementQuestion> finalBlock(
+  /// Sıradaki bölüm. [asked] ve [answers] o ana kadarki test.
+  List<PlacementQuestion> nextBlock(
     List<PlacementQuestion> asked,
     List<int> answers,
   ) {
-    final estimate = scorePlacement(asked, answers).level;
-    final band = PlacementBand.of(estimate);
-    return [_pick(band), _pick(band), _pick(band.step(1)), _pick(band.step(-1))]
-      ..shuffle(_random);
+    final index = _blocks.length;
+    final bands = index == 0
+        ? placementWarmup
+        : _bandsAround(
+            // Aşağı yuvarlanır: az cevapla yapılan tahmin öğrenciyi boyunu
+            // aşan bölüme itmesin.
+            PlacementBand.of(
+              DifficultyLevel.values[estimateAbility(
+                asked,
+                answers,
+              ).floor().clamp(0, DifficultyLevel.values.length - 1)],
+            ),
+            placementBlockSizes[index],
+          );
+    _current = [];
+    final block = [for (final band in bands) _pick(band)];
+    _blocks.add(_current);
+    // Isınma sırayla gelir; diğer bölümlerin içi karışık.
+    if (index > 0) block.shuffle(_random);
+    return block;
+  }
+
+  /// Bölümdeki bantlar: bir alt, bir üst, gerisi öğrencinin bandı.
+  List<PlacementBand> _bandsAround(PlacementBand band, int count) => [
+    band.step(-1),
+    for (var i = 0; i < count - 2; i++) band,
+    band.step(1),
+  ];
+
+  /// Son bölümü geri alır; sorular havuza döner (kullanıcı "Önceki" ile
+  /// önceki bölüme geçti).
+  void dropLastBlock() {
+    for (final q in _blocks.removeLast()) {
+      _used.remove(q);
+      _skills.update(q.skill, (n) => n - 1);
+      if (q.topic.isNotEmpty) _topics.update(q.topic, (n) => n - 1);
+    }
   }
 
   /// Bandından, kotası en çok açık becerinin sorusunu seçer. Konu sınırı
@@ -274,6 +278,7 @@ class PlacementDraw {
         final q = choices[_random.nextInt(choices.length)];
 
         _used.add(q);
+        _current.add(q);
         _skills.update(q.skill, (n) => n + 1, ifAbsent: () => 1);
         if (q.topic.isNotEmpty) {
           _topics.update(q.topic, (n) => n + 1, ifAbsent: () => 1);
@@ -306,15 +311,40 @@ class PlacementResult {
   final Map<PlacementSkill, (int, int)> bySkill;
 }
 
-/// Ağırlıklı puan eşikleri: yüzde bu değerlerin altındaysa o kademe.
-/// A2 < 32 ≤ B1- < 42 ≤ B1 < 52 ≤ B1+ < 61 ≤ B2- < 69 ≤ B2 < 77 ≤ B2+ < 86 ≤ C1
-/// Rastgele işaretleme (4 seçenek, ~%25) A2'de kalır.
-const placementThresholds = [32.0, 42.0, 52.0, 61.0, 69.0, 77.0, 86.0];
+/// Yetenek tahmininin ızgarası ve öncülü. Kademeler 0 (A2) – 7 (C1);
+/// ızgara iki uçtan taşar ki uç kademelere de ulaşılabilsin.
+const _abilityMin = -2.0;
+const _abilityMax = 9.0;
+const _abilityStep = 0.25;
+const _priorMean = 2.0;
+const _priorSd = 2.6;
 
-/// Sorunun zorluğuna göre ağırlıklı puan. Şansla yükselmeyi önlemek için
-/// banda göre sınır konur: zor soruların yarısı doğru değilse B1+'yı,
-/// çok zorların yarısı doğru değilse B2+'yı, orta soruların %40'ı doğru
-/// değilse B1-'i geçemez.
+/// Cevaplardan öğrencinin yeteneğini tahmin eder (3 parametreli madde tepki
+/// kuramı, sonsal ortalama). Uyarlanan testte herkes farklı zorlukta soru
+/// gördüğü için doğru yüzdesi karşılaştırılamaz: kolay soruların hepsini
+/// bilen, zorların yarısını bilenden "daha iyi" görünürdü. Burada her sorunun
+/// kademesi ve şansla bilme payı (1/seçenek) hesaba katılır.
+double estimateAbility(List<PlacementQuestion> questions, List<int> answers) {
+  var total = 0.0;
+  var weighted = 0.0;
+  for (var t = _abilityMin; t <= _abilityMax; t += _abilityStep) {
+    var logP = -pow((t - _priorMean) / _priorSd, 2) / 2;
+    for (var i = 0; i < answers.length && i < questions.length; i++) {
+      final q = questions[i];
+      final guess = 1 / q.options.length;
+      // Kademesindeki soruyu öğrenci ~%70 bilir.
+      final p =
+          guess + (1 - guess) / (1 + exp(-1.1 * (t - q.level.index + 0.4)));
+      logP += log(q.isCorrect(answers[i]) ? p : 1 - p);
+    }
+    final weight = exp(logP);
+    total += weight;
+    weighted += weight * t;
+  }
+  return total == 0 ? _priorMean : weighted / total;
+}
+
+/// Testin sonucu: seviye [estimateAbility]'den, yüzde ağırlıklı doğrulardan.
 PlacementResult scorePlacement(
   List<PlacementQuestion> questions,
   List<int> answers,
@@ -322,49 +352,30 @@ PlacementResult scorePlacement(
   var earned = 0;
   var possible = 0;
   var correct = 0;
-  final bandRight = <PlacementBand, int>{};
-  final bandTotal = <PlacementBand, int>{};
   final skillRight = <PlacementSkill, int>{};
   final skillTotal = <PlacementSkill, int>{};
 
   for (var i = 0; i < answers.length && i < questions.length; i++) {
     final q = questions[i];
-    final ok = q.isCorrect(answers[i]);
     possible += q.band.weight;
-    bandTotal.update(q.band, (n) => n + 1, ifAbsent: () => 1);
     skillTotal.update(q.skill, (n) => n + 1, ifAbsent: () => 1);
-    if (ok) {
+    if (q.isCorrect(answers[i])) {
       correct++;
       earned += q.band.weight;
-      bandRight.update(q.band, (n) => n + 1, ifAbsent: () => 1);
       skillRight.update(q.skill, (n) => n + 1, ifAbsent: () => 1);
     }
   }
 
-  final percent = possible == 0 ? 0.0 : 100 * earned / possible;
-  var index = placementThresholds.indexWhere((t) => percent < t);
-  if (index == -1) index = DifficultyLevel.values.length - 1;
-
-  double accuracy(PlacementBand b) {
-    final total = bandTotal[b] ?? 0;
-    return total == 0 ? 1 : (bandRight[b] ?? 0) / total;
-  }
-
-  if (accuracy(PlacementBand.veryHard) < 0.5) {
-    index = min(index, DifficultyLevel.b2Plus.index);
-  }
-  if (accuracy(PlacementBand.hard) < 0.5) {
-    index = min(index, DifficultyLevel.b1Plus.index);
-  }
-  if (accuracy(PlacementBand.medium) < 0.4) {
-    index = min(index, DifficultyLevel.b1Minus.index);
-  }
+  final index = estimateAbility(
+    questions,
+    answers,
+  ).round().clamp(0, DifficultyLevel.values.length - 1);
 
   return PlacementResult(
     level: DifficultyLevel.values[index],
     correct: correct,
     total: answers.length,
-    percent: percent,
+    percent: possible == 0 ? 0 : 100 * earned / possible,
     bySkill: {
       for (final s in PlacementSkill.values)
         if ((skillTotal[s] ?? 0) > 0) s: (skillRight[s] ?? 0, skillTotal[s]!),

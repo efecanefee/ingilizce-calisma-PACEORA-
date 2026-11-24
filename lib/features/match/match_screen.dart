@@ -146,6 +146,7 @@ class _MatchGameState extends ConsumerState<_MatchGame> {
     final summary = await finishMatchRound(ref, _board);
     if (!mounted) return;
     if (summary.isNewBest) Haptics.success();
+    summary.isNewBest ? Sounds.badge() : Sounds.finished();
     setState(() => _summary = summary);
   }
 

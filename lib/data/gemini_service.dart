@@ -354,8 +354,9 @@ Conversation so far:
 $transcript
 
 Respond with JSON:
-- reply: your next line, staying fully in character. 1-3 short sentences, natural spoken English suitable for level $level. Move the scene forward and give the student chances to complete their task. Never mention that you are an AI or that this is practice. If the student writes in Turkish, gently answer in English and keep the scene going.
-- hasError: true only if the student's LAST message has a real grammar, word choice or spelling mistake (ignore missing final punctuation, capitalisation and informal but correct speech).
+- understood: false if the student's LAST message is gibberish, random letters, completely off-topic noise, or so broken that a real listener could not tell what they mean. Otherwise true (small mistakes are still understood; a message in Turkish is understood).
+- reply: IF understood is false, do NOT continue the scene, do NOT guess what they meant and do NOT answer any question: just say in character, in one short simple sentence, that you did not understand and ask them to say it again, repeating your last question if there was one. OTHERWISE: your next line, staying fully in character. 1-3 short sentences, natural spoken English suitable for level $level. Move the scene forward and give the student chances to complete their task. Never mention that you are an AI or that this is practice. If the student writes in Turkish, gently answer in English and keep the scene going.
+- hasError: always false if understood is false; otherwise true only if the student's LAST message has a real grammar, word choice or spelling mistake (ignore missing final punctuation, capitalisation and informal but correct speech).
 - corrected: if hasError, the student's last message rewritten correctly with minimal changes; otherwise empty.
 - explanationTr: if hasError, one short sentence in TURKISH explaining the mistake; otherwise empty.
 - goalReached: true once the student has completed every part of their task during the conversation.
@@ -628,13 +629,15 @@ Verilerde olmayan bir şey uydurma. Veri azsa bunu nazikçe belirt.
   static const Map<String, dynamic> _roleplaySchema = {
     'type': 'OBJECT',
     'properties': {
+      // İlk sırada: model cevabı yazmadan önce anlayıp anlamadığına karar versin.
+      'understood': {'type': 'BOOLEAN'},
       'reply': {'type': 'STRING'},
       'hasError': {'type': 'BOOLEAN'},
       'corrected': {'type': 'STRING'},
       'explanationTr': {'type': 'STRING'},
       'goalReached': {'type': 'BOOLEAN'},
     },
-    'required': ['reply', 'hasError', 'goalReached'],
+    'required': ['understood', 'reply', 'hasError', 'goalReached'],
   };
 
   static const Map<String, dynamic> _translationSchema = {

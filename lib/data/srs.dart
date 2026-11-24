@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'repository.dart';
 
 /// Flash kart değerlendirmesinde kullanıcının verdiği not.
@@ -39,11 +41,13 @@ class SrsSchedule {
 /// SM-2 en düşük kolaylık katsayısı.
 const minEase = 1.3;
 
-/// SM-2 algoritmasıyla bir sonraki tekrarı hesaplar.
+/// SM-2 temelli, notlara göre ayrışan tekrar aralığı.
 ///
-/// - Bilinemeyen kart ([ReviewGrade.again]) baştan başlar ve ertesi gün sorulur.
-/// - İlk başarılı tekrar 1 gün, ikincisi 6 gün sonra; sonrakiler önceki aralık
-///   ile kolaylık katsayısının çarpımı kadar ileri atılır.
+/// - "Tekrar": kart baştan başlar ve bugün yeniden sorulur (0 gün).
+/// - İlk tekrar: Zor 1, İyi 3, Kolay 5 gün. İkinci: Zor 3, İyi 6, Kolay 9.
+/// - Sonrakiler: Zor ×1.2, İyi ×katsayı, Kolay ×katsayı×1.3.
+/// - Aralıklar her zaman Zor < İyi < Kolay sırasındadır; klasik SM-2'de yeni
+///   kartta hepsi 1 gündü ve not vermenin bir farkı görünmüyordu.
 /// - Kolaylık katsayısı her notta güncellenir: "Zor" düşürür, "Kolay" artırır.
 SrsSchedule nextSchedule({
   required double ease,
@@ -61,13 +65,21 @@ SrsSchedule nextSchedule({
   final int newInterval;
   if (q < 3) {
     newReps = 0;
-    newInterval = 1;
+    newInterval = 0;
   } else {
     newReps = reps + 1;
+    final step = q - 3; // 0: Zor, 1: İyi, 2: Kolay
     newInterval = switch (newReps) {
-      1 => 1,
-      2 => 6,
-      _ => (intervalDays * newEase).round(),
+      1 => const [1, 3, 5][step],
+      2 => const [3, 6, 9][step],
+      _ => () {
+        // Eski kayıtlardaki kısa aralıklar da sıralı kalsın diye taban var.
+        final base = intervalDays < 1 ? 1 : intervalDays;
+        final hard = max(base + 1, (base * 1.2).round());
+        final good = max(hard + 1, (base * newEase).round());
+        final easy = max(good + 1, (base * newEase * 1.3).round());
+        return [hard, good, easy][step];
+      }(),
     };
   }
 

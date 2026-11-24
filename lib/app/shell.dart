@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../data/settings_providers.dart';
 import 'motion.dart';
 import 'welcome_tour.dart';
 
@@ -9,10 +10,28 @@ import 'welcome_tour.dart';
 ///
 /// Sekmeler `IndexedStack` ile tutulur, böylece kaydırma konumu ve durum
 /// korunur; sekme değişince içerik hafifçe yükselerek belirir.
-class AppShell extends ConsumerWidget {
+class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key, required this.shell});
 
   final StatefulNavigationShell shell;
+
+  @override
+  ConsumerState<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends ConsumerState<AppShell> {
+  StatefulNavigationShell get shell => widget.shell;
+
+  @override
+  void initState() {
+    super.initState();
+    // Bildirim izni tanıtım turunun üstüne çıkmasın: tur varsa bitince sorulur.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && !ref.read(tourProvider)) _askNotifications();
+    });
+  }
+
+  void _askNotifications() => enableDefaultNotifications(ref).ignore();
 
   void _select(int index) {
     Haptics.tap();
@@ -21,8 +40,11 @@ class AppShell extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final touring = ref.watch(tourProvider);
+    ref.listen(tourProvider, (previous, next) {
+      if (previous == true && !next) _askNotifications();
+    });
     return Scaffold(
       body: Stack(
         children: [

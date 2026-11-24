@@ -73,6 +73,13 @@ void main() {
         final day = mondayOf(
           DateTime.now(),
         ).add(Duration(days: weekday, hours: 10));
+        // Program pazartesi başlar; yoksa test yalnızca pazartesi günleri geçer
+        // (başlangıçtan önceki günün "bugün"ü olmaz).
+        await db.delete(db.weeklyPlanDays).go();
+        await repository.replaceWeeklyPlan(mondayOf(DateTime.now()), [
+          for (var i = 0; i < 7; i++)
+            PlanDaySpec(grammarTopic: 'Konu $i', vocabTheme: 'Tema $i'),
+        ]);
         await withClock(Clock.fixed(day), () async {
           await pumpApp(tester);
 

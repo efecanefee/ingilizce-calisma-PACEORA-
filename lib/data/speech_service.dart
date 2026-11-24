@@ -29,6 +29,23 @@ abstract class SpeechService {
   Future<void> stopListening();
 }
 
+/// Yavaş okuma metni: her iki kelimede bir kısa durak.
+///
+/// Bazı telefonların ses motoru hız ayarını yok sayıyor; duraklar o
+/// telefonlarda da cümleyi yavaşlatır.
+String slowReading(String text) {
+  final words = text.trim().split(RegExp(r'\s+'));
+  if (words.length < 4) return text;
+  final b = StringBuffer();
+  for (final (i, w) in words.indexed) {
+    b.write(w);
+    if (i == words.length - 1) break;
+    final pause = i.isOdd && !RegExp(r'[.,!?;:]$').hasMatch(w);
+    b.write(pause ? ', ' : ' ');
+  }
+  return b.toString();
+}
+
 class DeviceSpeechService implements SpeechService {
   final _tts = FlutterTts();
   final _stt = SpeechToText();
@@ -51,8 +68,10 @@ class DeviceSpeechService implements SpeechService {
   Future<bool> speak(String text, {bool slow = false}) async {
     try {
       if (!await _prepareTts()) return false;
-      await _tts.setSpeechRate(slow ? 0.3 : 0.48);
-      await _tts.speak(text);
+      // Android'de eklenti hızı 2 ile çarpar: 0.48 ≈ normal, 0.22 ≈ yarı hız.
+      await _tts.stop();
+      await _tts.setSpeechRate(slow ? 0.22 : 0.48);
+      await _tts.speak(slow ? slowReading(text) : text);
       return true;
     } catch (_) {
       // Ses motoru yoksa okuma isteğe bağlı bir yardım; çağıran bilgilendirir.

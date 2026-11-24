@@ -234,9 +234,11 @@ class LocalReminderService implements ReminderService {
 
   static const _extraDetails = NotificationDetails(
     android: AndroidNotificationDetails(
-      'extras',
+      'extras_sound',
       'Haftalık rapor ve günün kelimesi',
       channelDescription: 'Pazar raporu ve sabah kelime bildirimi',
+      importance: Importance.high,
+      priority: Priority.high,
       icon: _smallIcon,
       color: Color(0xFF5A7414),
     ),

@@ -415,6 +415,16 @@ class _Bubble extends StatelessWidget {
             ),
           if (mine && correction != null)
             _CorrectionNote(correction: correction, maxWidth: maxWidth)
+          else if (mine && evaluated && !message.understood)
+            Padding(
+              padding: const EdgeInsets.only(top: 4, right: 4),
+              child: Text(
+                'Anlaşılamadı — başka türlü yazmayı dene',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            )
           else if (mine && evaluated)
             Padding(
               padding: const EdgeInsets.only(top: 4, right: 4),

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/feature_colors.dart';
 import '../../app/mascot.dart';
 import '../../app/motion.dart';
+import '../../app/sounds.dart';
 import '../../app/theme.dart';
 import '../../app/translate_help.dart';
 import '../../data/lesson_models.dart';
@@ -96,6 +97,7 @@ class _WritingScreenState extends ConsumerState<WritingScreen> {
     ref.invalidate(gameProvider);
     if (!mounted) return;
     Haptics.success();
+    Sounds.finished();
     setState(() {
       _busy = false;
       _feedback = feedback;

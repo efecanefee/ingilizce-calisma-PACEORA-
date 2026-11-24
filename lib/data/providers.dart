@@ -700,7 +700,13 @@ class FlashcardSessionNotifier extends AsyncNotifier<FlashcardSession> {
     final card = session?.current;
     if (session == null || card == null) return;
 
-    await ref.read(repositoryProvider).reviewFlashcard(card, grade);
+    final repository = ref.read(repositoryProvider);
+    await repository.reviewFlashcard(card, grade);
+    // "Tekrar" denen kart kuyruğa güncel haliyle döner; eski aralığıyla
+    // dönerse bir sonraki "İyi" onu haftalarca ileri atardı.
+    final again = grade == ReviewGrade.again
+        ? await repository.flashcardById(card.id) ?? card
+        : null;
     final prefs = ref.read(sharedPreferencesProvider);
     final key = cardsReviewedKey(clock.now());
     await prefs.setInt(key, (prefs.getInt(key) ?? 0) + 1);
@@ -708,7 +714,7 @@ class FlashcardSessionNotifier extends AsyncNotifier<FlashcardSession> {
     final rest = session.queue.skip(1).toList();
     state = AsyncValue.data(
       FlashcardSession(
-        queue: grade == ReviewGrade.again ? [...rest, card] : rest,
+        queue: [...rest, ?again],
         reviewed: session.reviewed + 1,
       ),
     );
@@ -880,7 +886,7 @@ class RoleplayState {
   bool get finished => xpEarned != null;
 
   int get userMessages =>
-      messages.where((m) => m.speaker == Speaker.user).length;
+      messages.where((m) => m.speaker == Speaker.user && m.understood).length;
 
   List<ChatMessage> get corrected => [
     for (final m in messages)
@@ -953,7 +959,7 @@ class RoleplayNotifier extends Notifier<RoleplayState> {
       return;
     }
     final messages = [...state.messages];
-    messages.last = messages.last.withCorrection(turn.correction);
+    messages.last = messages.last.evaluated(turn);
     state = state.copyWith(
       messages: [...messages, ChatMessage(Speaker.ai, turn.reply)],
       pending: false,

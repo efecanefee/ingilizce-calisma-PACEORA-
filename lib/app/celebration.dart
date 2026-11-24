@@ -11,6 +11,7 @@ import '../data/rewards.dart';
 import '../data/streak_freeze.dart';
 import 'mascot.dart';
 import 'motion.dart';
+import 'sounds.dart';
 import 'theme.dart';
 
 /// Tek seferlik konfeti patlaması. Zamanlayıcı kullanmaz; yalnızca kendi
@@ -153,7 +154,11 @@ class Celebration {
     this.chip,
     this.art,
     this.onDismissed,
+    this.sound = SoundEffect.badge,
   });
+
+  /// Kutlama ekrana gelince çalan ses.
+  final SoundEffect sound;
 
   final String title;
   final String subtitle;
@@ -224,6 +229,7 @@ class _CelebrationHostState extends ConsumerState<CelebrationHost> {
           icon: Icons.military_tech_rounded,
           color: context.pace.accent,
           chip: 'Seviye ${game.level.level}',
+          sound: SoundEffect.levelUp,
         ),
       );
     }
@@ -243,10 +249,17 @@ class _CelebrationHostState extends ConsumerState<CelebrationHost> {
 
     prefs.setInt(_seenLevelKey, game.level.level);
     prefs.setStringList(_seenBadgesKey, earned.toList());
-    if (fresh.isNotEmpty) setState(() => _queue.addAll(fresh));
+    if (fresh.isNotEmpty) _add(fresh);
   }
 
-  void _enqueue(Celebration c) => setState(() => _queue.add(c));
+  void _enqueue(Celebration c) => _add([c]);
+
+  void _add(List<Celebration> items) {
+    final wasEmpty = _queue.isEmpty;
+    setState(() => _queue.addAll(items));
+    // Sırada bekleyenin sesi kendi sırası gelince çalar.
+    if (wasEmpty) Sounds.play(_queue.first.sound);
+  }
 
   /// Seri yeni bir hedefe (3, 7, 14… gün) ulaştıysa kutlar. İlk açılışta
   /// mevcut durum sessizce kaydedilir.
@@ -288,6 +301,7 @@ class _CelebrationHostState extends ConsumerState<CelebrationHost> {
       _queue.removeAt(0);
       _shown++;
     });
+    if (_queue.isNotEmpty) Sounds.play(_queue.first.sound);
     done.onDismissed?.call();
   }
 

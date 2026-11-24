@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/error_view.dart';
 import '../../app/motion.dart';
+import '../../app/sounds.dart';
 import '../../app/speak_button.dart';
 import '../../app/theme.dart';
 import '../../app/translate_help.dart';
@@ -162,6 +163,7 @@ class _SessionState extends ConsumerState<_Session> {
     if (widget.mode == PracticeMode.speak) {
       await HardWords.record(ref.read(sharedPreferencesProvider), score);
     }
+    Sounds.answer(correct: score.passed);
     if (score.passed) {
       Haptics.success();
       if (_passed.add(_index)) {

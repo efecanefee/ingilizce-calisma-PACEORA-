@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'celebration.dart';
 import 'mascot.dart';
 import 'motion.dart';
+import 'sounds.dart';
 
 /// Başarı anlarında (gün tamamlandı, seviye atlandı) Paceora afişiyle
 /// kutlama.
@@ -15,6 +16,7 @@ void celebrateWithBanner(
   BuildContext context, {
   required String title,
   required String message,
+  SoundEffect sound = SoundEffect.finished,
 }) {
   CelebrationHost.show(
     context,
@@ -24,6 +26,7 @@ void celebrateWithBanner(
       icon: Icons.bolt_rounded,
       color: const Color(0xFFC6F432),
       art: const CelebrateBannerArt(),
+      sound: sound,
     ),
   );
 }

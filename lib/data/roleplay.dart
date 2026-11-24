@@ -132,7 +132,15 @@ class Correction {
 enum Speaker { ai, user }
 
 class ChatMessage {
-  const ChatMessage(this.speaker, this.text, {this.correction});
+  const ChatMessage(
+    this.speaker,
+    this.text, {
+    this.correction,
+    this.understood = true,
+  });
+
+  /// Öğrenci mesajı anlaşıldı mı; anlaşılmayan mesaj XP'ye sayılmaz.
+  final bool understood;
 
   final Speaker speaker;
   final String text;
@@ -140,8 +148,12 @@ class ChatMessage {
   /// Yalnızca öğrenci mesajlarında; null ise mesaj doğru bulundu.
   final Correction? correction;
 
-  ChatMessage withCorrection(Correction? c) =>
-      ChatMessage(speaker, text, correction: c);
+  ChatMessage evaluated(RoleplayTurn turn) => ChatMessage(
+    speaker,
+    text,
+    correction: turn.correction,
+    understood: turn.understood,
+  );
 }
 
 /// Bir sohbet turunda modelin cevabı.
@@ -150,7 +162,12 @@ class RoleplayTurn {
     required this.reply,
     this.correction,
     this.goalReached = false,
+    this.understood = true,
   });
+
+  /// Öğrencinin son mesajı anlaşıldı mı; değilse karakter tekrar ister,
+  /// düzeltme ve görev ilerlemesi sayılmaz.
+  final bool understood;
 
   /// Karakterin İngilizce cevabı.
   final String reply;
@@ -163,14 +180,17 @@ class RoleplayTurn {
     if (raw is! Map<String, dynamic>) return null;
     final reply = readString(raw, 'reply');
     if (reply.isEmpty) return null;
+    final understood = raw['understood'] != false;
     final corrected = readString(raw, 'corrected');
     final explanation = readString(raw, 'explanationTr');
     return RoleplayTurn(
       reply: reply,
-      correction: raw['hasError'] == true && corrected.isNotEmpty
+      understood: understood,
+      correction:
+          understood && raw['hasError'] == true && corrected.isNotEmpty
           ? Correction(corrected: corrected, explanationTr: explanation)
           : null,
-      goalReached: raw['goalReached'] == true,
+      goalReached: understood && raw['goalReached'] == true,
     );
   }
 }

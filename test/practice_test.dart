@@ -64,10 +64,10 @@ void main() {
         ReviewGrade.good,
         now: today,
       );
-      expect(schedule.dueDate, DateTime(2026, 10, 29));
+      expect(schedule.dueDate, DateTime(2026, 10, 31));
       expect(await repository.dueFlashcards(now: today), isEmpty);
       expect(
-        await repository.dueFlashcards(now: DateTime(2026, 10, 29)),
+        await repository.dueFlashcards(now: DateTime(2026, 10, 31)),
         hasLength(1),
       );
     });

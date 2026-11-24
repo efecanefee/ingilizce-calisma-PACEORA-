@@ -12,6 +12,9 @@ import '../../app/theme.dart';
 import '../../data/providers.dart';
 import '../../data/repository.dart';
 import '../../data/rewards.dart';
+import '../home/home_screen.dart' show showFreezeSheet;
+import '../program/month_calendar.dart';
+import 'lesson_history.dart';
 
 /// İlerleme: seri takvimi, haftalık skor grafiği ve genel istatistikler.
 class ProgressScreen extends ConsumerWidget {
@@ -76,6 +79,7 @@ class _ProgressBody extends StatelessWidget {
                 value: data.currentStreak,
                 suffix: ' gün',
                 color: AppColors.warning,
+                onTap: () => showFreezeSheet(context),
               ),
               _StatTile(
                 icon: Icons.emoji_events,
@@ -83,12 +87,22 @@ class _ProgressBody extends StatelessWidget {
                 value: data.bestStreak,
                 suffix: ' gün',
                 color: AppColors.success,
+                onTap: () => showProgressSheet(
+                  context,
+                  title: 'Çalıştığın günler',
+                  child: const MonthCalendar(),
+                ),
               ),
               _StatTile(
                 icon: Icons.school,
                 label: 'Biten ders',
                 value: data.lessonsCompleted,
                 color: theme.colorScheme.primary,
+                onTap: () => showProgressSheet(
+                  context,
+                  title: 'Biten dersler',
+                  child: const LessonHistory(),
+                ),
               ),
               _StatTile(
                 icon: Icons.style,
@@ -96,6 +110,7 @@ class _ProgressBody extends StatelessWidget {
                 value: data.cardsMature,
                 suffix: '/${data.cardsTotal}',
                 color: context.pace.accentDim,
+                onTap: () => context.push('/flashcards'),
               ),
             ].indexed.map((e) => e.$2.entrance(e.$1)).toList(),
           ),
@@ -122,7 +137,7 @@ class _ProgressBody extends StatelessWidget {
           Text('Haftalık skor', style: title).entrance(6),
           const SizedBox(height: 4),
           Text(
-            'Ders testlerindeki ortalama başarı, son 8 hafta.',
+            'Ortalama başarı, son 8 hafta. Bir çubuğa dokun, derslerini gör.',
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
             ),
@@ -479,6 +494,7 @@ class _StatTile extends StatelessWidget {
     required this.label,
     required this.value,
     required this.color,
+    required this.onTap,
     this.suffix = '',
   });
 
@@ -488,38 +504,53 @@ class _StatTile extends StatelessWidget {
   final String suffix;
   final Color color;
 
+  /// Kutunun ayrıntısını açar.
+  final VoidCallback onTap;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                Icon(icon, size: 18, color: color),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: theme.textTheme.labelMedium,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () {
+          Haptics.tap();
+          onTap();
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(icon, size: 18, color: color),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: theme.textTheme.labelMedium,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                ),
-              ],
-            ),
-            CountUpText(
-              value: value,
-              suffix: suffix,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w800,
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    size: 18,
+                    color: theme.colorScheme.outline,
+                  ),
+                ],
               ),
-            ),
-          ],
+              CountUpText(
+                value: value,
+                suffix: suffix,
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -684,63 +715,83 @@ class _WeeklyScoreChart extends StatelessWidget {
       children: [
         for (final (i, week) in scores.indexed)
           Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(
-                  height: 18,
-                  child: week.average == null
-                      ? null
-                      : Text(
-                          '${week.average!.round()}',
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ).animate(delay: (300 + i * 80).ms).fadeIn(),
-                ),
-                const SizedBox(height: 4),
-                TweenAnimationBuilder<double>(
-                  tween: Tween(begin: 0, end: (week.average ?? 0) / 100),
-                  duration: Motion.slow + Duration(milliseconds: i * 80),
-                  curve: Curves.easeOutBack,
-                  builder: (context, v, _) => Container(
-                    height: week.average == null
-                        ? 4
-                        : (maxHeight * v).clamp(4, maxHeight),
-                    margin: const EdgeInsets.symmetric(horizontal: 5),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      gradient: week.average == null
+            child: Semantics(
+              button: true,
+              label:
+                  '${week.weekStart.day}/${week.weekStart.month} haftası, '
+                  '${week.average == null ? 'ders yok' : 'ortalama yüzde ${week.average!.round()}'}',
+              excludeSemantics: true,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(8),
+                onTap: () {
+                  Haptics.tap();
+                  showProgressSheet(
+                    context,
+                    title: weekTitle(week.weekStart),
+                    child: LessonHistory(weekStart: week.weekStart),
+                  );
+                },
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      height: 18,
+                      child: week.average == null
                           ? null
-                          : LinearGradient(
-                              begin: Alignment.bottomCenter,
-                              end: Alignment.topCenter,
-                              colors: isDark
-                                  ? [
-                                      context.pace.accentDark,
-                                      context.pace.accent,
-                                    ]
-                                  : [
-                                      context.pace.accentDim,
-                                      context.pace.accentDark,
-                                    ],
-                            ),
-                      color: week.average == null
-                          ? theme.colorScheme.surfaceContainerHighest
-                          : null,
+                          : Text(
+                              '${week.average!.round()}',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ).animate(delay: (300 + i * 80).ms).fadeIn(),
                     ),
-                  ),
+                    const SizedBox(height: 4),
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0, end: (week.average ?? 0) / 100),
+                      duration: Motion.slow + Duration(milliseconds: i * 80),
+                      curve: Curves.easeOutBack,
+                      builder: (context, v, _) => Container(
+                        height: week.average == null
+                            ? 4
+                            : (maxHeight * v).clamp(4, maxHeight),
+                        margin: const EdgeInsets.symmetric(horizontal: 5),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          gradient: week.average == null
+                              ? null
+                              : LinearGradient(
+                                  begin: Alignment.bottomCenter,
+                                  end: Alignment.topCenter,
+                                  colors: isDark
+                                      ? [
+                                          context.pace.accentDark,
+                                          context.pace.accent,
+                                        ]
+                                      : [
+                                          context.pace.accentDim,
+                                          context.pace.accentDark,
+                                        ],
+                                ),
+                          color: week.average == null
+                              ? theme.colorScheme.surfaceContainerHighest
+                              : null,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      i == scores.length - 1
+                          ? 'Bu h.'
+                          : '${week.weekStart.day}/${week.weekStart.month}',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        fontWeight: i == scores.length - 1
+                            ? FontWeight.w800
+                            : null,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  i == scores.length - 1
-                      ? 'Bu h.'
-                      : '${week.weekStart.day}/${week.weekStart.month}',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    fontWeight: i == scores.length - 1 ? FontWeight.w800 : null,
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
       ],

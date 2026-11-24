@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/error_view.dart';
 import '../../app/mascot.dart';
 import '../../app/motion.dart';
+import '../../app/sounds.dart';
 import '../../app/speak_button.dart';
 import '../../app/theme.dart';
 import '../../app/translate_help.dart';
@@ -74,6 +75,9 @@ class _SessionViewState extends ConsumerState<_SessionView> {
     if (_busy) return;
     setState(() => _busy = true);
     await ref.read(flashcardSessionProvider.notifier).grade(grade);
+    if (ref.read(flashcardSessionProvider).value?.isDone ?? false) {
+      Sounds.finished();
+    }
     if (mounted) {
       setState(() {
         _busy = false;
@@ -347,6 +351,7 @@ class _GradeButtons extends StatelessWidget {
       today: clock.now(),
     );
     return switch (next.intervalDays) {
+      0 => 'bugün',
       1 => 'yarın',
       final d when d < 30 => '$d gün',
       final d => '${(d / 30).round()} ay',

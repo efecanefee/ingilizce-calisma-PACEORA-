@@ -23,8 +23,7 @@ Future<DifficultyLevel?> openPlacementTest(BuildContext context) {
 }
 
 /// Seviye testi: 20 soru, 4 bölüm. Dilbilgisi, kelime, okuma ve dinleme
-/// soruları karışık gelir; zorluk bölümler boyunca dalgalanarak artar, son
-/// bölüm cevaplara göre seçilir. Sonda seviye ve beceri dökümü gösterilir.
+/// soruları karışık gelir; ilk bölüm kolay-orta, sonrakiler cevaplara göre. Sonda seviye ve beceri dökümü gösterilir.
 class PlacementTestScreen extends ConsumerWidget {
   const PlacementTestScreen({super.key, this.random});
 
@@ -85,8 +84,8 @@ class _PlacementSessionState extends ConsumerState<_PlacementSession> {
 
   late final _draw = PlacementDraw(widget.bank, widget.random);
 
-  /// Önce 16 bloklu soru; son 4 soru 16. cevaptan sonra eklenir.
-  late final _questions = _draw.fixedBlocks();
+  /// Sorular bölüm bölüm eklenir; her bölüm önceki cevaplara göre seçilir.
+  late final _questions = [..._draw.nextBlock(const [], const [])];
 
   int get _index => _answers.length;
   bool get _done => _index >= placementQuestionCount;
@@ -94,11 +93,11 @@ class _PlacementSessionState extends ConsumerState<_PlacementSession> {
   /// 1-4 arası bölüm numarası.
   int get _section {
     var end = 0;
-    for (var b = 0; b < placementBlocks.length; b++) {
-      end += placementBlocks[b].length;
+    for (var b = 0; b < placementBlockSizes.length; b++) {
+      end += placementBlockSizes[b];
       if (_index < end) return b + 1;
     }
-    return placementBlocks.length + 1;
+    return placementBlockSizes.length;
   }
 
   /// Test yarıdayken çıkılırsa ilerleme kaybolur; önce sorulur.
@@ -135,10 +134,9 @@ class _PlacementSessionState extends ConsumerState<_PlacementSession> {
     setState(() {
       _answers.add(option);
       _picked = null;
-      // Sabit bloklar bitti: son bölüm şimdiye kadarki cevaplara göre.
-      if (_answers.length == placementFixedCount &&
-          _questions.length == placementFixedCount) {
-        _questions.addAll(_draw.finalBlock(_questions, _answers));
+      // Bölüm bitti: sıradaki, şimdiye kadarki cevaplara göre.
+      if (!_done && _answers.length == _questions.length) {
+        _questions.addAll(_draw.nextBlock([..._questions], _answers));
       }
     });
     if (_done) {
@@ -153,10 +151,15 @@ class _PlacementSessionState extends ConsumerState<_PlacementSession> {
     if (_answers.isEmpty || _picked != null) return;
     setState(() {
       _answers.removeLast();
-      // Sabit bloklara geri dönüldü: son bölüm yeni cevaplarla yeniden seçilir.
-      if (_answers.length < placementFixedCount &&
-          _questions.length > placementFixedCount) {
-        _questions.removeRange(placementFixedCount, _questions.length);
+      // Önceki bölüme dönüldü: sonraki bölüm yeni cevaplarla yeniden seçilir.
+      var end = 0;
+      for (final size in placementBlockSizes) {
+        end += size;
+        if (end > _answers.length) break;
+      }
+      if (_questions.length > end) {
+        _draw.dropLastBlock();
+        _questions.removeRange(end, _questions.length);
       }
     });
   }
@@ -341,7 +344,7 @@ class _ListenCardState extends ConsumerState<_ListenCard> {
     // Bazı ses motorları okumanın bittiğini hiç bildirmez; düğmeler metnin
     // uzunluğuna göre bir süre sonra yeniden açılır.
     final words = widget.script.split(RegExp(r'\s+')).length;
-    final limit = Duration(milliseconds: (words * (slow ? 900 : 500)) + 3000);
+    final limit = Duration(milliseconds: (words * (slow ? 1500 : 500)) + 3000);
     final ok = await speech
         .speak(widget.script, slow: slow)
         .timeout(limit, onTimeout: () => true);

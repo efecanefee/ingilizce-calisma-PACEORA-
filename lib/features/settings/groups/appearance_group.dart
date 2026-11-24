@@ -76,7 +76,7 @@ class AppearanceGroup extends ConsumerWidget {
         SettingsTile(
           icon: Icons.volume_up_rounded,
           title: 'Ses efektleri',
-          subtitle: 'Doğru ve yanlış cevapta kısa ses',
+          subtitle: 'Cevap, ders bitişi ve başarı sesleri',
           trailing: Switch(
             value: sounds,
             onChanged: (v) => ref.read(soundsProvider.notifier).set(v),

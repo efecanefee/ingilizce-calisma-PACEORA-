@@ -3,6 +3,8 @@
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:description="@string/widget_description"
     android:initialLayout="@layout/pace_widget"
+    android:previewImage="@drawable/widget_pace"
+    android:previewLayout="@layout/pace_widget"
     android:minWidth="180dp"
     android:minHeight="110dp"
     android:minResizeWidth="150dp"
