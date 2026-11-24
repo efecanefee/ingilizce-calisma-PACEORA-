@@ -1,5 +1,50 @@
 # Değişiklik günlüğü
 
+## 1.4.0
+
+1.3 için planlanan değişiklikler ayrıca yayımlanmadı; bu sürümde birlikte geldi.
+
+### Yeni
+- **Program başladığın günden başlar:** Haftalar ilk günden itibaren 7 günlük
+  bloklar; önceki günler "kaçırıldı" sayılmaz. Mevcut kullanıcıların haftası
+  kaymaz.
+- **Aylık takvim:** Çalışılan günler, puana göre ton ve ay özeti. Güne dokununca
+  dersi tekrar çözme, kaçırılan günü telafi etme ya da konuyu değiştirme.
+- **Pace tanıtım turu:** İlk kurulumda 5 sekmeyi gezdirir; Ayarlar > Hakkında'dan
+  yeniden izlenir. Pace'in 20 yeni pozu ve hareketli kutlama.
+- **Türkçe yardım:** Derslerde, hikayede, sohbette, konuşmada, yazmada ve
+  kartlarda "Türkçesi" düğmesi. Hikayenin tamamı Türkçe okunabilir.
+- **Çeviri ipuçları:** Cümlenin başı verilir; istenirse kelime kutusu açılır.
+- **Yazma pratiği:** Yapay zeka hataları işaretler ve Türkçe açıklar.
+- **Seviye atlama sınavı:** 10 soru, 7 doğruyla bir üst seviye.
+- **Yeni seviye testi:** 20 soru; dilbilgisi, kelime, okuma ve dinleme.
+- **Akıllı tekrar:** Yanlış yapılan ifadeler 1, 3 ve 7 gün sonra derse döner.
+- **Vaktim az:** O güne özel 5 dakikalık ders. Yarının dersi önceden hazırlanır.
+- **Arama:** Kelimeler, hata defteri ve program konuları.
+- **Bildirimler:** Haftalık rapor, günün kelimesi ve önerilen hatırlatma saati.
+- **Android ana ekran widget'ı:** Seri ve günün kelimesi.
+- **Konuşma:** Yanlış kelimeye dokununca okunur; zorlanılan kelimeler listesi.
+
+### Değişen
+- **Anahtarsız yapay zeka:** Firebase AI Logic üzerinden çalışır; kendi Gemini
+  anahtarın isteğe bağlı (Ayarlar > Gelişmiş).
+- **Pratik sekmesi** ayrıldı; ana ekran ve Pratik kartları sadeleşti.
+- **Ayarlar** kategori kartlarına ayrıldı, simgeler nötr renkte.
+- **Günlük süreler** 5, 15, 30 ve 60 dakika. Koyu tema varsayılan.
+- iOS için en düşük sürüm 15.
+- **Seviye testi** cevaplara göre ilerler; zorlanan kişiye üst düzey soru gelmez.
+- **Kart aralıkları** nota göre ayrışır: bugün, 1, 3 ya da 5 gün.
+- **Günlük bildirimler** ilk açılışta izin istenip açılır.
+- **İlerleme** kutuları ve haftalık skor çubukları ayrıntı açar.
+
+### Düzeltilen
+- Sesler telefon titreşimdeyken duyulmuyordu; ders bitişi, rozet ve seviye
+  sesleri eklendi. Yavaş okuma gerçekten yavaşladı.
+- Ana ekran widget'ı yüklenmiyordu.
+- AI sohbet anlamadığı mesajda sahneye devam ediyordu.
+- Telafi dersi hazırlanamayınca bugünü tamamlayabiliyordu.
+- "Tekrar" denen kart bir sonraki notta haftalarca ileri gidebiliyordu.
+
 ## 1.2.0
 
 ### Yeni

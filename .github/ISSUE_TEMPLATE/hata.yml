@@ -24,7 +24,7 @@ body:
     attributes:
       label: Uygulama sürümü
       description: Ayarlar > Hakkında > Sürüm
-      placeholder: "1.2.0"
+      placeholder: "1.4.0"
   - type: dropdown
     id: platform
     attributes:
