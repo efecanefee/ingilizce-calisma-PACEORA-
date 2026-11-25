@@ -129,7 +129,18 @@ class LocalReminderService implements ReminderService {
   LocalReminderService._(this._plugin);
 
   static const _notificationId = 7001;
-  static const _channelId = 'daily_reminder';
+
+  /// Android kanalın sesini ilk kurulumdan sonra değiştirmez; ses
+  /// yenilenince kanalın kimliği de yenilenir, eskisi silinir.
+  static const _channelId = 'daily_reminder_2';
+  static const _extrasChannelId = 'extras_2';
+  static const _oldChannels = ['daily_reminder', 'extras_sound', 'extras'];
+
+  /// Pace'in bildirim sesi (res/raw ve iOS paketi: paceora_bildirim.wav).
+  static const _sound = RawResourceAndroidNotificationSound('paceora_bildirim');
+  static const _darwin = DarwinNotificationDetails(
+    sound: 'paceora_bildirim.wav',
+  );
 
   /// Tek renkli bildirim simgesi (res/drawable/ic_stat_paceora.xml).
   static const _smallIcon = 'ic_stat_paceora';
@@ -163,6 +174,13 @@ class LocalReminderService implements ReminderService {
           ),
         ),
       );
+      final android = plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+      for (final id in _oldChannels) {
+        await android?.deleteNotificationChannel(channelId: id);
+      }
       return LocalReminderService._(plugin);
     } catch (e) {
       debugPrint('Hatırlatma servisi başlatılamadı: $e');
@@ -220,8 +238,9 @@ class LocalReminderService implements ReminderService {
           priority: Priority.high,
           icon: _smallIcon,
           color: Color(0xFF5A7414),
+          sound: _sound,
         ),
-        iOS: DarwinNotificationDetails(),
+        iOS: _darwin,
       ),
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       // Yalnızca saat/dakika eşleşir: her gün tekrarlar.
@@ -234,15 +253,16 @@ class LocalReminderService implements ReminderService {
 
   static const _extraDetails = NotificationDetails(
     android: AndroidNotificationDetails(
-      'extras_sound',
+      _extrasChannelId,
       'Haftalık rapor ve günün kelimesi',
       channelDescription: 'Pazar raporu ve sabah kelime bildirimi',
       importance: Importance.high,
       priority: Priority.high,
       icon: _smallIcon,
       color: Color(0xFF5A7414),
+      sound: _sound,
     ),
-    iOS: DarwinNotificationDetails(),
+    iOS: _darwin,
   );
 
   @override

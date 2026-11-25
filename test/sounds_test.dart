@@ -87,7 +87,7 @@ void main() {
       at(200, Sounds.finished);
       at(400, Sounds.correct);
       expect(player.played, [SoundEffect.badge]);
-      at(1000, Sounds.finished);
+      at(1300, Sounds.finished);
       expect(player.played.last, SoundEffect.finished);
     });
 

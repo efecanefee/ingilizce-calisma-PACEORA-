@@ -8,7 +8,7 @@
 Seviyene göre haftalık program üretir, her gün ne çalışacağını söyler,
 serini (streak) takip eder. Hesap gerekmez; ilerlemen cihazında kalır.
 
-**Sürüm 1.4.0** · [Değişiklik günlüğü](CHANGELOG.md)
+**Sürüm 1.4.1** · [Değişiklik günlüğü](CHANGELOG.md)
 
 ![Flutter](https://img.shields.io/badge/Flutter-3.44-02569B?logo=flutter&logoColor=white)
 ![Dart](https://img.shields.io/badge/Dart-3-0175C2?logo=dart&logoColor=white)
@@ -29,7 +29,7 @@ yapar: adını, seviyeni ve günde kaç dakika ayırabildiğini sorar, sonra **s
 bağlıdır: ilk günden itibaren 7 günlük bloklar halinde ilerler, her günün bir
 dilbilgisi konusu ve bir kelime teması olur.
 
-## 1.4.0 ile gelenler
+## 1.4 ile gelenler
 
 - **Anahtarsız yapay zeka** — Firebase AI Logic ile çalışır; kullanıcıdan API
   anahtarı istenmez.
@@ -75,7 +75,8 @@ Tamamı: [CHANGELOG.md](CHANGELOG.md)
 - **Konuşma ve dinle-yaz** — cümle kelime kelime puanlanır; yanlış kelimeye
   dokununca okunur, zorlandıkların listelenir. Yavaş okuma düğmesi var.
 - **Yazma** — birkaç cümle yaz; hatalar işaretlenir ve Türkçe açıklanır.
-- **Kelime Rallisi** — 60 saniyelik eşleştirme oyunu.
+- **Kelime Rallisi** — seviyenin kelimeleriyle 60 saniyelik eşleştirme oyunu
+  (8 seviye, 480 kelime).
 
 ### Motivasyon
 - **Seri** — gün atlarsan sıfırlanır; XP ile alınan **seri dondurma** kaçırılan
@@ -281,6 +282,7 @@ assets/
   pace/ mascot/  Pace pozları, kutlama GIF'i, formalar
   sounds/        doğru, yanlış, ders bitti, rozet, seviye
   placement/     seviye testi soruları (116)
+  words/         Kelime Rallisi'nin seviye kelimeleri (480)
   lessons/       internetsiz hazır dersler (24)
   fonts/         Inter (OFL)
 ```

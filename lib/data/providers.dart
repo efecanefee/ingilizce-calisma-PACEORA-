@@ -11,6 +11,7 @@ import '../app/error_reporting.dart';
 import 'database.dart';
 import 'gemini_service.dart';
 import 'lesson_models.dart';
+import 'level_words.dart';
 import 'match_game.dart';
 import 'offline_lessons.dart';
 import 'pronunciation.dart';
@@ -732,15 +733,26 @@ final flashcardSessionProvider =
 
 // --- Kelime Rallisi ---------------------------------------------------------
 
-/// Oyunun kartları; deste [matchMinPairs]'ten küçükse oyun açılmaz.
+/// Seviyelere ayrılmış hazır kelimeler.
+final levelWordsProvider = FutureProvider<LevelWords>(
+  (ref) => LevelWords.load(rootBundle),
+);
+
+/// Oyunun kelimeleri: kullanıcının seviyesi ve destesinden birkaç kart.
 final matchDeckProvider = FutureProvider.autoDispose<List<MatchPair>>((
   ref,
 ) async {
+  final words = await ref.watch(levelWordsProvider.future);
+  final profile = await ref.watch(profileProvider.future);
   final cards = await ref.read(repositoryProvider).matchCards();
-  return [
-    for (final c in cards)
-      MatchPair(id: c.id, word: c.word, meaning: c.meaning),
-  ];
+  return levelMatchDeck(
+    words: words,
+    level: profile?.level ?? DifficultyLevel.b1.code,
+    own: [
+      for (final c in cards)
+        MatchPair(id: c.id, word: c.word, meaning: c.meaning),
+    ],
+  );
 });
 
 /// Rekor ve toplamlar; tur bitince geçersiz kılınır.
@@ -748,15 +760,22 @@ final matchRecordsProvider = Provider.autoDispose<MatchRecords>(
   (ref) => MatchRecords.read(ref.read(sharedPreferencesProvider)),
 );
 
-/// Biten turu kaydeder: rekor/XP güncellenir, karıştırılan kartların
-/// tekrarı bugüne çekilir.
+/// Biten turu kaydeder: rekor/XP güncellenir. Karıştırılan kartların tekrarı
+/// bugüne çekilir; seviye listesinden gelenler desteye eklenir.
 Future<MatchSummary> finishMatchRound(WidgetRef ref, MatchBoard board) async {
   final prefs = ref.read(sharedPreferencesProvider);
   final summary = board.summary(
     bestScoreBefore: MatchRecords.read(prefs).bestScore,
   );
   await MatchRecords.save(prefs, summary);
-  await ref.read(repositoryProvider).pullFlashcardsToToday(board.confusedIds);
+  final repository = ref.read(repositoryProvider);
+  await repository.pullFlashcardsToToday(
+    board.confused.map((p) => p.id).where((id) => id > 0),
+  );
+  await repository.addFlashcards([
+    for (final p in board.confused)
+      if (p.id < 0) (word: p.word, meaning: p.meaning, example: ''),
+  ], source: 'new_word');
   ref.invalidate(matchRecordsProvider);
   ref.invalidate(flashcardSummaryProvider);
   ref.invalidate(gameProvider);

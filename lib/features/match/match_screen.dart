@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/constants.dart';
 import '../../app/error_view.dart';
 import '../../app/mascot.dart';
 import '../../app/motion.dart';
@@ -191,17 +192,16 @@ class _MatchGameState extends ConsumerState<_MatchGame> {
         _Phase.intro => _Intro(
           key: const ValueKey('intro'),
           records: ref.watch(matchRecordsProvider),
-          deckSize: widget.deck.length,
+          level: DifficultyLevel.fromCode(
+            ref.watch(profileProvider).value?.level ?? DifficultyLevel.b1.code,
+          ).code,
           onStart: _start,
         ),
         _Phase.playing => _buildBoard(context),
         _Phase.finished => _Results(
           key: const ValueKey('results'),
           summary: _summary,
-          confused: [
-            for (final p in widget.deck)
-              if (_board.confusedIds.contains(p.id)) p,
-          ],
+          confused: _board.confused.toList(),
           onAgain: _start,
           onDone: () => context.pop(),
         ),
@@ -231,6 +231,8 @@ class _MatchGameState extends ConsumerState<_MatchGame> {
                       : _board.at(side, row).meaning,
                   state: _board.cleared.contains((side, row))
                       ? _TileState.correct
+                      : _board.isVacant(side, row)
+                      ? _TileState.vacant
                       : _wrong.contains((side, row))
                       ? _TileState.wrong
                       : _board.selected == (side, row)
@@ -328,7 +330,7 @@ class _MatchGameState extends ConsumerState<_MatchGame> {
   }
 }
 
-enum _TileState { idle, selected, correct, wrong }
+enum _TileState { idle, selected, correct, wrong, vacant }
 
 class _Tile extends StatelessWidget {
   const _Tile({
@@ -346,6 +348,8 @@ class _Tile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Boş yer: yeni çiftler topluca gelince dolar.
+    if (state == _TileState.vacant) return const SizedBox.expand();
     final theme = Theme.of(context);
     final (bg, border) = switch (state) {
       _TileState.idle => (
@@ -364,6 +368,7 @@ class _Tile extends StatelessWidget {
         AppColors.error.withValues(alpha: 0.2),
         AppColors.error,
       ),
+      _TileState.vacant => (Colors.transparent, Colors.transparent),
     };
 
     Widget tile = GestureDetector(
@@ -423,12 +428,12 @@ class _Intro extends StatelessWidget {
   const _Intro({
     super.key,
     required this.records,
-    required this.deckSize,
+    required this.level,
     required this.onStart,
   });
 
   final MatchRecords records;
-  final int deckSize;
+  final String level;
   final VoidCallback onStart;
 
   @override
@@ -472,7 +477,7 @@ class _Intro extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         Text(
-          'Destendeki $deckSize kelimeyle yarışıyorsun.',
+          '$level seviyesinin kelimeleriyle yarışıyorsun.',
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyMedium?.copyWith(
             color: theme.colorScheme.onSurface.withValues(alpha: 0.65),

@@ -1,11 +1,15 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:paceora/app/constants.dart';
 import 'package:paceora/app/sounds.dart';
 import 'package:paceora/data/database.dart';
 import 'package:paceora/data/lesson_models.dart';
+import 'package:paceora/data/level_words.dart';
 import 'package:paceora/data/providers.dart';
 import 'package:paceora/data/repository.dart';
 import 'package:paceora/data/story_models.dart';
@@ -58,6 +62,10 @@ void main() {
         overrides: [
           sharedPreferencesProvider.overrideWithValue(prefs),
           databaseProvider.overrideWithValue(db),
+          levelWordsProvider.overrideWith(
+            (ref) =>
+                LevelWords.parse(File(LevelWords.asset).readAsStringSync()),
+          ),
         ],
         child: const PaceoraApp(onboardingDone: true),
       ),
@@ -223,14 +231,17 @@ void main() {
       await _advance(tester);
     }
 
-    testWidgets('deste küçükse yönlendirme gösterilir', (tester) async {
-      await repository.addFlashcards([
-        (word: 'apple', meaning: 'elma', example: ''),
-      ], source: 'new_word');
+    testWidgets('destesi boş olan da seviyesinin kelimeleriyle oynar', (
+      tester,
+    ) async {
       await openRally(tester);
-
-      expect(find.textContaining('en az 6 kelime gerekli'), findsOneWidget);
-      expect(find.text('Günün hikayesine git'), findsOneWidget);
+      expect(
+        find.text('B1 seviyesinin kelimeleriyle yarışıyorsun.'),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Başla'));
+      await _advance(tester);
+      expect(find.byKey(const ValueKey('match-score')), findsOneWidget);
     });
 
     testWidgets('eşleştirilir, süre dolunca sonuç kaydedilir', (tester) async {
@@ -244,20 +255,26 @@ void main() {
       )).write(FlashcardsCompanion(dueDate: Value(DateTime(2099))));
       await openRally(tester);
 
+      final bank = LevelWords.parse(File(LevelWords.asset).readAsStringSync());
+      final all = {
+        for (final level in [DifficultyLevel.b1, DifficultyLevel.b1Minus])
+          for (final w in bank.of(level)) w.word: w.meaning,
+        ...pairs,
+      };
       expect(find.text('60 saniyede kaç kelime?'), findsOneWidget);
       await tester.tap(find.text('Başla'));
       await _advance(tester);
 
       // Tahtadaki ilk İngilizce kelime ve karşılığı.
       final onBoard = [
-        for (final w in pairs.keys)
+        for (final w in all.keys)
           if (find.text(w).evaluate().isNotEmpty) w,
       ];
       expect(onBoard, hasLength(5));
       final first = onBoard.first;
       await tester.tap(find.text(first));
       await tester.pump();
-      await tester.tap(find.text(pairs[first]!));
+      await tester.tap(find.text(all[first]!));
       await _advance(tester);
       expect(
         tester.widget<Text>(find.byKey(const ValueKey('match-score'))).data,
@@ -265,13 +282,15 @@ void main() {
       );
 
       // Bir yanlış: tahtadaki iki farklı çift.
+      // Eşleşen çift boşaldı; yerine hemen yenisi gelmez.
       final words = [
-        for (final w in pairs.keys)
+        for (final w in all.keys)
           if (find.text(w).evaluate().isNotEmpty) w,
       ];
+      expect(words, hasLength(4));
       await tester.tap(find.text(words[0]));
       await tester.pump();
-      await tester.tap(find.text(pairs[words[1]]!));
+      await tester.tap(find.text(all[words[1]]!));
       await _advance(tester);
 
       // Süreyi bitir.

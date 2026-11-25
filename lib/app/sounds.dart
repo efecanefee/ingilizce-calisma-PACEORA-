@@ -62,11 +62,11 @@ abstract class Sounds {
 }
 
 enum SoundEffect {
-  correct('sounds/dogru.wav', 0, Duration(milliseconds: 500)),
-  wrong('sounds/yanlis.wav', 0, Duration(milliseconds: 480)),
-  finished('sounds/ders_bitti.wav', 1, Duration(milliseconds: 1400)),
-  badge('sounds/rozet.wav', 2, Duration(milliseconds: 950)),
-  levelUp('sounds/seviye.wav', 3, Duration(milliseconds: 1600));
+  correct('sounds/dogru.wav', 0, Duration(milliseconds: 600)),
+  wrong('sounds/yanlis.wav', 0, Duration(milliseconds: 550)),
+  finished('sounds/ders_bitti.wav', 1, Duration(milliseconds: 1500)),
+  badge('sounds/rozet.wav', 2, Duration(milliseconds: 1200)),
+  levelUp('sounds/seviye.wav', 3, Duration(milliseconds: 1900));
 
   const SoundEffect(this.asset, this.priority, this.length);
 

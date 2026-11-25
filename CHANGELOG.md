@@ -1,5 +1,21 @@
 # Değişiklik günlüğü
 
+## 1.4.1
+
+### Yeni
+- **Kelime kutusu:** Çeviride ipucundan eklenen kelimenin üstü çizilir; "Geri al"
+  son eklenen kelimeyi yazıdan çıkarır.
+- **Kelime Rallisi seviyene göre:** 8 seviye için 480 kelime. Seviyenin bütün
+  kelimeleri, bir alt seviyeden biraz pekiştirme ve destenden birkaç kart gelir;
+  oyun yalnız o günkü derse bağlı değil. Karıştırılan kelime desteye eklenir.
+- **Yeni sesler:** Daha tok ve sıcak, marimba tınılı cevap, bitiş, rozet ve
+  seviye sesleri. Bildirimlerin de kendi sesi var.
+
+### Düzeltilen
+- Rallide yeni çift her zaman az önce boşalan iki yere geliyor, okumadan
+  eşleştirilebiliyordu. Yeni çiftler artık üçer üçer ve karışık yerlere gelir.
+- Rallide kutucuğa sığmayan cümleler ve soru metinleri çıkabiliyordu.
+
 ## 1.4.0
 
 1.3 için planlanan değişiklikler ayrıca yayımlanmadı; bu sürümde birlikte geldi.

@@ -173,6 +173,40 @@ void main() {
     await tester.pump();
     expect(find.text('went '), findsOneWidget);
 
+    // Kullanılan kelimenin üstü çizilir, yeniden eklenemez; geri alınabilir.
+    bool struck(String w) {
+      final label = find.descendant(
+        of: find.widgetWithText(ActionChip, w),
+        matching: find.text(w),
+      );
+      return tester.widget<Text>(label).style?.decoration ==
+          TextDecoration.lineThrough;
+    }
+
+    expect(struck('went'), isTrue);
+    expect(struck('park'), isFalse);
+    await tester.tap(find.widgetWithText(ActionChip, 'park'));
+    await tester.pump();
+    expect(find.text('went park '), findsOneWidget);
+    await tester.tap(find.text('Geri al'));
+    await tester.pump();
+    expect(find.text('went '), findsOneWidget);
+    expect(struck('park'), isFalse);
+    await tester.tap(find.text('Geri al'));
+    await tester.pump();
+    expect(struck('went'), isFalse);
+    // Elle yazılan kelime de çizilir ama geri al ona dokunmaz.
+    await tester.enterText(find.byType(TextField), 'I ');
+    await tester.pump();
+    expect(struck('I'), isTrue);
+    await tester.tap(find.text('Geri al'));
+    await tester.pump();
+    expect(find.text('I '), findsOneWidget);
+    await tester.enterText(find.byType(TextField), '');
+    await tester.pump();
+    await tester.tap(find.widgetWithText(ActionChip, 'went'));
+    await tester.pump();
+
     await tester.tap(find.text('Biraz daha yardım'));
     await _advance(tester);
     final field = tester.widget<TextField>(find.byType(TextField));

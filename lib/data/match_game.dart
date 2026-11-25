@@ -3,7 +3,8 @@ import 'dart:math';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Kelime Rallisi: 60 saniyede olabildiğince çok İngilizce–Türkçe çifti
-/// eşleştirme oyunu. Kelimeler kullanıcının flash kart destesinden gelir.
+/// eşleştirme oyunu. Kelimeler kullanıcının seviyesinden gelir
+/// (bkz. `level_words.dart`).
 
 /// Bir turun süresi.
 const matchRoundDuration = Duration(seconds: 60);
@@ -16,6 +17,12 @@ const matchBoardRows = 5;
 /// Tam 5 kartla eşleşen çiftin yerine yine kendisi gelir; oyuncuya "hiçbir
 /// şey olmadı" gibi görünür. Dışarıda kalan kart her eşleşmede yeni yüz getirir.
 const matchMinPairs = matchBoardRows + 1;
+
+/// Boşalan çift sayısı buna ulaşınca yerlerine topluca yeni çiftler gelir.
+///
+/// Her eşleşmede tek çift gelseydi iki yarısı da az önce boşalan iki yere
+/// düşer, oyuncu okumadan eşleştirirdi.
+const matchRefillAt = 3;
 
 /// Doğru eşleşme başına temel puan; kombo çarpanıyla çarpılır.
 const matchBasePoints = 10;
@@ -52,7 +59,8 @@ enum MatchOutcome {
 /// Oyun tahtası. Arayüzden bağımsızdır; süreyi ekran tutar.
 ///
 /// Doğru eşleşen kutucuklar önce [cleared] olarak işaretlenir, ekran kısa
-/// bir yeşil parlamadan sonra [refill] çağırır ve yerlerine yeni çift gelir.
+/// bir yeşil parlamadan sonra [refill] çağırır. Kutucuklar önce boşalır;
+/// [matchRefillAt] çift boşalınca yerlerine karışık sırada yenileri gelir.
 class MatchBoard {
   MatchBoard(List<MatchPair> pairs, {Random? random})
     : assert(pairs.length >= matchBoardRows),
@@ -81,6 +89,13 @@ class MatchBoard {
   /// Doğru eşleşip yenilenmeyi bekleyen kutucuklar.
   final cleared = <(MatchSide, int)>{};
 
+  /// Parlaması bitmiş, yeni çift bekleyen boş yerler: (İngilizce satırı,
+  /// Türkçe satırı), eşleştirilme sırasıyla.
+  final vacant = <(int word, int meaning)>[];
+
+  bool isVacant(MatchSide side, int row) =>
+      vacant.any((v) => row == (side == MatchSide.word ? v.$1 : v.$2));
+
   int score = 0;
   int matches = 0;
   int mistakes = 0;
@@ -89,8 +104,12 @@ class MatchBoard {
   int combo = 0;
   int bestCombo = 0;
 
-  /// Yanlış eşleştirilen kartlar (her iki taraf da).
-  final confusedIds = <int>{};
+  /// Yanlış eşleştirilen çiftler (her iki taraf da), kimliğe göre.
+  final _confused = <int, MatchPair>{};
+
+  Iterable<MatchPair> get confused => _confused.values;
+
+  Set<int> get confusedIds => _confused.keys.toSet();
 
   /// Sıradaki doğru eşleşmenin çarpanı: 1-3. eşleşme x1, 4-6. x2, sonrası x3.
   int get multiplier => 1 + min(combo ~/ 3, 2);
@@ -136,7 +155,9 @@ class MatchBoard {
   static String _norm(String s) => s.trim().toLowerCase();
 
   MatchOutcome tap(MatchSide side, int row) {
-    if (cleared.contains((side, row))) return MatchOutcome.ignored;
+    if (cleared.contains((side, row)) || isVacant(side, row)) {
+      return MatchOutcome.ignored;
+    }
     final current = selected;
 
     if (current == null || current.$1 == side) {
@@ -164,34 +185,46 @@ class MatchBoard {
     }
     combo = 0;
     mistakes++;
-    confusedIds
-      ..add(a.id)
-      ..add(b.id);
+    _confused
+      ..[a.id] = a
+      ..[b.id] = b;
     return MatchOutcome.wrong;
   }
 
-  /// Eşleşen kutucukların yerine yeni çift koyar.
+  /// Eşleşen kutucukları boşaltır; yeterince yer boşaldıysa yeni çiftler
+  /// koyar.
   ///
-  /// Yeni çiftin iki yarısı boşalan iki yere gider; birden fazla çift
-  /// bekliyorsa sağ taraftaki yerler karıştırılır ki konumdan tahmin
-  /// edilemesin.
+  /// Yeni çiftlerin Türkçesi hiçbir zaman, İngilizcesinin geldiği yerle aynı
+  /// anda boşalan yere gitmez: son eşleştirilen iki yere bakıp tahmin
+  /// edilemez.
   void refill() {
     final wordRows = [
       for (final (side, row) in cleared)
         if (side == MatchSide.word) row,
     ];
-    final meaningRows = [
-      for (final (side, row) in cleared)
-        if (side == MatchSide.meaning) row,
-    ]..shuffle(_random);
-    final leaving = {for (final row in wordRows) words[row].id};
+    for (final row in wordRows) {
+      final id = words[row].id;
+      vacant.add((row, meanings.indexWhere((p) => p.id == id)));
+    }
     cleared.clear();
-    for (var i = 0; i < wordRows.length && i < meaningRows.length; i++) {
+    if (vacant.length < matchRefillAt) return;
+
+    final slots = [...vacant];
+    vacant.clear();
+    final leaving = {for (final (row, _) in slots) words[row].id};
+    final shift = 1 + _random.nextInt(slots.length - 1);
+    final fresh = <MatchPair>[];
+    for (final (row, _) in slots) {
       final next = _draw(leaving: leaving);
-      words[wordRows[i]] = next;
-      meanings[meaningRows[i]] = next;
+      words[row] = next;
+      fresh.add(next);
       // Geri dönen çift artık tahtada kalıyor; ikinci kez çekilmesin.
       leaving.remove(next.id);
+    }
+    // Türkçe karşılıklar en son yazılır: çekiliş sırasında tahtadan çıkan
+    // çiftler hâlâ çakışma sayılsın.
+    for (var i = 0; i < slots.length; i++) {
+      meanings[slots[(i + shift) % slots.length].$2] = fresh[i];
     }
   }
 

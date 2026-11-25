@@ -21,8 +21,13 @@ void _expectValid(MatchBoard board) {
   expect(board.meanings.map((p) => p.id).toSet(), wordIds.toSet());
 }
 
-/// [board] üzerinde [row]. kelimenin doğru karşılığını bulup eşleştirir.
+/// [board] üzerinde [row]'dan başlayarak ilk dolu kelimeyi doğru karşılığıyla
+/// eşleştirir.
 MatchOutcome _matchRow(MatchBoard board, int row) {
+  while (board.isVacant(MatchSide.word, row) ||
+      board.cleared.contains((MatchSide.word, row))) {
+    row = (row + 1) % matchBoardRows;
+  }
   final id = board.words[row].id;
   final target = board.meanings.indexWhere((p) => p.id == id);
   board.tap(MatchSide.word, row);
@@ -46,10 +51,45 @@ void main() {
       // Yenilenmeyi bekleyen kutucuğa dokunmak bir şey yapmaz.
       expect(board.tap(MatchSide.word, 0), MatchOutcome.ignored);
 
+      // Tek çift boşalınca yer boş kalır: yenisi gelse yeri belli olurdu.
       board.refill();
       expect(board.cleared, isEmpty);
+      expect(board.vacant, hasLength(1));
+      expect(board.isVacant(MatchSide.word, 0), isTrue);
+      expect(board.tap(MatchSide.word, 0), MatchOutcome.ignored);
+      expect(board.words[0].id, old);
+
+      for (var i = 1; i < matchRefillAt; i++) {
+        _matchRow(board, 0);
+        board.refill();
+      }
+      expect(board.vacant, isEmpty);
       expect(board.words[0].id, isNot(old));
       _expectValid(board);
+    });
+
+    test('yeni çiftin iki yarısı aynı anda boşalan yerlere gelmez', () {
+      for (var seed = 0; seed < 40; seed++) {
+        final board = MatchBoard(_deck(40), random: Random(seed));
+        final slots = <(int, int)>[];
+        for (var round = 0; round < 6; round++) {
+          slots.clear();
+          for (var i = 0; i < matchRefillAt; i++) {
+            final row = List.generate(
+              matchBoardRows,
+              (r) => r,
+            ).firstWhere((r) => !board.isVacant(MatchSide.word, r));
+            final id = board.words[row].id;
+            slots.add((row, board.meanings.indexWhere((p) => p.id == id)));
+            _matchRow(board, row);
+            board.refill();
+          }
+          for (final (w, m) in slots) {
+            expect(board.words[w].id, isNot(board.meanings[m].id));
+          }
+          _expectValid(board);
+        }
+      }
     });
 
     test('kombo çarpanı: 4. eşleşmeden x2, 7.\'den x3', () {
@@ -72,10 +112,15 @@ void main() {
       }
       expect(board.multiplier, 2);
 
-      final a = board.words[0];
-      final wrongRow = board.meanings.indexWhere((p) => p.id != a.id);
+      bool live(MatchSide side, int row) => !board.isVacant(side, row);
+      final rows = List.generate(matchBoardRows, (r) => r);
+      final wordRow = rows.firstWhere((r) => live(MatchSide.word, r));
+      final a = board.words[wordRow];
+      final wrongRow = rows.firstWhere(
+        (r) => live(MatchSide.meaning, r) && board.meanings[r].id != a.id,
+      );
       final b = board.meanings[wrongRow];
-      board.tap(MatchSide.word, 0);
+      board.tap(MatchSide.word, wordRow);
       expect(board.tap(MatchSide.meaning, wrongRow), MatchOutcome.wrong);
 
       expect(board.combo, 0);
@@ -120,19 +165,16 @@ void main() {
         _matchRow(board, i % matchBoardRows);
         if (i.isEven) _matchRow(board, (i + 2) % matchBoardRows);
         board.refill();
-        _expectValid(board);
+        if (board.vacant.isEmpty) _expectValid(board);
       }
     });
 
-    test('en küçük oynanabilir destede her eşleşme yeni kart getirir', () {
+    test('en küçük oynanabilir destede tahta bozulmadan sürer', () {
       final board = MatchBoard(_deck(matchMinPairs), random: Random(9));
       for (var i = 0; i < 30; i++) {
-        final row = i % matchBoardRows;
-        final old = board.words[row].id;
-        _matchRow(board, row);
+        _matchRow(board, i % matchBoardRows);
         board.refill();
-        expect(board.words[row].id, isNot(old));
-        _expectValid(board);
+        if (board.vacant.isEmpty) _expectValid(board);
       }
     });
   });

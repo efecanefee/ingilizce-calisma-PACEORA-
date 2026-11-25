@@ -418,13 +418,17 @@ class Repository {
     int limit = AppConstants.maxReviewItems,
   }) async {
     final today = dayOf(now ?? clock.now());
-    final rows = await (_db.select(_db.mistakes)
-          ..where((t) => t.resolved.equals(false))
-          ..orderBy([
-            (t) => OrderingTerm(expression: t.timesWrong, mode: OrderingMode.desc),
-            (t) => OrderingTerm(expression: t.lastAskedAt),
-          ]))
-        .get();
+    final rows =
+        await (_db.select(_db.mistakes)
+              ..where((t) => t.resolved.equals(false))
+              ..orderBy([
+                (t) => OrderingTerm(
+                  expression: t.timesWrong,
+                  mode: OrderingMode.desc,
+                ),
+                (t) => OrderingTerm(expression: t.lastAskedAt),
+              ]))
+            .get();
     final due = rows.where((m) {
       final last = dayOf(m.lastAskedAt ?? m.createdAt);
       final step = m.timesCorrect.clamp(0, reviewIntervals.length - 1);
@@ -505,7 +509,8 @@ class Repository {
   }
 
   /// Kelime Rallisi için kartlar: önce az tekrarlanmış (henüz oturmamış)
-  /// olanlar, en fazla [limit] tane, karışık sırada.
+  /// olanlar, en fazla [limit] tane, karışık sırada. Yalnız bugünün dersi
+  /// değil, bütün deste.
   Future<List<Flashcard>> matchCards({int limit = 40, Random? random}) async {
     final all = await _db.select(_db.flashcards).get();
     all.shuffle(random);

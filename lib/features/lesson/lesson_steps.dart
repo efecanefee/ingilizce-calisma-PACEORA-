@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
@@ -285,9 +286,20 @@ class _TranslateQuestionCardState extends State<TranslateQuestionCard> {
   );
 
   @override
+  void initState() {
+    super.initState();
+    // Elle yazılan ya da silinen kelimeler de kutuda işaretlenir.
+    _controller.addListener(_onText);
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  void _onText() {
+    if (mounted && _hintLevel >= 1) setState(() {});
   }
 
   bool get _answered => widget.given != null;
@@ -303,7 +315,46 @@ class _TranslateQuestionCardState extends State<TranslateQuestionCard> {
       .toList();
 
   /// Kelime kutusu: karışık sırada, her açılışta aynı.
-  late final List<String> _bank = [..._words]..shuffle(Random(widget.number));
+  late final List<String> _bank = () {
+    final words = _words;
+    final bank = [...words]..shuffle(Random(widget.number));
+    // Şans eseri cümlenin kendisi çıkarsa ters çevrilir.
+    return listEquals(bank, words) ? bank.reversed.toList() : bank;
+  }();
+
+  /// Kutudan eklenen kelimeler, sırayla; "Geri al" sondan başlar.
+  final _added = <String>[];
+
+  static String _bare(String w) =>
+      w.replaceAll(RegExp(r'[.,!?;:"]'), '').toLowerCase();
+
+  /// Kutuda üstü çizilecek kelimelerin sıraları: yazıda geçenler. Aynı kelime
+  /// iki kez varsa yazıda geçtiği kadarı çizilir.
+  Set<int> get _used {
+    final left = <String, int>{};
+    for (final w in _controller.text.split(RegExp(r'\s+'))) {
+      final key = _bare(w);
+      if (key.isNotEmpty) left[key] = (left[key] ?? 0) + 1;
+    }
+    final used = <int>{};
+    for (final (i, w) in _bank.indexed) {
+      final key = _bare(w);
+      final n = left[key] ?? 0;
+      if (n == 0) continue;
+      left[key] = n - 1;
+      used.add(i);
+    }
+    return used;
+  }
+
+  /// Yazıda hâlâ duran, kutudan eklenmiş son kelime.
+  String? get _lastAdded {
+    final words = _controller.text.split(RegExp(r'\s+')).map(_bare).toList();
+    for (final word in _added.reversed) {
+      if (words.contains(_bare(word))) return word;
+    }
+    return null;
+  }
 
   void _hint() {
     Haptics.tap();
@@ -331,12 +382,28 @@ class _TranslateQuestionCardState extends State<TranslateQuestionCard> {
     _controller.selection = TextSelection.collapsed(
       offset: _controller.text.length,
     );
+    _added.add(word);
+  }
+
+  /// Kutudan eklenen son kelimeyi yazıdan çıkarır; elle yazılanlara dokunmaz.
+  void _undoWord() {
+    final word = _lastAdded;
+    if (word == null) return;
+    Haptics.tap();
+    _added.removeAt(_added.lastIndexOf(word));
+    final parts = _controller.text.trim().split(RegExp(r'\s+'));
+    parts.removeAt(parts.map(_bare).toList().lastIndexOf(_bare(word)));
+    _controller.text = parts.isEmpty ? '' : '${parts.join(' ')} ';
+    _controller.selection = TextSelection.collapsed(
+      offset: _controller.text.length,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final color = widget.correct ? AppColors.success : AppColors.error;
+    final used = _used;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -394,12 +461,31 @@ class _TranslateQuestionCardState extends State<TranslateQuestionCard> {
                 spacing: 6,
                 runSpacing: 6,
                 children: [
-                  for (final word in _bank)
+                  for (final (i, word) in _bank.indexed)
                     ActionChip(
-                      label: Text(word),
-                      onPressed: () => _addWord(word),
+                      label: Text(
+                        word,
+                        semanticsLabel: used.contains(i)
+                            ? '$word, kullanıldı'
+                            : word,
+                        style: used.contains(i)
+                            ? TextStyle(
+                                decoration: TextDecoration.lineThrough,
+                                decorationThickness: 2,
+                                color: theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.55,
+                                ),
+                              )
+                            : null,
+                      ),
+                      onPressed: used.contains(i) ? null : () => _addWord(word),
                     ),
                 ],
+              ),
+              TextButton.icon(
+                onPressed: _lastAdded == null ? null : _undoWord,
+                icon: const Icon(Icons.undo_rounded),
+                label: const Text('Geri al'),
               ),
             ],
             const SizedBox(height: 12),

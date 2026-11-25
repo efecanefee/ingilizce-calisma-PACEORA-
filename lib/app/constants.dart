@@ -3,7 +3,7 @@ abstract class AppConstants {
   static const appName = 'Paceora';
 
   /// pubspec.yaml'daki sürümle aynı tutulur.
-  static const appVersion = '1.4.0';
+  static const appVersion = '1.4.1';
 
   /// Ayarlar > Geri bildirim gönder'in alıcısı.
   static const supportEmail = 'paceora.app@gmail.com';
